@@ -1,81 +1,81 @@
-# EYWA Platform
+# EYWA Platform - All-in-One Academic Workspace
 
 > **One Platform. Zero Friction.**
 
-EYWA — это унифицированная платформа для студентов, объединяющая заметки, PDF-аннотации, интерактивные доски, задачи и календарь в одном приложении. Разработано студентами PolyU для студентов.
+EYWA is a unified platform for university students, combining notes, PDF annotations, interactive whiteboards, tasks, and calendar in one application. Developed by PolyU students for students.
 
-## ✨ Основные возможности
+## ✨ Core Features
 
-### 🎯 Ядро продукта
-- **Workspaces & Pages**: Иерархическая организация контента
-- **Три режима страницы**:
-  - **Doc** - совместное редактирование документов
-  - **Canvas** - интерактивная доска (Miro-like)
-  - **Sources** - управление PDF и аннотациями
+### 🎯 Product Core
+- **Workspaces & Pages**: Hierarchical content organization
+- **Three page modes**:
+  - **Doc** - Collaborative document editing
+  - **Canvas** - Interactive whiteboard (Miro-like)
+  - **Sources** - PDF management and annotations
 
-### 🤝 Режимы коллаборации
-- **Real-time совместное редактирование** (Doc и Canvas)
-- **Presence** - видеть кто онлайн
-- **Комментарии** к элементам
-- **История изменений** и откат версий
+### 🤝 Collaboration Modes
+- **Real-time collaborative editing** (Doc and Canvas)
+- **Presence** - See who's online
+- **Comments** on elements
+- **Version history** and rollback
 
-### 📄 Работа с PDF
-- Загрузка и хранение PDF
-- Аннотации (выделения, заметки)
-- Полнотекстовый поиск по PDF
-- Извлечение выделений в Doc
+### 📄 PDF Handling
+- PDF upload and storage
+- Annotations (highlights, notes)
+- Full-text search within PDFs
+- Extract highlights into Doc
 
-### 🎨 Canvas (Miro-подобная доска)
-- Sticky notes, текстовые блоки, фигуры
-- Соединители, изображения, файлы
-- Преобразование Canvas → Outline в Doc
-- Интеграция с AFFiNE Blocks
+### 🎨 Canvas (Miro-like Whiteboard)
+- Sticky notes, text blocks, shapes
+- Connectors, images, file cards
+- Canvas → Outline conversion in Doc
+- AFFiNE Blocks integration
 
-### 📅 Задачи и Календарь
-- Задачи с дедлайнами и привязкой к страницам
-- Календарь событий
-- Синхронизация с учебными системами
+### 📅 Tasks & Calendar
+- Tasks with deadlines linked to pages
+- Calendar events
+- Integration with academic systems (Blackboard)
 
-### 🤖 AI помощник
-- **Summary** - сжатие материалов
-- **Flashcards** - создание карточек для запоминания
-- Ограничение источниками текущей страницы
-- Лимиты запросов
+### 🤖 AI Study Assistant
+- **Summary** - Compress study materials
+- **Flashcards** - Create memorization cards
+- Limited to current page sources
+- Request limits/usage tracking
 
-### 📤 Экспорт
-- Экспорт в PDF и DOCX
-- Фоновая обработка (job queue)
-- Отправка в Notion
+### 📤 Export
+- Export to PDF and DOCX
+- Background job processing
+- Send to Notion
 
-## 🏗️ Архитектура
+## 🏗️ Architecture
 
-### Микросервисы:
-1. **Auth & Identity** - аутентификация, роли, доступ
-2. **Core API** - workspaces, pages, tasks, calendar
-3. **Realtime Gateway** - WebSocket для коллаборации
-4. **File Service** - загрузка/хранение файлов, PDF
-5. **Export Service** - фоновые задачи экспорта
-6. **AI Service** - интеграция с LLM
+### Microservices:
+1. **Auth & Identity** - Authentication, roles, access control
+2. **Core API** - Workspaces, pages, tasks, calendar
+3. **Realtime Gateway** - WebSocket for collaboration
+4. **File Service** - File upload/storage, PDF processing
+5. **Export Service** - Background export jobs
+6. **AI Service** - LLM integration
 
-### Технологический стек:
+### Tech Stack:
 - **Backend**: Node.js/TypeScript, NestJS, Prisma
 - **Frontend**: React/TypeScript, Next.js
 - **Realtime**: Socket.io, CRDT (Yjs)
-- **Базы данных**: PostgreSQL, Redis
-- **Файлы**: S3-совместимое хранилище
-- **PDF**: PDF.js, custom аннотации
-- **Canvas**: AFFiNE Blocks интеграция
+- **Databases**: PostgreSQL, Redis
+- **File Storage**: S3-compatible storage
+- **PDF**: PDF.js, custom annotations
+- **Canvas**: AFFiNE Blocks integration
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
 ```bash
-# Клонирование
-git clone https://github.com/expusercatherine/eywa-platform.git
+# Clone the repository
+git clone https://github.com/YOUR-USERNAME/eywa-platform.git
 cd eywa-platform
 
-# Установка зависимостей
+# Setup (coming soon)
 npm run setup
 
-# Запуск в development
+# Development
 docker-compose up -d
 npm run dev
