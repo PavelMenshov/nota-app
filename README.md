@@ -6,7 +6,7 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 
 ## ✨ Core Features
 
-### 🎯 Product Core
+### Product Core
 - **Workspaces & Pages**: Hierarchical content organization for courses, projects, and research
 - **Three page modes**:
   - **Doc** - Collaborative document editing with version control
@@ -14,10 +14,10 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
   - **Sources** - PDF management with advanced annotations
 - **Role-based Access**: Owner/Editor/Viewer permissions for students and faculty
 
-### 👥 Built for the Entire Academic Community
+### Built for the Entire Academic Community
 **For Students:**
 - Study materials organization
-- Assignment tracking and submission
+- Assignment tracыking and submission
 - Peer collaboration
 
 **For Faculty & Instructors:**
@@ -25,20 +25,20 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 - Student progress monitoring
 - Grading and feedback integration
 
-### 🤝 Collaboration Modes
+### Collaboration Modes
 - **Real-time collaborative editing** (Doc and Canvas)
 - **Presence** - See who's online across workspaces
 - **Comments & annotations** with @mentions
 - **Version history** with rollback and audit trails
 
-### 📄 PDF & Document Intelligence
+### PDF & Document Intelligence
 - PDF upload and secure storage
 - Smart annotations (highlights, notes, drawings)
 - Full-text search across all uploaded materials
 - Extract highlights into organized notes with citations
 - OCR support for scanned documents
 
-### 🎨 Canvas
+### Canvas
 - Sticky notes, text blocks, shapes, and connectors
 - Image embedding and file cards
 - Real-time multi-user collaboration
@@ -46,22 +46,20 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 - **Open Canvas API** for programmatic board management and automation
 - AFFiNE Blocks integration for extensibility
 
-### 🤖 AI Study Assistant with Academic Context
+### AI Study Assistant
 - **Intelligent Summarization** - Condense complex materials while preserving key concepts
 - **Smart Flashcards** - Auto-generate study cards from content
 - **Research Assistance** - AI leverages secure agents to access and reference university library resources, providing deeper academic context alongside current page materials
-- **Citation Support** - Help with proper referencing and bibliography
 - **Context-Aware Help** - Understands course context through integration with university systems
-- **Usage Analytics** - Track AI assistance patterns for learning optimization
 
-### 📅 Academic Task & Calendar System
+### Academic Task & Calendar System
 - Assignment tracking with deadlines
 - Course schedule integration
 - Group project milestone planning
 - Automated reminders and notifications
 - Sync with university academic calendars
 
-### 🔌 API & Integrations
+### API & Integrations
 - **Open REST API** for extending platform capabilities
 - **Canvas API** for programmatic board management and automation
 - **LMS Integration** - Seamless connectivity with Blackboard, Moodle, and other learning systems
@@ -69,7 +67,7 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 - **Single Sign-On (SSO)** - PolyU NetID and enterprise authentication support
 - **Export SDK** - Custom export formats and workflow automation
 
-### 📤 Export & Distribution
+### Export & Distribution
 - Export to PDF, DOCX, and Markdown
 - Background job processing for large exports
 - Send to Notion, OneNote, and other platforms
