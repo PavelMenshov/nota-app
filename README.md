@@ -16,24 +16,20 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 
 ### 👥 Built for the Entire Academic Community
 **For Students:**
-- Personal and group workspaces
 - Study materials organization
 - Assignment tracking and submission
 - Peer collaboration
 
 **For Faculty & Instructors:**
-- Course workspace creation and management
 - Material distribution and updates
 - Student progress monitoring
 - Grading and feedback integration
-- Research collaboration spaces
 
 ### 🤝 Collaboration Modes
 - **Real-time collaborative editing** (Doc and Canvas)
 - **Presence** - See who's online across workspaces
 - **Comments & annotations** with @mentions
 - **Version history** with rollback and audit trails
-- **Cross-role collaboration** between students and instructors
 
 ### 📄 PDF & Document Intelligence
 - PDF upload and secure storage
@@ -42,7 +38,7 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 - Extract highlights into organized notes with citations
 - OCR support for scanned documents
 
-### 🎨 Canvas (Miro-like Whiteboard)
+### 🎨 Canvas
 - Sticky notes, text blocks, shapes, and connectors
 - Image embedding and file cards
 - Real-time multi-user collaboration
