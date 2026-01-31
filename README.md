@@ -17,7 +17,7 @@ EYWA is a unified academic ecosystem for university students and faculty, combin
 ### Built for the Entire Academic Community
 **For Students:**
 - Study materials organization
-- Assignment tracыking and submission
+- Assignment tracking and submission
 - Peer collaboration
 
 **For Faculty & Instructors:**
