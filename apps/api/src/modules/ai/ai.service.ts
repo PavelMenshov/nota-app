@@ -258,11 +258,12 @@ export class AIService {
     return page;
   }
 
-  private async callAI(prompt: string, maxTokens: number): Promise<{ text: string; tokensUsed: number }> {
+  private async callAI(prompt: string, _maxTokens: number): Promise<{ text: string; tokensUsed: number }> {
     // Check if API key is configured
     if (!this.apiKey) {
       // Return mock response for demo
       console.warn('AI API key not configured. Returning mock response.');
+      console.log('AI provider:', this.aiProvider);
       return {
         text: `[AI Response Placeholder]\n\nTo enable real AI features, please configure your API key:\n\n1. For OpenAI: Set OPENAI_API_KEY in .env.local\n2. For Anthropic: Set ANTHROPIC_API_KEY in .env.local\n\nOnce configured, this will provide real AI-generated summaries and flashcards based on your content.`,
         tokensUsed: 100,
@@ -280,7 +281,7 @@ export class AIService {
     //   body: JSON.stringify({
     //     model: 'gpt-4',
     //     messages: [{ role: 'user', content: prompt }],
-    //     max_tokens: maxTokens,
+    //     max_tokens: _maxTokens,
     //   }),
     // });
 

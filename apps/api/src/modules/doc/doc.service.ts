@@ -8,7 +8,7 @@ export class DocService {
   constructor(private prisma: PrismaService) {}
 
   async getDoc(pageId: string, userId: string) {
-    const _page = await this.getPageWithAccess(pageId, userId);
+    await this.getPageWithAccess(pageId, userId);
 
     let doc = await this.prisma.doc.findUnique({
       where: { pageId },
@@ -86,7 +86,7 @@ export class DocService {
   }
 
   async updateDoc(pageId: string, userId: string, dto: UpdateDocDto) {
-    const _page = await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
+    await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
 
     const doc = await this.prisma.doc.upsert({
       where: { pageId },

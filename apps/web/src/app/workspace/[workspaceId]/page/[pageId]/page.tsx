@@ -64,7 +64,9 @@ export default function PageEditorPage() {
     if (!token) return;
     try {
       const data = await pagesApi.get(token, pageId);
-      setPage(data);
+      // Add workspaceId to the data since it's not returned from API but we have it from params
+      const pageWithWorkspaceId = { ...data, workspaceId };
+      setPage(pageWithWorkspaceId);
       setTitle(data.title);
       setCurrentPage({ id: data.id, title: data.title, icon: data.icon, workspaceId });
       
