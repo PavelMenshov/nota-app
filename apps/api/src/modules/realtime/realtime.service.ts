@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 interface UserPresence {
-  oderId: string;
+  userId: string;
   name: string;
   email: string;
   avatarUrl?: string;

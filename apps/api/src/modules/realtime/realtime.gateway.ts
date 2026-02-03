@@ -59,7 +59,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       
       // Notify others
       this.server.to(client.pageId).emit('user_left', {
-        oderId: client.userId,
+        userId: client.userId,
       });
     }
     console.log(`Client disconnected: ${client.id}`);
@@ -93,7 +93,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     const user = await this.realtimeService.getUser(client.userId);
     if (user) {
       this.realtimeService.joinPage(data.pageId, client.userId, {
-        oderId: client.userId,
+        userId: client.userId,
         name: user.name || 'Anonymous',
         email: user.email,
         avatarUrl: user.avatarUrl || undefined,
@@ -103,7 +103,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // Notify others
     this.server.to(data.pageId).emit('user_joined', {
-      oderId: client.userId,
+      userId: client.userId,
       name: user?.name || 'Anonymous',
       avatarUrl: user?.avatarUrl,
     });
@@ -121,7 +121,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.realtimeService.leavePage(client.pageId, client.userId);
 
     this.server.to(client.pageId).emit('user_left', {
-      oderId: client.userId,
+      userId: client.userId,
     });
 
     client.pageId = undefined;
@@ -166,7 +166,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // Broadcast to others
     client.to(client.pageId).emit('presence_update', [{
-      oderId: client.userId,
+      userId: client.userId,
       ...data,
     }]);
   }
