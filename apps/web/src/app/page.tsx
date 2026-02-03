@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { EywaIcon } from '@/components/EywaIcon';
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,9 +22,7 @@ export default function HomePage() {
           <div className="h-[70px] flex items-center justify-between gap-4">
             {/* Brand */}
             <Link href="#top" className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-              <div className="w-[34px] h-[34px] rounded-[10px] border border-[rgba(20,20,20,0.10)] bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] shadow-[0_10px_20px_rgba(31,122,74,0.12)] relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(31,122,74,0.18)] to-transparent opacity-70 group-hover:animate-[sweep_3.8s_cubic-bezier(0.2,0.8,0.2,1)_infinite]" style={{ transform: 'translateX(-60%)' }} />
-              </div>
+              <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
               <span className="text-base">EYWA</span>
             </Link>
 
