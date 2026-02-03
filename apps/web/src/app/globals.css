@@ -90,3 +90,24 @@
   height: 0;
   pointer-events: none;
 }
+
+/* Custom animations for EYWA landing page */
+@keyframes sweep {
+  0% {
+    transform: translateX(-60%);
+  }
+  55% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.animate-sweep {
+  animation: sweep 3.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
