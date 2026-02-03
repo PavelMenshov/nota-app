@@ -294,7 +294,7 @@ cp .env.example .env
 cp .env packages/database/.env
 
 # Verify both files contain DATABASE_URL and DIRECT_DATABASE_URL
-cat packages/database/.env | grep DATABASE_URL
+grep DATABASE_URL packages/database/.env
 ```
 
 **Error: Can't reach database server at `localhost:5432`**
