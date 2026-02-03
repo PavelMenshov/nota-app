@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
+import { Prisma } from '@eywa/database';
 
 @Injectable()
 export class SourcesService {
@@ -134,7 +135,7 @@ export class SourcesService {
         content: dto.content,
         color: dto.color,
         pageNumber: dto.pageNumber,
-        position: dto.position as object,
+        position: dto.position as Prisma.InputJsonValue,
         selectedText: dto.selectedText,
       },
       include: {
@@ -258,7 +259,7 @@ export class SourcesService {
       await this.prisma.doc.update({
         where: { pageId },
         data: {
-          content: newContent,
+          content: newContent as Prisma.InputJsonValue,
           plainText: (doc.plainText || '') + '\n' + highlights.map((h) => h.selectedText).join('\n'),
         },
       });

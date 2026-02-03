@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { UpdateCanvasDto, ConvertToOutlineDto } from './dto/canvas.dto';
+import { Prisma } from '@eywa/database';
 
 @Injectable()
 export class CanvasService {
@@ -33,10 +34,10 @@ export class CanvasService {
       where: { pageId },
       create: {
         pageId,
-        content: dto.content,
+        content: dto.content as Prisma.InputJsonValue,
       },
       update: {
-        content: dto.content,
+        content: dto.content as Prisma.InputJsonValue,
       },
     });
 
@@ -115,7 +116,7 @@ export class CanvasService {
     const canvas = await this.prisma.canvas.update({
       where: { pageId },
       data: {
-        content: snapshot.content,
+        content: snapshot.content as Prisma.InputJsonValue,
       },
     });
 
@@ -177,7 +178,7 @@ export class CanvasService {
       await this.prisma.doc.update({
         where: { pageId },
         data: {
-          content: newContent,
+          content: newContent as Prisma.InputJsonValue,
           plainText: (doc.plainText || '') + '\n' + textElements.map((el) => {
             const textContent = el.content[0] as { text?: string };
             return textContent.text || '';

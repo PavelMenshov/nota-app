@@ -4,7 +4,7 @@ import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsDateString } from
 export class CreateTaskDto {
   @ApiProperty({ example: 'cuid123' })
   @IsString()
-  workspaceId: string;
+  workspaceId!: string;
 
   @ApiPropertyOptional({ example: 'cuid456' })
   @IsOptional()
@@ -15,7 +15,7 @@ export class CreateTaskDto {
   @IsString()
   @MinLength(1)
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'Description of the task' })
   @IsOptional()
@@ -77,5 +77,5 @@ export class UpdateTaskDto {
 export class AssigneeDto {
   @ApiProperty({ example: 'cuid123' })
   @IsString()
-  userId: string;
+  userId!: string;
 }

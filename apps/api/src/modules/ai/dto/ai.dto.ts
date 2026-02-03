@@ -4,7 +4,7 @@ import { IsString, IsOptional, IsBoolean, IsInt, Min, Max, MaxLength } from 'cla
 export class SummaryDto {
   @ApiProperty({ example: 'cuid123', description: 'Page ID to summarize' })
   @IsString()
-  pageId: string;
+  pageId!: string;
 
   @ApiPropertyOptional({ example: true, description: 'Include document content' })
   @IsOptional()
@@ -27,7 +27,7 @@ export class SummaryDto {
 export class FlashcardsDto {
   @ApiProperty({ example: 'cuid123', description: 'Page ID to create flashcards from' })
   @IsString()
-  pageId: string;
+  pageId!: string;
 
   @ApiPropertyOptional({ example: 10, description: 'Number of flashcards to generate' })
   @IsOptional()

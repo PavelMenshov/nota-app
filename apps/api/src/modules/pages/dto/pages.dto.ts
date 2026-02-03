@@ -4,13 +4,13 @@ import { IsString, IsOptional, MaxLength, MinLength, IsEnum } from 'class-valida
 export class CreatePageDto {
   @ApiProperty({ example: 'cuid123' })
   @IsString()
-  workspaceId: string;
+  workspaceId!: string;
 
   @ApiProperty({ example: 'My New Page' })
   @IsString()
   @MinLength(1)
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'cuid456' })
   @IsOptional()

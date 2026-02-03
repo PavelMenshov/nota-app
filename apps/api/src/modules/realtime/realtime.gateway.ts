@@ -25,7 +25,7 @@ interface AuthenticatedSocket extends Socket {
 })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private jwtService: JwtService,

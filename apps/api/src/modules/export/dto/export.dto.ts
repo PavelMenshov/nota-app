@@ -28,10 +28,10 @@ class ExportConfigDto {
 export class CreateExportJobDto {
   @ApiProperty({ enum: ['PDF', 'DOCX', 'MARKDOWN'], description: 'Export format' })
   @IsEnum(['PDF', 'DOCX', 'MARKDOWN'])
-  type: 'PDF' | 'DOCX' | 'MARKDOWN';
+  type!: 'PDF' | 'DOCX' | 'MARKDOWN';
 
   @ApiProperty({ description: 'Export configuration' })
   @ValidateNested()
   @Type(() => ExportConfigDto)
-  config: ExportConfigDto;
+  config!: ExportConfigDto;
 }

@@ -6,7 +6,7 @@ export class CreateWorkspaceDto {
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'A workspace for my project' })
   @IsOptional()
@@ -38,7 +38,7 @@ export class UpdateWorkspaceDto {
 export class AddMemberDto {
   @ApiProperty({ example: 'member@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiPropertyOptional({ enum: ['OWNER', 'EDITOR', 'VIEWER'], default: 'VIEWER' })
   @IsOptional()
@@ -49,7 +49,7 @@ export class AddMemberDto {
 export class UpdateMemberRoleDto {
   @ApiProperty({ enum: ['OWNER', 'EDITOR', 'VIEWER'] })
   @IsEnum(['OWNER', 'EDITOR', 'VIEWER'])
-  role: 'OWNER' | 'EDITOR' | 'VIEWER';
+  role!: 'OWNER' | 'EDITOR' | 'VIEWER';
 }
 
 export class GenerateShareLinkDto {

@@ -4,7 +4,7 @@ import { IsString, IsOptional, MaxLength, IsInt, IsPositive, IsEnum } from 'clas
 export class CreateAnnotationDto {
   @ApiProperty({ enum: ['HIGHLIGHT', 'NOTE', 'DRAWING', 'TEXT'] })
   @IsEnum(['HIGHLIGHT', 'NOTE', 'DRAWING', 'TEXT'])
-  type: 'HIGHLIGHT' | 'NOTE' | 'DRAWING' | 'TEXT';
+  type!: 'HIGHLIGHT' | 'NOTE' | 'DRAWING' | 'TEXT';
 
   @ApiPropertyOptional({ example: 'This is important!' })
   @IsOptional()
@@ -21,10 +21,10 @@ export class CreateAnnotationDto {
   @ApiProperty({ example: 1 })
   @IsInt()
   @IsPositive()
-  pageNumber: number;
+  pageNumber!: number;
 
   @ApiProperty({ description: 'Position data as JSON (coordinates, bounds)' })
-  position: unknown;
+  position!: unknown;
 
   @ApiPropertyOptional({ example: 'Selected text from PDF' })
   @IsOptional()

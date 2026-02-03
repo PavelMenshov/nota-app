@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreatePageDto, UpdatePageDto } from './dto/pages.dto';
+import { Prisma } from '@eywa/database';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -129,7 +130,7 @@ export class PagesService {
         pageId: id,
         userId,
         action: 'updated',
-        details: dto,
+        details: dto as unknown as Prisma.InputJsonValue,
       },
     });
 

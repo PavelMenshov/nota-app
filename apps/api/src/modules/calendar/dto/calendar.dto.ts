@@ -4,7 +4,7 @@ import { IsString, IsOptional, MaxLength, MinLength, IsDateString, IsBoolean } f
 export class CreateEventDto {
   @ApiProperty({ example: 'cuid123' })
   @IsString()
-  workspaceId: string;
+  workspaceId!: string;
 
   @ApiPropertyOptional({ example: 'cuid456' })
   @IsOptional()
@@ -15,7 +15,7 @@ export class CreateEventDto {
   @IsString()
   @MinLength(1)
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'Weekly sync meeting' })
   @IsOptional()
@@ -25,11 +25,11 @@ export class CreateEventDto {
 
   @ApiProperty({ example: '2024-12-01T10:00:00Z' })
   @IsDateString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ example: '2024-12-01T11:00:00Z' })
   @IsDateString()
-  endTime: string;
+  endTime!: string;
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()

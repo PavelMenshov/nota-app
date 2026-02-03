@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { UpdateDocDto, CreateCommentDto } from './dto/doc.dto';
+import { Prisma } from '@eywa/database';
 
 @Injectable()
 export class DocService {
   constructor(private prisma: PrismaService) {}
 
   async getDoc(pageId: string, userId: string) {
-    const page = await this.getPageWithAccess(pageId, userId);
+    const _page = await this.getPageWithAccess(pageId, userId);
 
     let doc = await this.prisma.doc.findUnique({
       where: { pageId },
@@ -48,11 +49,35 @@ export class DocService {
       doc = await this.prisma.doc.create({
         data: {
           pageId,
-          content: { type: 'doc', content: [] },
+          content: { type: 'doc', content: [] } as Prisma.InputJsonValue,
           plainText: '',
         },
         include: {
-          comments: true,
+          comments: {
+            where: { parentId: null },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true,
+                },
+              },
+              replies: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                      avatarUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
     }
@@ -61,17 +86,17 @@ export class DocService {
   }
 
   async updateDoc(pageId: string, userId: string, dto: UpdateDocDto) {
-    const page = await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
+    const _page = await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
 
     const doc = await this.prisma.doc.upsert({
       where: { pageId },
       create: {
         pageId,
-        content: dto.content,
+        content: dto.content as Prisma.InputJsonValue,
         plainText: dto.plainText,
       },
       update: {
-        content: dto.content,
+        content: dto.content as Prisma.InputJsonValue,
         plainText: dto.plainText,
       },
     });
@@ -152,7 +177,7 @@ export class DocService {
     const doc = await this.prisma.doc.update({
       where: { pageId },
       data: {
-        content: snapshot.content,
+        content: snapshot.content as Prisma.InputJsonValue,
         plainText: snapshot.plainText,
       },
     });
@@ -187,7 +212,7 @@ export class DocService {
         docId: doc.id,
         userId,
         content: dto.content,
-        position: dto.position,
+        position: (dto.position as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         parentId: dto.parentId,
       },
       include: {

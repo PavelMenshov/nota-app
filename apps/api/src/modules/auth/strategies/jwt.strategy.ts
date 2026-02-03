@@ -10,11 +10,11 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(private _configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'eywa-secret-key-change-in-production',
+      secretOrKey: _configService.get<string>('JWT_SECRET') || 'eywa-secret-key-change-in-production',
     });
   }
 
