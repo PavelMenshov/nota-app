@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EYWA — Academic Workspace</title>
+  <meta name="description" content="Pages, docs, canvas, PDFs, tasks, and calendar — one calm academic workspace with collaboration and exports." />
+
+  <style>
+    :root{
+      /* Unique but Notion-adjacent: warm paper + graphite + quiet green */
+      --bg: #fbfaf7;
+      --paper: #ffffff;
+      --ink: #141414;
+      --muted: #5b6167;
+      --muted2:#7a828a;
+      --line: rgba(20,20,20,.10);
+      --line2: rgba(20,20,20,.07);
+
+      --accent: #1f7a4a;     /* calm green */
+      --accent2:#21a061;     /* brighter green */
+      --tint: rgba(31,122,74,.08);
+
+      --shadow: 0 14px 40px rgba(20,20,20,.08);
+      --shadow2: 0 10px 26px rgba(20,20,20,.06);
+      --r12: 12px;
+      --r16: 16px;
+      --r20: 20px;
+
+      --max: 1140px;
+      --ease: cubic-bezier(.2,.8,.2,1);
+
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 520px at 18% -10%, rgba(31,122,74,.10), transparent 55%),
+        radial-gradient(900px 520px at 82% 0%, rgba(31,122,74,.06), transparent 60%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+
+    a{color:inherit; text-decoration:none}
+    button{font-family:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:0 22px}
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      background: rgba(251,250,247,.76);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line2);
+    }
+    .topbar-inner{
+      height: 70px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap: 10px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .mark{
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(10px 10px at 30% 25%, rgba(255,255,255,.8), transparent 60%),
+        linear-gradient(135deg, rgba(31,122,74,.18), rgba(31,122,74,.06));
+      box-shadow: 0 10px 20px rgba(31,122,74,.12);
+      position:relative;
+      overflow:hidden;
+    }
+    .mark:after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(31,122,74,.18), transparent);
+      transform: translateX(-60%);
+      animation: sweep 3.8s var(--ease) infinite;
+      opacity:.7;
+    }
+    @keyframes sweep{
+      0%{transform:translateX(-60%)}
+      55%{transform:translateX(120%)}
+      100%{transform:translateX(120%)}
+    }
+
+    .nav{
+      display:flex; align-items:center; gap: 2px;
+    }
+    .nav a{
+      font-size: 13px;
+      color: var(--muted);
+      padding: 9px 12px;
+      border-radius: 999px;
+      transition: background .18s var(--ease), color .18s var(--ease);
+    }
+    .nav a:hover{
+      background: rgba(20,20,20,.05);
+      color: var(--ink);
+    }
+
+    .actions{display:flex; align-items:center; gap: 10px}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+      transition: transform .08s var(--ease), background .18s var(--ease), border-color .18s var(--ease);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ background: rgba(255,255,255,.92); border-color: rgba(20,20,20,.16); transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); }
+    .btn-primary{
+      background: linear-gradient(180deg, rgba(31,122,74,1), rgba(31,122,74,.92));
+      border-color: rgba(31,122,74,.45);
+      color: #fff;
+      box-shadow: 0 16px 34px rgba(31,122,74,.18);
+    }
+    .btn-primary:hover{ background: linear-gradient(180deg, rgba(31,122,74,1), rgba(31,122,74,.86)); border-color: rgba(31,122,74,.55); }
+
+    .hamb{
+      display:none;
+      width: 42px; height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+      align-items:center; justify-content:center;
+    }
+    .mobile{
+      display:none;
+      padding: 10px 0 14px;
+      border-top: 1px solid var(--line2);
+    }
+    .mobile a{
+      display:block;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.7);
+      margin-top: 8px;
+      color: var(--muted);
+      font-weight: 650;
+      font-size: 13px;
+    }
+
+    /* Hero */
+    .hero{
+      padding: 62px 0 28px;
+    }
+    .hero-top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap: 22px;
+    }
+    .kicker{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.70);
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+    .kdot{
+      width: 9px; height: 9px; border-radius: 99px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(31,122,74,.10);
+    }
+    h1{
+      margin: 14px 0 0;
+      font-size: clamp(38px, 5vw, 64px);
+      letter-spacing: -0.05em;
+      line-height: 1.02;
+    }
+    .sub{
+      margin: 14px 0 0;
+      max-width: 62ch;
+      color: var(--muted);
+      font-size: 15.5px;
+      line-height: 1.7;
+    }
+    .hero-ctas{
+      margin-top: 18px;
+      display:flex; flex-wrap:wrap; gap: 10px;
+      align-items:center;
+    }
+    .ghost{
+      background: rgba(255,255,255,.70);
+      box-shadow: none;
+      border: 1px solid var(--line2);
+      color: var(--ink);
+      font-weight: 750;
+    }
+    .ghost:hover{ background: rgba(255,255,255,.90); border-color: rgba(20,20,20,.14); }
+
+    /* Notion-like preview (lighter, no heavy grid of cards) */
+    .showcase{
+      margin-top: 22px;
+      border-radius: var(--r20);
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.72);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .sc-head{
+      height: 44px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line2);
+      background: rgba(255,255,255,.78);
+    }
+    .dots{display:flex; gap: 8px; align-items:center}
+    .dots i{width:10px;height:10px;border-radius:99px;display:inline-block;background: rgba(20,20,20,.14)}
+    .dots i:nth-child(1){background: rgba(255,92,92,.78)}
+    .dots i:nth-child(2){background: rgba(255,201,71,.80)}
+    .dots i:nth-child(3){background: rgba(56,196,112,.80)}
+    .sc-title{
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(20,20,20,.55);
+    }
+    .sc-body{
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+    }
+
+    .page{
+      border-radius: var(--r16);
+      border: 1px solid var(--line2);
+      background: var(--paper);
+      padding: 18px;
+      min-height: 420px;
+      position:relative;
+    }
+    .page .picon{
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--line2);
+      background: rgba(31,122,74,.08);
+      display:grid; place-items:center;
+      color: var(--accent);
+      font-weight: 900;
+    }
+    .page h3{margin: 12px 0 0; font-size: 22px; letter-spacing: -0.02em}
+    .cols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .block{
+      border-radius: 14px;
+      border: 1px solid var(--line2);
+      background: rgba(251,250,247,.75);
+      padding: 12px 12px;
+    }
+    .block h4{
+      margin:0;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(20,20,20,.55);
+      font-family: var(--mono);
+    }
+    .list{
+      margin-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .li{
+      display:flex; align-items:center; gap: 10px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(20,20,20,.06);
+      background: rgba(255,255,255,.8);
+    }
+    .tag{
+      margin-left:auto;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(31,122,74,.20);
+      background: rgba(31,122,74,.08);
+      color: rgba(20,20,20,.72);
+      white-space:nowrap;
+    }
+
+    .assistant{
+      border-radius: var(--r16);
+      border: 1px solid var(--line2);
+      background: var(--paper);
+      padding: 14px;
+      min-height: 420px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .a-top{
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line2);
+    }
+    .a-top b{font-size: 13px}
+    .a-top small{font-size: 12px; color: var(--muted2)}
+    .msg{
+      border: 1px solid rgba(20,20,20,.07);
+      background: rgba(251,250,247,.80);
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .msg strong{color: var(--ink)}
+    .meta{
+      display:flex; gap: 10px; flex-wrap:wrap;
+      margin-top:auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--line2);
+      color: var(--muted2);
+      font-size: 12px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.85);
+    }
+    .chip i{
+      width: 8px; height: 8px; border-radius: 99px;
+      background: var(--accent2);
+    }
+
+    /* Sections (lightweight: one column + split callouts, not heavy card grids) */
+    .section{
+      padding: 60px 0;
+    }
+    .section h2{
+      margin:0;
+      font-size: clamp(24px, 3vw, 40px);
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+    .section .lead{
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.75;
+      max-width: 72ch;
+    }
+    .rail{
+      margin-top: 22px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .row{
+      border-radius: var(--r20);
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 10px 28px rgba(20,20,20,.06);
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items:start;
+    }
+    .row h3{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+    .row p{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+    .spec{
+      border-radius: 16px;
+      border: 1px solid rgba(20,20,20,.08);
+      background: rgba(255,255,255,.86);
+      padding: 14px;
+    }
+    .spec .k{
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(20,20,20,.55);
+      margin-bottom: 10px;
+    }
+    .spec ul{
+      margin:0; padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .spec li{margin: 6px 0}
+
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(20,20,20,.12);
+      background: rgba(255,255,255,.9);
+      color: rgba(20,20,20,.78);
+    }
+
+    /* Pricing / CTA (minimal) */
+    .cta-box{
+      margin-top: 18px;
+      border-radius: 26px;
+      border: 1px solid var(--line2);
+      background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.70));
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display:flex; align-items:center; justify-content:space-between; gap: 14px;
+      flex-wrap:wrap;
+    }
+    .cta-box h3{margin:0; font-size: 18px; letter-spacing:-0.02em}
+    .cta-box p{margin:6px 0 0; color: var(--muted); font-size: 13.5px; line-height:1.6; max-width: 70ch}
+
+    footer{
+      padding: 34px 0 50px;
+      border-top: 1px solid var(--line2);
+      background: rgba(255,255,255,.35);
+    }
+    .foot{
+      display:flex; align-items:flex-start; justify-content:space-between; gap: 18px;
+      flex-wrap:wrap;
+    }
+    .foot p{margin: 8px 0 0; color: var(--muted); font-size: 13px; max-width: 60ch}
+    .foot .links{display:flex; gap: 10px; flex-wrap:wrap}
+    .foot .links a{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.70);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .foot .links a:hover{border-color: rgba(20,20,20,.14); color: var(--ink);}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .nav{display:none}
+      .hamb{display:inline-flex}
+      .sc-body{grid-template-columns: 1fr; }
+      .row{grid-template-columns: 1fr}
+    }
+    @media (max-width: 560px){
+      .wrap{padding:0 16px}
+      .cols{grid-template-columns: 1fr}
+      .topbar-inner{height: 64px}
+      .cta-box{padding: 16px}
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="EYWA Home">
+          <span class="mark" aria-hidden="true"></span>
+          <span>EYWA</span>
+        </a>
+
+        <nav class="nav" aria-label="Primary">
+          <a href="#core">Core</a>
+          <a href="#collab">Collaboration</a>
+          <a href="#pdf">PDF</a>
+          <a href="#export">Export</a>
+          <a href="#tasks">Tasks</a>
+        </nav>
+
+        <div class="actions">
+          <a class="btn ghost" href="#signin">Sign in</a>
+          <a class="btn btn-primary" href="#get-started">Get started</a>
+          <button class="hamb" id="hamb" aria-label="Open menu" aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile" id="mobile" aria-label="Mobile menu">
+        <a href="#core">Core</a>
+        <a href="#collab">Collaboration</a>
+        <a href="#pdf">PDF</a>
+        <a href="#export">Export</a>
+        <a href="#tasks">Tasks</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-top">
+          <div>
+            <div class="kicker">
+              <span class="kdot" aria-hidden="true"></span>
+              Calm like Notion — built for PDFs, deadlines, and study loops
+            </div>
+
+            <h1>
+              One workspace for notes, canvas, and PDFs —
+              <span style="color:var(--accent)">connected by design</span>.
+            </h1>
+
+            <p class="sub">
+              EYWA is the academic “page-first” OS: a workspace contains pages, and each page can host surfaces
+              (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable — without visual noise.
+            </p>
+
+            <div class="hero-ctas">
+              <a class="btn btn-primary" href="#get-started">Start free</a>
+              <a class="btn ghost" href="#core">See the architecture</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Showcase -->
+        <div class="showcase" aria-label="Product showcase">
+          <div class="sc-head">
+            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="sc-title">EYWA · workspace preview</div>
+            <div class="sc-title" style="opacity:.6">pages · docs · pdf</div>
+          </div>
+
+          <div class="sc-body">
+            <div class="page">
+              <div class="picon" aria-hidden="true">E</div>
+              <h3>Acme Inc. · Semester Hub</h3>
+
+              <div class="cols">
+                <div class="block">
+                  <h4>Policies</h4>
+                  <div class="list">
+                    <div class="li">📌 Course outline <span class="tag">doc</span></div>
+                    <div class="li">🗂 Reading list <span class="tag">pdf</span></div>
+                    <div class="li">🧠 Study system <span class="tag">canvas</span></div>
+                  </div>
+                </div>
+
+                <div class="block">
+                  <h4>Company Priorities</h4>
+                  <div class="list">
+                    <div class="li">✅ Problem Set 4 <span class="tag">task</span></div>
+                    <div class="li">🗓 Office hours <span class="tag">event</span></div>
+                    <div class="li">⭐ Exam prep <span class="tag">plan</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="block" style="margin-top:14px;">
+                <h4>Roadmap</h4>
+                <div class="list">
+                  <div class="li">Launch AI-assisted onboarding <span class="tag">status</span></div>
+                  <div class="li">Migrate to modern cloud <span class="tag">priority</span></div>
+                  <div class="li">Build GTM capabilities <span class="tag">by team</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assistant">
+              <div class="a-top">
+                <div>
+                  <b>AI Study Assistant</b><br/>
+                  <small>Grounded in your pages & PDFs</small>
+                </div>
+                <span class="kbd">⌘ K</span>
+              </div>
+
+              <div class="msg">
+                <strong>Turn this page into a hub</strong> for your course notes, roadmap, and priorities.
+                I can create a “Roadmap” database, extract highlights from PDFs into doc blocks, and schedule review sessions.
+              </div>
+
+              <div class="msg">
+                <strong>Found:</strong> 96 results across <em>docs</em>, <em>PDF highlights</em>, and <em>tasks</em>.<br/>
+                Want me to group by <strong>Week</strong> or by <strong>Course</strong>?
+              </div>
+
+              <div class="meta">
+                <span class="chip"><i aria-hidden="true"></i> All sources</span>
+                <span class="chip"><i aria-hidden="true"></i> Versioned</span>
+                <span class="chip"><i aria-hidden="true"></i> Shareable</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Minimal CTA -->
+        <div class="cta-box" id="get-started">
+          <div>
+            <h3>Ship a clean v1 fast.</h3>
+            <p>
+              Start with the core page model, PDF annotations, and tasks/calendar. Add export + “Send to Notion” as a lightweight bridge.
+            </p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn btn-primary" href="#signin">Create workspace</a>
+            <a class="btn ghost" href="#core">View spec</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.1 Core -->
+    <section class="section" id="core">
+      <div class="wrap">
+        <h2>1.1 Workspace / Page (ядро)</h2>
+        <p class="lead">
+          Workspace → Pages. A page contains “surfaces”: <strong>doc</strong>, <strong>canvas</strong>, and <strong>PDF</strong>
+          (PDF as attached file + annotations). Version history + audit trail, link sharing, and role-based access.
+        </p>
+
+        <div class="rail">
+          <div class="row">
+            <div>
+              <h3>Page = container for surfaces</h3>
+              <p>
+                Keep UX simple: users open a page and switch surfaces (Doc / Canvas / PDFs) without navigating away.
+                This is the “Notion feeling” but purpose-built for academic assets.
+              </p>
+              <p style="margin-top:10px; color:var(--muted2)">
+                Suggested primitives: <span class="kbd">workspace_id</span>, <span class="kbd">page_id</span>, <span class="kbd">surface_type</span>, <span class="kbd">object_ref</span>
+              </p>
+            </div>
+            <div class="spec">
+              <div class="k">Capabilities</div>
+              <ul>
+                <li>Workspace → Pages hierarchy</li>
+                <li>Surfaces: Doc / Canvas / PDF attachments</li>
+                <li>History: version snapshots + diffs</li>
+                <li>Audit: who changed what, when</li>
+                <li>Share link + roles (viewer/editor)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.2 Collaboration -->
+    <section class="section" id="collab">
+      <div class="wrap">
+        <h2>1.2 Real-time collaboration (Doc + “Miro”)</h2>
+        <p class="lead">
+          Collaborative editing for docs and canvas with presence (who’s online) and minimal cursors/selection.
+          Conflict resolution via CRDT/OT.
+        </p>
+
+        <div class="rail">
+          <div class="row">
+            <div>
+              <h3>Presence + cursors, but quiet</h3>
+              <p>
+                Don’t gamify it. Show small avatars, a subtle “live” indicator, and optional cursors.
+                Most users want calm, not fireworks.
+              </p>
+              <p style="margin-top:10px; color:var(--muted2)">
+                Implementation note: doc blocks + canvas objects can share the same collaboration layer.
+              </p>
+            </div>
+            <div class="spec">
+              <div class="k">Minimum spec</div>
+              <ul>
+                <li>Presence: active users list</li>
+                <li>Optional cursors/selection</li>
+                <li>CRDT/OT conflict resolution</li>
+                <li>Offline merge-friendly writes</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.3 Files/PDF -->
+    <section class="section" id="pdf">
+      <div class="wrap">
+        <h2>1.3 Files and PDF</h2>
+        <p class="lead">
+          S3-compatible object storage, upload/download, PDF annotations (highlights + ink + comments),
+          and extraction: highlights → doc blocks.
+        </p>
+
+        <div class="rail">
+          <div class="row">
+            <div>
+              <h3>PDF as a first-class source</h3>
+              <p>
+                Make PDF annotation reliable: highlight ranges, freehand ink, and anchored comments.
+                Then allow “extract highlights” to instantly build a study doc page section.
+              </p>
+              <p style="margin-top:10px; color:var(--muted2)">
+                UX tip: one button <span class="kbd">Extract → Doc</span> creates structured blocks with citations.
+              </p>
+            </div>
+            <div class="spec">
+              <div class="k">Annotation types</div>
+              <ul>
+                <li>Highlight (text ranges)</li>
+                <li>Ink (stylus strokes)</li>
+                <li>Comments (anchored)</li>
+                <li>Export highlights → doc blocks</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.4 Export -->
+    <section class="section" id="export">
+      <div class="wrap">
+        <h2>1.4 Export / send results</h2>
+        <p class="lead">
+          Export Page → PDF and DOCX (server-side job). For B2C: “Send to Notion” — create a page with content/attachment.
+        </p>
+
+        <div class="rail">
+          <div class="row">
+            <div>
+              <h3>Exports as background jobs</h3>
+              <p>
+                Generate PDF/DOCX server-side to keep the client clean.
+                Provide a single “Export” entry point on the page with format choices.
+              </p>
+              <p style="margin-top:10px; color:var(--muted2)">
+                B2C bridge: <span class="kbd">Send to Notion</span> creates a page + attaches exported file.
+              </p>
+            </div>
+            <div class="spec">
+              <div class="k">Deliverables</div>
+              <ul>
+                <li>Export PDF (print-ready)</li>
+                <li>Export DOCX (editable)</li>
+                <li>Job status + download link</li>
+                <li>Send to Notion (page + file)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.5 Tasks + Calendar -->
+    <section class="section" id="tasks">
+      <div class="wrap">
+        <h2>1.5 Tasks + Calendar (minimum)</h2>
+        <p class="lead">
+          Tasks: title, due, status, links to pages. Calendar: events. In B2B: sync schedules/exams/deadlines from LMS.
+        </p>
+
+        <div class="rail">
+          <div class="row">
+            <div>
+              <h3>Tasks and time: the “anti-procrastination” layer</h3>
+              <p>
+                The simplest implementation wins: tasks live next to pages and can create calendar events.
+                B2B integration can come later via LMS sync.
+              </p>
+              <p style="margin-top:10px; color:var(--muted2)">
+                Keep schema tight: <span class="kbd">task → page_id</span>, <span class="kbd">event → task_id?</span>
+              </p>
+            </div>
+            <div class="spec">
+              <div class="k">Minimum schema</div>
+              <ul>
+                <li>Task: title, due, status, page links</li>
+                <li>Calendar: events + reminders</li>
+                <li>B2B: LMS sync (deadlines/exams)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-box" style="margin-top: 18px;">
+          <div>
+            <h3>Want it even closer to Notion’s polish?</h3>
+            <p>
+              I can add a super subtle “page cover + icon” header style, a database-table preview, and micro-interactions
+              (hover/scroll reveal) without turning it into a neon dashboard.
+            </p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn btn-primary" href="#get-started">Start building</a>
+            <a class="btn ghost" href="#top">Back to top</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="foot">
+          <div>
+            <div class="brand">
+              <span class="mark" aria-hidden="true"></span>
+              <span>EYWA</span>
+            </div>
+            <p>
+              Calm UI, strong model: workspace → pages → surfaces. Versioned, shareable, collaborative — designed for academic flow.
+            </p>
+          </div>
+
+          <div class="links" aria-label="Footer links">
+            <a href="#core">Core</a>
+            <a href="#collab">Collab</a>
+            <a href="#pdf">PDF</a>
+            <a href="#export">Export</a>
+            <a href="#tasks">Tasks</a>
+            <a href="#signin">Sign in</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // Mobile menu
+    const hamb = document.getElementById('hamb');
+    const mobile = document.getElementById('mobile');
+
+    if (hamb && mobile){
+      hamb.addEventListener('click', () => {
+        const open = mobile.style.display === 'block';
+        mobile.style.display = open ? 'none' : 'block';
+        hamb.setAttribute('aria-expanded', String(!open));
+      });
+    }
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if (!id || id === '#') return;
+        const el = document.querySelector(id);
+        if (!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+        if (mobile) mobile.style.display = 'none';
+        if (hamb) hamb.setAttribute('aria-expanded','false');
+      });
+    });
+  </script>
+</body>
+</html>
