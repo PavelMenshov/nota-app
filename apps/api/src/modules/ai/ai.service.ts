@@ -9,7 +9,6 @@ import { SummaryDto, FlashcardsDto } from './dto/ai.dto';
 
 @Injectable()
 export class AIService {
-  private readonly aiProvider: string;
   private readonly apiKey: string | undefined;
   private readonly dailyLimit: number;
 
@@ -17,7 +16,6 @@ export class AIService {
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {
-    this.aiProvider = this.configService.get('AI_PROVIDER') || 'openai';
     this.apiKey = this.configService.get('OPENAI_API_KEY') || this.configService.get('ANTHROPIC_API_KEY');
     this.dailyLimit = parseInt(this.configService.get('AI_DAILY_LIMIT') || '50', 10);
   }
@@ -263,7 +261,6 @@ export class AIService {
     if (!this.apiKey) {
       // Return mock response for demo
       console.warn('AI API key not configured. Returning mock response.');
-      console.log('AI provider:', this.aiProvider);
       return {
         text: `[AI Response Placeholder]\n\nTo enable real AI features, please configure your API key:\n\n1. For OpenAI: Set OPENAI_API_KEY in .env.local\n2. For Anthropic: Set ANTHROPIC_API_KEY in .env.local\n\nOnce configured, this will provide real AI-generated summaries and flashcards based on your content.`,
         tokensUsed: 100,

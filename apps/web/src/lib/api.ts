@@ -12,7 +12,7 @@ async function fetchApi<T>(
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
+    ...(options.headers ? (options.headers as Record<string, string>) : {}),
   };
 
   if (token) {
