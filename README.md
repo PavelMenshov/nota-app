@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.svg" alt="EYWA Logo" width="100" height="100">
+</p>
+
 # EYWA — Academic Workspace
 
 > **One workspace for notes, canvas, and PDFs — connected by design.**
