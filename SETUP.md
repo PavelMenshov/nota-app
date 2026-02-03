@@ -28,20 +28,55 @@ docker-compose up -d
 ### 3. Configure Environment
 
 ```bash
-# Copy the example environment file
-cp .env.example .env.local
+# Copy the example environment file to .env in the root directory
+cp .env.example .env
 
-# Edit .env.local with your configuration
+# IMPORTANT: Also copy to packages/database for Prisma CLI
+cp .env packages/database/.env
+
+# Edit .env with your configuration (the root .env will be used by the API and web apps)
 ```
 
-### 4. Initialize Database
+> **📝 Note on Environment Files**:
+> - **`.env`** (root) - Used by API and web applications at runtime
+> - **`packages/database/.env`** - Required by Prisma CLI for database operations
+> - Both files should have the same content (you can keep them in sync manually or use symlinks)
+> - The `.env.example` file now includes both `DATABASE_URL` and `DIRECT_DATABASE_URL`
+> - For local development, both URLs can have the same value
+
+### 4. Initialize Database with Prisma
+
+> **What is Prisma?**
+> Prisma is a modern database toolkit that provides:
+> - **Type-safe database client** - Auto-generated TypeScript types based on your schema
+> - **Schema management** - Define your database structure in `prisma/schema.prisma`
+> - **Migrations** - Version control for database changes
+> 
+> The project uses Prisma to manage the PostgreSQL database and generate a type-safe client for database operations.
 
 ```bash
-# Generate Prisma client
+# Step 1: Generate Prisma Client
+# This reads the schema.prisma file and generates TypeScript types and database client
 pnpm db:generate
 
-# Push schema to database
+# Step 2: Push schema to database
+# This creates/updates the database tables to match your Prisma schema
+# (Alternative to migrations, useful for development)
 pnpm db:push
+```
+
+> **Environment Variables Required**:
+> - `DATABASE_URL` - Main database connection string (used for queries)
+> - `DIRECT_DATABASE_URL` - Direct database connection (used for migrations, can be same as DATABASE_URL for local dev)
+
+**If you encounter errors:**
+```bash
+# Error: Environment variable not found: DIRECT_DATABASE_URL
+# Solution: Make sure .env file exists in packages/database directory
+cp .env packages/database/.env
+
+# Error: Can't reach database server
+# Solution: Make sure Docker containers are running (docker compose ps)
 ```
 
 ### 5. Start Development Servers
@@ -250,21 +285,56 @@ For presentation/demo purposes:
 
 ## 🐛 Troubleshooting
 
+### Prisma / Database Setup Issues
+
+**Error: Environment variable not found: DIRECT_DATABASE_URL**
+```bash
+# Solution: Prisma looks for .env in packages/database directory
+cp .env.example .env
+cp .env packages/database/.env
+
+# Verify both files contain DATABASE_URL and DIRECT_DATABASE_URL
+cat packages/database/.env | grep DATABASE_URL
+```
+
+**Error: Can't reach database server at `localhost:5432`**
+```bash
+# Check if PostgreSQL container is running
+docker compose ps
+
+# If not running, start the containers
+docker compose up -d
+
+# Wait a few seconds for PostgreSQL to initialize, then try again
+sleep 5
+pnpm db:push
+```
+
+**Error: P1012 - Prisma schema validation failed**
+```bash
+# This usually means environment variables are missing
+# Make sure .env exists in the root directory with all required variables
+ls -la .env
+
+# If missing, copy from example
+cp .env.example .env
+```
+
 ### Database Connection Issues
 ```bash
 # Check if PostgreSQL is running
-docker ps
+docker compose ps
 
-# Restart containers
-docker-compose down && docker-compose up -d
+# Restart containers (use docker compose, not docker-compose)
+docker compose down && docker compose up -d
 
-# Reset database
+# Reset database (warning: deletes all data)
 pnpm db:push --force-reset
 ```
 
 ### Port Conflicts
 ```bash
-# Change ports in docker-compose.yml and .env.local
+# Change ports in docker-compose.yml and .env
 # Default: API=4000, Web=3000, Postgres=5432, Redis=6379
 ```
 
