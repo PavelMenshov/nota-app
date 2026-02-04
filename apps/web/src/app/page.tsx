@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { EywaIcon } from '@/components/EywaIcon';
 
+// Use environment variable or default to localhost for API URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -430,7 +433,7 @@ export default function HomePage() {
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
                 Comprehensive API reference for integrating EYWA into your applications. RESTful endpoints and WebSocket support.
               </p>
-              <a href="http://localhost:4000/api/docs" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+              <a href={`${API_URL}/api/docs`} target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 View API docs
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
