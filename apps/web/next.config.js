@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@eywa/shared'],
+  devIndicators: false,
   async rewrites() {
     return [
       {
