@@ -43,6 +43,9 @@ export default function HomePage() {
               <Link href="#tasks" className="text-[13px] text-[#5b6167] px-3 py-2 rounded-full hover:bg-[rgba(20,20,20,0.05)] hover:text-[#141414] transition-all">
                 Tasks
               </Link>
+              <Link href="#docs" className="text-[13px] text-[#5b6167] px-3 py-2 rounded-full hover:bg-[rgba(20,20,20,0.05)] hover:text-[#141414] transition-all">
+                Docs
+              </Link>
             </nav>
 
             {/* Actions */}
@@ -88,6 +91,9 @@ export default function HomePage() {
               </Link>
               <Link href="#tasks" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 mt-2 rounded-xl border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.7)] text-[#5b6167] font-semibold text-[13px]">
                 Tasks
+              </Link>
+              <Link href="#docs" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 mt-2 rounded-xl border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.7)] text-[#5b6167] font-semibold text-[13px]">
+                Docs
               </Link>
             </div>
           )}
@@ -387,20 +393,166 @@ export default function HomePage() {
           </div>
         </Section>
 
+        {/* Documentation & Resources Section */}
+        <Section
+          id="docs"
+          title="Documentation & Resources"
+          description="Everything you need to get started with EYWA. Explore our guides, API documentation, and community resources."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Getting Started Guide */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">Getting Started</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Quick start guide to set up EYWA, create your first workspace, and understand the core concepts.
+              </p>
+              <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                Read guide
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* API Documentation */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">API Documentation</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Comprehensive API reference for integrating EYWA into your applications. RESTful endpoints and WebSocket support.
+              </p>
+              <a href="http://localhost:4000/api/docs" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                View API docs
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+
+            {/* Architecture Guide */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">Architecture Overview</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Learn about EYWA's microservices design, tech stack, and how different components work together.
+              </p>
+              <a href="https://github.com/expusercatherine/eywa-platform#-architecture" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                Explore architecture
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+
+            {/* User Guide */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">User Guide</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Detailed tutorials on using EYWA features: docs, canvas, PDF annotations, tasks, and collaboration tools.
+              </p>
+              <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                Browse tutorials
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Security & Privacy */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">Security & Privacy</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Learn about our security practices, data encryption, GDPR compliance, and how we protect your academic work.
+              </p>
+              <Link href="#security" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                Security info
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Community */}
+            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold tracking-tight mb-2">Community & Support</h3>
+              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
+                Join our community of students and educators. Get help, share ideas, and contribute to the project.
+              </p>
+              <a href="https://github.com/expusercatherine/eywa-platform/issues" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
+                Join community
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </Section>
+
         {/* Footer */}
         <footer className="py-[34px] pb-[50px] border-t border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.35)] mt-20">
           <div className="max-w-[1140px] mx-auto px-6">
             <div className="flex items-start justify-between gap-[18px] flex-wrap">
               <div>
                 <div className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-                  <div className="w-[34px] h-[34px] rounded-[10px] border border-[rgba(20,20,20,0.10)] bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] shadow-[0_10px_20px_rgba(31,122,74,0.12)] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(31,122,74,0.18)] to-transparent opacity-70" />
-                  </div>
+                  <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
                   <span>EYWA</span>
                 </div>
                 <p className="mt-2 text-[#5b6167] text-[13px] max-w-[60ch]">
                   Calm UI, strong model: workspace › pages › surfaces. Versioned, shareable, collaborative - designed for academic flow.
                 </p>
+                
+                {/* Contact Information */}
+                <div className="mt-4 space-y-2">
+                  <h4 className="text-[13px] font-bold text-[#141414] tracking-tight">Contact Our Team</h4>
+                  <div className="flex flex-col gap-1.5 text-[12px] text-[#5b6167]">
+                    <a href="mailto:team@eywa.app" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      team@eywa.app
+                    </a>
+                    <a href="https://github.com/expusercatherine/eywa-platform" target="_blank" rel="noopener noreferrer" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                      </svg>
+                      GitHub Repository
+                    </a>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      <span>Hong Kong Polytechnic University</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2.5 flex-wrap">
