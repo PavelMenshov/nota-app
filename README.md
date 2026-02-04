@@ -19,6 +19,32 @@ EYWA is the academic "page-first" OS: a workspace contains pages, and each page 
 
 Everything is linkable, versioned, and shareable with role-based access (Owner/Editor/Viewer) for students and faculty.
 
+## 🆕 Recent Updates (February 2026)
+
+### Security & Data Protection
+- ✅ **Rate Limiting**: Implemented global rate limiting (100 requests/min per IP) using @nestjs/throttler
+- ✅ **Enhanced Security Headers**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options via Helmet
+- ✅ **Improved CORS**: Explicit allowed methods and headers for production security
+- ✅ **Input Validation**: Strict validation with whitelist and forbidden non-whitelisted properties
+- ✅ **Environment Configuration**: Production-ready with `NEXT_PUBLIC_API_URL` environment variable
+
+### Homepage & UX Improvements
+- ✅ **Fixed Logo Consistency**: Footer now uses consistent `EywaIcon` component (no more disappearing logo)
+- ✅ **Contact Information**: Added "Contact Our Team" section in footer with email, GitHub, and university info
+- ✅ **Documentation Section**: New "Documentation & Resources" section with 6 resource cards
+- ✅ **Navigation Enhancement**: Added "Docs" link to main navigation (desktop and mobile)
+
+### Comprehensive Documentation
+- ✅ **SECURITY.md** (9KB): Complete security practices, GDPR compliance, incident response
+- ✅ **GETTING-STARTED.md** (8KB): Quick start guide with prerequisites, installation, and troubleshooting
+- ✅ **API.md** (11KB): Full API reference with authentication, endpoints, and code examples
+- ✅ **ARCHITECTURE.md** (14KB): System architecture, tech stack, data flow, and scalability
+
+### Code Quality
+- ✅ **Security Scan**: CodeQL verification - 0 vulnerabilities detected
+- ✅ **Code Review**: Completed with all feedback addressed
+- ✅ **Production Ready**: Environment variables, error handling, and best practices implemented
+
 ## 🎯 Key Features
 
 ### 1. Workspace & Page System (Core)
@@ -318,6 +344,12 @@ eywa-platform/
 │   ├── database/            # Prisma schema & client
 │   └── shared/              # Shared types & validation
 │
+├── docs/                    # Documentation
+│   ├── GETTING-STARTED.md   # Quick start guide
+│   ├── API.md               # API reference
+│   ├── ARCHITECTURE.md      # System architecture
+│   └── SECURITY.md          # Security practices
+│
 ├── docker-compose.yml       # Development infrastructure
 ├── .env.example             # Environment template
 └── README.md                # This file
@@ -341,6 +373,9 @@ eywa-platform/
 - [x] **Export Jobs**: Background job framework
 - [x] **Real-time**: WebSocket gateway for collaboration
 - [x] **Share Links**: URL-based sharing for workspaces/pages
+- [x] **Security Enhancements**: Rate limiting, security headers, CORS protection (Feb 2026)
+- [x] **Documentation**: Comprehensive docs for security, API, architecture, and getting started (Feb 2026)
+- [x] **Homepage Improvements**: Fixed logo consistency, added contact info, documentation section (Feb 2026)
 
 ### 🔄 In Development
 
@@ -440,8 +475,14 @@ pnpm db:generate
 
 ## 📞 Support
 
-- **Issues**: GitHub Issues
-- **Email**: support@eywa.app (placeholder)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/expusercatherine/eywa-platform/issues)
+- **Email**: team@eywa.app
+- **Documentation**: 
+  - [Getting Started Guide](./docs/GETTING-STARTED.md)
+  - [API Documentation](./docs/API.md)
+  - [Architecture Guide](./docs/ARCHITECTURE.md)
+  - [Security & Privacy](./docs/SECURITY.md)
+- **Community**: [Join discussions on GitHub](https://github.com/expusercatherine/eywa-platform/discussions)
 
 ---
 
