@@ -1,9 +1,25 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+// Helper to detect if we're running in a mobile environment
+function isMobileEnvironment(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Get a more helpful API URL for error messages
+function getApiUrlInfo(): { url: string; isFallback: boolean } {
+  const isFallback = !process.env.NEXT_PUBLIC_API_URL;
+  return {
+    url: API_URL,
+    isFallback
+  };
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
   retries?: number;
   retryDelay?: number;
+  timeout?: number;
 }
 
 // Custom error class for API errors
@@ -11,7 +27,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode?: number,
-    public isNetworkError: boolean = false
+    public isNetworkError: boolean = false,
+    public helpText?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -43,7 +60,7 @@ async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { token, retries = 2, retryDelay = 1000, ...fetchOptions } = options;
+  const { token, retries = 2, retryDelay = 1000, timeout = 10000, ...fetchOptions } = options;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -58,10 +75,17 @@ async function fetchApi<T>(
   
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      // Add timeout to fetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...fetchOptions,
         headers,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ 
@@ -77,6 +101,26 @@ async function fetchApi<T>(
     } catch (error) {
       lastError = error as Error;
       
+      // Handle timeout errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        if (attempt < retries) {
+          await wait(retryDelay * (attempt + 1));
+          continue;
+        }
+        
+        const apiInfo = getApiUrlInfo();
+        const helpText = apiInfo.isFallback 
+          ? 'Using default API URL. Set NEXT_PUBLIC_API_URL environment variable if your API is running on a different address.'
+          : '';
+        
+        throw new ApiError(
+          `Request timed out after ${timeout}ms. The server might be slow or unreachable.`,
+          undefined,
+          true,
+          helpText
+        );
+      }
+      
       // Handle network errors (fetch failures - TypeError indicates network error)
       if (error instanceof TypeError) {
         // Check if it's a network error - retry
@@ -87,12 +131,27 @@ async function fetchApi<T>(
         
         // After retries, check if API is reachable
         const isApiUp = await checkApiHealth();
+        const apiInfo = getApiUrlInfo();
+        
+        const errorMessage = isApiUp 
+          ? 'Network error occurred. Please check your connection and try again.'
+          : 'Unable to connect to the server. Please ensure the API server is running.';
+        
+        let helpText = `API URL: ${apiInfo.url}`;
+        
+        if (apiInfo.isFallback) {
+          helpText += '\n\nNote: Using default API URL. If your API is on a different address, set the NEXT_PUBLIC_API_URL environment variable.';
+        }
+        
+        if (isMobileEnvironment()) {
+          helpText += '\n\nMobile users: Make sure you\'re using the correct server IP address instead of localhost.';
+        }
+        
         throw new ApiError(
-          isApiUp 
-            ? 'Network error occurred. Please check your connection and try again.'
-            : 'Unable to connect to the server. Please ensure the API server is running.',
+          errorMessage,
           undefined,
-          true
+          true,
+          helpText
         );
       }
       

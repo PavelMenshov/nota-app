@@ -39,6 +39,11 @@ export default function LoginPage() {
         if (error.isNetworkError) {
           title = 'Connection Error';
           description = error.message;
+          
+          // Add helpful info if available
+          if (error.helpText) {
+            description += '\n\n' + error.helpText;
+          }
         } else if (error.statusCode === 401) {
           description = 'Invalid email or password. Please try again.';
         } else {

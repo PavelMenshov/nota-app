@@ -40,6 +40,11 @@ export default function RegisterPage() {
         if (error.isNetworkError) {
           title = 'Connection Error';
           description = error.message;
+          
+          // Add helpful info if available
+          if (error.helpText) {
+            description += '\n\n' + error.helpText;
+          }
         } else if (error.statusCode === 409) {
           title = 'Account Already Exists';
           description = 'An account with this email already exists. Please try logging in instead.';
