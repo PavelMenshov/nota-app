@@ -28,7 +28,7 @@ export default function RegisterPage() {
       const response = await authApi.register(email, password, name);
       setAuth(response.accessToken, response.user);
       toast({ title: 'Account created!', description: 'Welcome to EYWA Platform' });
-      router.push('/dashboard');
+      router.push('/welcome');
     } catch (error) {
       toast({
         title: 'Registration failed',

@@ -43,3 +43,7 @@ temp/
 
 # Upload directories (development)
 uploads/
+
+# Desktop app builds
+apps/desktop/release/
+apps/desktop/dist/

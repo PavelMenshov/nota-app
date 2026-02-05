@@ -27,7 +27,7 @@ export default function LoginPage() {
       const response = await authApi.login(email, password);
       setAuth(response.accessToken, response.user);
       toast({ title: 'Welcome back!', description: `Logged in as ${response.user.email}` });
-      router.push('/dashboard');
+      router.push('/welcome');
     } catch (error) {
       toast({
         title: 'Login failed',
