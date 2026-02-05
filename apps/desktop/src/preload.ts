@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Menu actions listener
   onMenuAction: (callback: (action: string) => void) => {
-    ipcRenderer.on('menu-action', (event, action) => callback(action));
+    ipcRenderer.on('menu-action', (_event, action) => callback(action));
   },
   
   // Update notifications

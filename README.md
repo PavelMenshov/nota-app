@@ -218,14 +218,16 @@ pnpm dev
 
 # Or start individually:
 # API (http://localhost:4000): cd apps/api && pnpm dev
-# Web (http://localhost:3000): cd apps/web && pnpm dev
+# Web (http://localhost:3001): cd apps/web && pnpm dev
 ```
 
 ### 6. Access the Application
 
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:3001
 - **API**: http://localhost:4000
 - **API Docs (Swagger)**: http://localhost:4000/api/docs
+
+> **📝 Note on Ports**: The web app uses port 3001 by default to avoid conflicts with other applications that commonly use port 3000. You can change this in `apps/web/package.json` if needed.
 
 ### 7. Desktop Application (Optional)
 
@@ -238,8 +240,8 @@ cd apps/desktop
 # Install dependencies
 pnpm install
 
-# Set web app URL (optional, defaults to localhost:3000)
-export WEB_APP_URL=http://localhost:3000
+# Set web app URL (optional, defaults to localhost:3001)
+export WEB_APP_URL=http://localhost:3001
 
 # Build TypeScript
 pnpm build
@@ -509,8 +511,17 @@ pnpm db:push --force-reset
 
 ### Port Conflicts
 ```bash
-# Change ports in docker-compose.yml and .env
-# Default: API=4000, Web=3000, Postgres=5432, Redis=6379
+# If you need to change ports:
+# 1. Update apps/web/package.json (scripts.dev and scripts.start)
+# 2. Update .env (CORS_ORIGIN)
+# 3. Update apps/desktop/src/config.ts (DEFAULT_WEB_APP_URL)
+# 
+# Default ports:
+# - Web: 3001 (can be changed to 3000 or any other port)
+# - API: 4000
+# - PostgreSQL: 5432
+# - Redis: 6379
+# - MinIO: 9000
 ```
 
 ### Build Errors
