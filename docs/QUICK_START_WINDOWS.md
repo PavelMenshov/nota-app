@@ -14,7 +14,8 @@
 
 ### 1. Clone the Repository
 ```powershell
-git clone https://github.com/expusercatherine/eywa-platform.git
+# Replace YOUR_USERNAME with your GitHub username or organization
+git clone https://github.com/YOUR_USERNAME/eywa-platform.git
 cd eywa-platform
 ```
 

@@ -28,10 +28,15 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 - ✅ **Windows Testing Script**: Added PowerShell script to easily test authentication endpoints
 - ✅ **Comprehensive Guides**: 
   - [Authentication API Usage Guide](./docs/AUTH_API_USAGE.md) - Explains why POST endpoints don't work in browser
+  - [Web App Auth Integration Guide](./docs/WEB_APP_AUTH_INTEGRATION.md) - **NEW!** How web apps properly use auth endpoints
   - [Windows Quick Start](./docs/QUICK_START_WINDOWS.md) - Step-by-step setup for Windows users
   - [Test Script](./scripts/test-auth-api.ps1) - Automated API testing for Windows
 
-> **Important**: `/api/auth/register` and `/api/auth/login` are POST endpoints and won't work when typed in browser address bar (which uses GET). Use Swagger UI, curl, PowerShell, or Postman instead. See [AUTH_API_USAGE.md](./docs/AUTH_API_USAGE.md) for details.
+> **Important for Developers**: 
+> - ❌ `/api/auth/register` and `/api/auth/login` won't work when typed in browser (they're POST endpoints, browser uses GET)
+> - ✅ Your **web application works perfectly** - it sends POST requests via JavaScript/fetch
+> - 📚 See [Web App Auth Integration Guide](./docs/WEB_APP_AUTH_INTEGRATION.md) for complete code examples
+> - 🧪 Use Swagger UI, curl, PowerShell, or Postman for testing
 
 ### Authentication & Cross-Platform Improvements
 - ✅ **Fixed Registration/Login Issues**: Resolved connection errors that prevented login on different systems
@@ -883,6 +888,7 @@ pnpm dev
   - [Architecture Guide](./docs/ARCHITECTURE.md)
   - [Security & Privacy](./docs/SECURITY.md)
   - [Auth API Usage Guide](./docs/AUTH_API_USAGE.md) - **New!** Understanding authentication endpoints
+  - [Web App Auth Integration](./docs/WEB_APP_AUTH_INTEGRATION.md) - **New!** How to use auth in your web app
   - [Windows Quick Start](./docs/QUICK_START_WINDOWS.md) - **New!** Setup guide for Windows
   - [Desktop App Guide](./docs/DESKTOP-APP.md)
 - **Community**: [Join discussions on GitHub](https://github.com/expusercatherine/eywa-platform/discussions)

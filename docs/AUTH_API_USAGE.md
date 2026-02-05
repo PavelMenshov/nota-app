@@ -3,7 +3,15 @@
 ## Understanding the Issue
 
 ### The Problem
-When trying to access `http://localhost:4000/api/auth/register` or `http://localhost:4000/api/auth` directly in a browser, you receive a **404 error**. However, the same endpoints work perfectly when called from the Swagger documentation interface.
+When trying to access `http://localhost:4000/api/auth/register` directly in a browser, you receive a **404 error**. However, the same endpoints work perfectly when called from the Swagger documentation interface.
+
+**Note**: Before this fix, accessing `http://localhost:4000/api/auth` also returned a 404 error. Now, this endpoint returns helpful information about the authentication API.
+
+### Important Clarification
+
+**This issue ONLY affects typing URLs in the browser address bar.** Your web application (the frontend at `localhost:3001`) can and should use these endpoints normally! 
+
+👉 **See [Web App Auth Integration Guide](./WEB_APP_AUTH_INTEGRATION.md) for how your web application properly uses these endpoints.**
 
 ### Why This Happens
 This is **NOT a bug** - it's expected behavior! Here's why:
@@ -158,6 +166,15 @@ Invoke-RestMethod -Uri "http://localhost:4000/api/auth/login" `
 2. **❌ Don't use browser address bar** for POST endpoints (register/login)
 3. **✅ Use Swagger UI, curl, Postman, or PowerShell** to test POST endpoints
 4. **✅ GET endpoints** (like `/api/auth` and `/api/auth/me`) work fine in the browser
+5. **✅ Web applications work perfectly** - they send POST requests via JavaScript (see [Web App Integration Guide](./WEB_APP_AUTH_INTEGRATION.md))
+
+## For Web Developers
+
+**If you're building a web application that needs authentication:**
+
+👉 **Read the [Web App Auth Integration Guide](./WEB_APP_AUTH_INTEGRATION.md)** for complete examples of how to properly integrate these endpoints in React, Vue, Angular, or any other frontend framework.
+
+Your web app will work perfectly! The confusion only comes from trying to test endpoints by typing URLs in the browser address bar.
 
 ## Why Not Create a Separate Docker Container?
 
