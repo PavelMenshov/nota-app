@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
-import { authApi } from '@/lib/api';
+import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { EywaIcon } from '@/components/EywaIcon';
 
@@ -27,12 +27,32 @@ export default function RegisterPage() {
     try {
       const response = await authApi.register(email, password, name);
       setAuth(response.accessToken, response.user);
-      toast({ title: 'Account created!', description: 'Welcome to EYWA Platform' });
+      toast({ 
+        title: 'Account created!', 
+        description: 'Welcome to EYWA Platform' 
+      });
       router.push('/welcome');
     } catch (error) {
+      let title = 'Registration failed';
+      let description = 'Could not create account';
+      
+      if (error instanceof ApiError) {
+        if (error.isNetworkError) {
+          title = 'Connection Error';
+          description = error.message;
+        } else if (error.statusCode === 409) {
+          title = 'Account Already Exists';
+          description = 'An account with this email already exists. Please try logging in instead.';
+        } else {
+          description = error.message;
+        }
+      } else if (error instanceof Error) {
+        description = error.message;
+      }
+      
       toast({
-        title: 'Registration failed',
-        description: error instanceof Error ? error.message : 'Could not create account',
+        title,
+        description,
         variant: 'destructive',
       });
     } finally {

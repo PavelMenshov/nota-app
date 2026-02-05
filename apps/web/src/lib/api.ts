@@ -2,13 +2,48 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 interface FetchOptions extends RequestInit {
   token?: string;
+  retries?: number;
+  retryDelay?: number;
+}
+
+// Custom error class for API errors
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public isNetworkError: boolean = false
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// Helper function to wait
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Check if the API is reachable
+async function checkApiHealth(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(`${API_URL}/api/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { token, ...fetchOptions } = options;
+  const { token, retries = 2, retryDelay = 1000, ...fetchOptions } = options;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -19,17 +54,65 @@ async function fetchApi<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-  });
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || 'An error occurred');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ 
+          message: response.status === 409 ? 'User already exists' : 'An error occurred' 
+        }));
+        throw new ApiError(
+          error.message || 'An error occurred',
+          response.status
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Handle network errors (fetch failures)
+      const errorObj = error as { name?: string };
+      if (error instanceof TypeError || errorObj.name === 'TypeError') {
+        // Check if it's a network error
+        if (attempt < retries) {
+          await wait(retryDelay * (attempt + 1));
+          continue;
+        }
+        
+        // After retries, check if API is reachable
+        const isApiUp = await checkApiHealth();
+        throw new ApiError(
+          isApiUp 
+            ? 'Network error occurred. Please check your connection and try again.'
+            : 'Unable to connect to the server. Please ensure the API server is running.',
+          undefined,
+          true
+        );
+      }
+      
+      // For API errors (like 409, 401, etc.), don't retry
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      // For unknown errors, retry
+      if (attempt < retries) {
+        await wait(retryDelay * (attempt + 1));
+        continue;
+      }
+      
+      throw error;
+    }
   }
-
-  return response.json();
+  
+  throw lastError || new ApiError('Request failed after retries', undefined, true);
 }
 
 // Auth API

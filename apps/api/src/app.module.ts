@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { PagesModule } from './modules/pages/pages.module';
@@ -27,6 +28,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
       limit: 100, // 100 requests
     }]),
     PrismaModule,
+    HealthModule,
     AuthModule,
     WorkspacesModule,
     PagesModule,

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
-import { authApi } from '@/lib/api';
+import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { EywaIcon } from '@/components/EywaIcon';
 
@@ -26,12 +26,31 @@ export default function LoginPage() {
     try {
       const response = await authApi.login(email, password);
       setAuth(response.accessToken, response.user);
-      toast({ title: 'Welcome back!', description: `Logged in as ${response.user.email}` });
+      toast({ 
+        title: 'Welcome back!', 
+        description: `Logged in as ${response.user.email}` 
+      });
       router.push('/welcome');
     } catch (error) {
+      let title = 'Login failed';
+      let description = 'Invalid credentials';
+      
+      if (error instanceof ApiError) {
+        if (error.isNetworkError) {
+          title = 'Connection Error';
+          description = error.message;
+        } else if (error.statusCode === 401) {
+          description = 'Invalid email or password. Please try again.';
+        } else {
+          description = error.message;
+        }
+      } else if (error instanceof Error) {
+        description = error.message;
+      }
+      
       toast({
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Invalid credentials',
+        title,
+        description,
         variant: 'destructive',
       });
     } finally {
