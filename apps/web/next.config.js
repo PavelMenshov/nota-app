@@ -7,9 +7,7 @@ const nextConfig = {
   devIndicators: false,
   // Fix for Windows readlink error (EINVAL) with .next directory
   // This sets the output file tracing root to the monorepo root
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../../'),
-  },
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   async rewrites() {
     return [
       {

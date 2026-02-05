@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
@@ -41,6 +42,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
     ExportModule,
     RealtimeModule,
   ],
+  controllers: [AppController],
   providers: [
     // Apply rate limiting globally
     {

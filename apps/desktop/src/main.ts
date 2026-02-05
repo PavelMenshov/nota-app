@@ -128,10 +128,10 @@ function loadErrorPage() {
           <div class="steps">
             <h3>To fix this issue:</h3>
             <ol>
-              <li>Make sure the EYWA web server is running:<br><code>pnpm dev</code> or <code>pnpm dev:web</code></li>
-              <li>Check if the API server is running:<br><code>pnpm dev:api</code></li>
+              <li>Make sure the EYWA web server is running on port 3001:<br><code>pnpm dev</code> or <code>pnpm dev:web</code></li>
+              <li>Check if the API server is running on port 4000:<br><code>pnpm dev:api</code></li>
               <li>Verify Docker services are up:<br><code>docker compose up -d</code></li>
-              <li>Check that port 3001 (web) and 4000 (API) are not blocked</li>
+              <li>Check that ports 3001 (web) and 4000 (API) are not blocked</li>
             </ol>
           </div>
           
