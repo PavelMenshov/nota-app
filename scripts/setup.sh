@@ -14,6 +14,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Container name from docker-compose.yml
+POSTGRES_CONTAINER="eywa-postgres"
+
 # Check if .env exists
 echo "Checking environment configuration..."
 if [ ! -f ".env" ]; then
@@ -54,7 +57,7 @@ echo -e "${GREEN}✓ Prisma Client generated${NC}"
 # Check if database is accessible
 echo ""
 echo "Checking database connection..."
-if docker ps | grep -q eywa-postgres; then
+if docker ps | grep -q "$POSTGRES_CONTAINER"; then
     echo -e "${GREEN}✓ Database container is running${NC}"
 else
     echo -e "${YELLOW}Warning: Database container not running. Starting it...${NC}"
@@ -70,10 +73,10 @@ echo "Pushing database schema..."
 pnpm db:push
 echo -e "${GREEN}✓ Database schema is up to date${NC}"
 
-# Verify Prisma types
+# Verify Prisma types - check for generated Prisma Client index file
 echo ""
 echo "Verifying Prisma types..."
-if [ -d "node_modules/.pnpm/@prisma+client"*"/node_modules/@prisma/client" ]; then
+if [ -f "node_modules/@prisma/client/index.js" ]; then
     echo -e "${GREEN}✓ Prisma Client types are available${NC}"
 else
     echo -e "${RED}✗ Prisma Client types not found. Regenerating...${NC}"

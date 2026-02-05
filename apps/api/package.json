@@ -4,7 +4,7 @@
   "description": "EYWA Platform API Server",
   "main": "dist/main.js",
   "scripts": {
-    "prebuild": "cd ../../packages/database && pnpm generate",
+    "prebuild": "pnpm --filter @eywa/database generate",
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main",

@@ -77,10 +77,9 @@ async function fetchApi<T>(
     } catch (error) {
       lastError = error as Error;
       
-      // Handle network errors (fetch failures)
-      const errorObj = error as { name?: string };
-      if (error instanceof TypeError || errorObj.name === 'TypeError') {
-        // Check if it's a network error
+      // Handle network errors (fetch failures - TypeError indicates network error)
+      if (error instanceof TypeError) {
+        // Check if it's a network error - retry
         if (attempt < retries) {
           await wait(retryDelay * (attempt + 1));
           continue;
