@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
 import { EywaIcon } from '@/components/EywaIcon';
+import { APP_CONFIG } from '@/lib/app-config';
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -33,28 +34,26 @@ export default function WelcomePage() {
   }, [isAuthenticated, router]);
 
   const getDownloadUrl = () => {
-    // In production, these would point to actual release files
-    const baseUrl = '/downloads';
     switch (platform) {
       case 'windows':
-        return `${baseUrl}/EYWA-Setup.exe`;
+        return APP_CONFIG.DOWNLOADS.WINDOWS;
       case 'mac':
-        return `${baseUrl}/EYWA.dmg`;
+        return APP_CONFIG.DOWNLOADS.MAC;
       case 'linux':
-        return `${baseUrl}/EYWA.AppImage`;
+        return APP_CONFIG.DOWNLOADS.LINUX;
       default:
-        return `${baseUrl}/EYWA-Setup.exe`;
+        return APP_CONFIG.DOWNLOADS.WINDOWS;
     }
   };
 
   const getPlatformName = () => {
     switch (platform) {
       case 'windows':
-        return 'Windows';
+        return APP_CONFIG.PLATFORM_NAMES.WINDOWS;
       case 'mac':
-        return 'macOS';
+        return APP_CONFIG.PLATFORM_NAMES.MAC;
       case 'linux':
-        return 'Linux';
+        return APP_CONFIG.PLATFORM_NAMES.LINUX;
       default:
         return 'Your Platform';
     }
@@ -156,7 +155,7 @@ export default function WelcomePage() {
                   </Button>
                 </a>
                 <p className="text-xs text-center text-[#7a828a]">
-                  Free • Version 0.1.0 • ~80MB
+                  Free • Version {APP_CONFIG.APP_VERSION} • {APP_CONFIG.APP_SIZE_MB}
                 </p>
               </CardContent>
             </Card>

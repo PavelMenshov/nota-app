@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron';
 import * as path from 'path';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
+import { APP_CONFIG } from './config';
 
 // Initialize electron store for persisting user preferences
 const store = new Store();
@@ -13,15 +14,15 @@ let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === 'development';
 
 // Web app URL (use environment variable or default)
-const WEB_APP_URL = process.env.WEB_APP_URL || 'http://localhost:3000';
+const WEB_APP_URL = process.env.WEB_APP_URL || APP_CONFIG.DEFAULT_WEB_APP_URL;
 
 function createWindow() {
   // Create the browser window
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 800,
-    minHeight: 600,
+    width: APP_CONFIG.DEFAULT_WIDTH,
+    height: APP_CONFIG.DEFAULT_HEIGHT,
+    minWidth: APP_CONFIG.MIN_WIDTH,
+    minHeight: APP_CONFIG.MIN_HEIGHT,
     title: 'EYWA - Academic Workspace',
     icon: path.join(__dirname, '../assets/icon.png'),
     webPreferences: {
@@ -135,13 +136,13 @@ function createMenu() {
         {
           label: 'Documentation',
           click: () => {
-            shell.openExternal('https://github.com/expusercatherine/eywa-platform/tree/main/docs');
+            shell.openExternal(APP_CONFIG.DOCS_URL);
           },
         },
         {
           label: 'Report Issue',
           click: () => {
-            shell.openExternal('https://github.com/expusercatherine/eywa-platform/issues');
+            shell.openExternal(APP_CONFIG.ISSUES_URL);
           },
         },
         { type: 'separator' },
