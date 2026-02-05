@@ -222,10 +222,15 @@ docker compose ps
 # Start all services (API + Web)
 pnpm dev
 
-# Or start individually:
+# The web app will automatically wait for the API to be ready before starting.
+# You'll see: "⏳ Waiting for API server to be ready..." followed by "✅ API server is healthy and ready!"
+
+# Or start individually for debugging:
 # API (http://localhost:4000): cd apps/api && pnpm dev
 # Web (http://localhost:3001): cd apps/web && pnpm dev
 ```
+
+> **💡 Automatic Startup Coordination**: When you run `pnpm dev`, the web application automatically waits for the API server to be healthy before starting. This prevents connection errors during registration or login. If the API doesn't start within 60 seconds, you'll see a helpful error message with troubleshooting steps.
 
 ### 6. Access the Application
 
@@ -591,6 +596,33 @@ pnpm start
 ```
 
 ### Development Server Issues
+
+**Error: "Connection Error. Unable to connect to the server" during registration/login**
+```bash
+# This error appears when the web app tries to connect to the API before it's ready.
+# The wait-for-api script should handle this automatically, but if you see this error:
+
+# Solution 1: Wait a few seconds and try again
+# The API server may still be starting up
+
+# Solution 2: Verify API is running
+curl http://localhost:4000/api/health
+# Should return: {"status":"ok","timestamp":"...","uptime":...}
+
+# Solution 3: Start API and web separately for debugging
+# Terminal 1 - Start API first:
+cd apps/api
+pnpm dev
+
+# Wait for API to show "🚀 EYWA API is running on http://localhost:4000"
+
+# Terminal 2 - Then start web:
+cd apps/web
+pnpm dev
+
+# Solution 4: Check logs for specific errors
+# If API is not starting, check the logs in Terminal 1 for database connection issues
+```
 
 **Error: Port 3001 is already in use**
 ```bash
