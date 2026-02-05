@@ -180,7 +180,7 @@ function createWindow() {
       console.log(`Retrying load... (attempt ${loadAttempts + 1}/${MAX_LOAD_ATTEMPTS})`);
       setTimeout(() => {
         mainWindow?.loadURL(WEB_APP_URL);
-      }, 2000 * loadAttempts); // Exponential backoff: 2s, 4s, 6s
+      }, Math.pow(2, loadAttempts) * 1000); // Exponential backoff: 2s, 4s, 8s
     }
   });
 
