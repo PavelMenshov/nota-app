@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { getApiUrl, getConfig } from './config-store';
+
+export { getApiUrl, getConfig, setConfig, detectLocalApiServers, isValidApiUrl } from './config-store';
 
 // Helper to detect if we're running in a mobile environment
 function isMobileEnvironment(): boolean {
@@ -8,9 +10,11 @@ function isMobileEnvironment(): boolean {
 
 // Get a more helpful API URL for error messages
 function getApiUrlInfo(): { url: string; isFallback: boolean } {
-  const isFallback = !process.env.NEXT_PUBLIC_API_URL;
+  const config = getConfig();
+  const url = getApiUrl();
+  const isFallback = !config.apiUrl && !process.env.NEXT_PUBLIC_API_URL;
   return {
-    url: API_URL,
+    url,
     isFallback
   };
 }
@@ -39,12 +43,13 @@ export class ApiError extends Error {
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Check if the API is reachable
-async function checkApiHealth(): Promise<boolean> {
+async function checkApiHealth(apiUrl?: string): Promise<boolean> {
+  const url = apiUrl || getApiUrl();
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
     
-    const response = await fetch(`${API_URL}/api/health`, {
+    const response = await fetch(`${url}/api/health`, {
       method: 'GET',
       signal: controller.signal,
     });
@@ -61,6 +66,9 @@ async function fetchApi<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const { token, retries = 2, retryDelay = 1000, timeout = 10000, ...fetchOptions } = options;
+  
+  // Get API URL dynamically for each request
+  const apiUrl = getApiUrl();
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -79,7 +87,7 @@ async function fetchApi<T>(
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         ...fetchOptions,
         headers,
         signal: controller.signal,

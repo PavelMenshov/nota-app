@@ -10,12 +10,14 @@ import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { EywaIcon } from '@/components/EywaIcon';
+import { ApiSettings } from '@/components/ApiSettings';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showApiSettings, setShowApiSettings] = useState(false);
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const { toast } = useToast();
@@ -149,6 +151,20 @@ export default function RegisterPage() {
                   {isLoading ? 'Creating account...' : 'Create account'}
                 </Button>
               </form>
+
+              {/* API Settings Toggle */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowApiSettings(!showApiSettings)}
+                  className="text-[12px] text-[#5b6167] hover:text-[#1f7a4a] transition-colors"
+                >
+                  {showApiSettings ? '▲ Hide' : '▼ Show'} API Settings
+                </button>
+              </div>
+
+              {/* API Settings Panel */}
+              {showApiSettings && <ApiSettings />}
 
               {/* Footer */}
               <div className="text-center">
