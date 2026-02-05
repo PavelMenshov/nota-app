@@ -21,7 +21,19 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 
 ## 🆕 Recent Updates (February 2026)
 
-### Authentication & Cross-Platform Improvements (Latest)
+### Authentication Endpoints Clarification (Latest - Feb 5, 2026)
+- ✅ **Fixed "404 on /api/auth" Issue**: Added comprehensive documentation explaining why browser access returns 404
+- ✅ **Added GET Endpoint**: New `/api/auth` endpoint provides API information when accessed via browser
+- ✅ **Fixed Prisma Version Mismatch**: Resolved database package version conflict (5.10.0 → 5.22.0)
+- ✅ **Windows Testing Script**: Added PowerShell script to easily test authentication endpoints
+- ✅ **Comprehensive Guides**: 
+  - [Authentication API Usage Guide](./docs/AUTH_API_USAGE.md) - Explains why POST endpoints don't work in browser
+  - [Windows Quick Start](./docs/QUICK_START_WINDOWS.md) - Step-by-step setup for Windows users
+  - [Test Script](./scripts/test-auth-api.ps1) - Automated API testing for Windows
+
+> **Important**: `/api/auth/register` and `/api/auth/login` are POST endpoints and won't work when typed in browser address bar (which uses GET). Use Swagger UI, curl, PowerShell, or Postman instead. See [AUTH_API_USAGE.md](./docs/AUTH_API_USAGE.md) for details.
+
+### Authentication & Cross-Platform Improvements
 - ✅ **Fixed Registration/Login Issues**: Resolved connection errors that prevented login on different systems
 - ✅ **Desktop Error Handling**: Desktop app now shows user-friendly error page instead of white screen
 - ✅ **Runtime API Configuration**: Users can configure API URL without environment variables via UI
@@ -248,10 +260,36 @@ pnpm dev
 - **Frontend**: http://localhost:3001
 - **API**: http://localhost:4000
 - **API Docs (Swagger)**: http://localhost:4000/api/docs
+- **Auth Info**: http://localhost:4000/api/auth
+- **Health Check**: http://localhost:4000/api/health
 
 > **📝 Note on Ports**: The web app uses port 3001 by default to avoid conflicts with other applications that commonly use port 3000. You can change this in `apps/web/package.json` if needed.
 
-### 7. Desktop Application (Optional)
+### 7. Test Authentication Endpoints (Windows)
+
+For Windows users, we provide a PowerShell script to test the authentication API:
+
+```powershell
+# Run the automated test script
+.\scripts\test-auth-api.ps1
+```
+
+This script will:
+- ✅ Check if the API is running
+- ✅ Get authentication endpoint information
+- ✅ Register a new test user
+- ✅ Login with the test user
+- ✅ Retrieve the user profile (authenticated request)
+
+**Manual Testing Options:**
+- **Swagger UI**: Visit http://localhost:4000/api/docs (recommended for development)
+- **PowerShell**: See examples in [AUTH_API_USAGE.md](./docs/AUTH_API_USAGE.md)
+- **curl**: Available in PowerShell 7+ or Git Bash
+- **Postman/Thunder Client**: Popular API testing tools
+
+> **⚠️ Important**: Don't try to access `/api/auth/register` or `/api/auth/login` directly in your browser! These are POST endpoints and browsers use GET requests. See [AUTH_API_USAGE.md](./docs/AUTH_API_USAGE.md) for detailed explanation.
+
+### 8. Desktop Application (Optional)
 
 To run the desktop application:
 
@@ -844,6 +882,9 @@ pnpm dev
   - [API Documentation](./docs/API.md)
   - [Architecture Guide](./docs/ARCHITECTURE.md)
   - [Security & Privacy](./docs/SECURITY.md)
+  - [Auth API Usage Guide](./docs/AUTH_API_USAGE.md) - **New!** Understanding authentication endpoints
+  - [Windows Quick Start](./docs/QUICK_START_WINDOWS.md) - **New!** Setup guide for Windows
+  - [Desktop App Guide](./docs/DESKTOP-APP.md)
 - **Community**: [Join discussions on GitHub](https://github.com/expusercatherine/eywa-platform/discussions)
 
 ---
