@@ -117,7 +117,7 @@ pnpm dev
 
 ### 7. Access the Application
 
-- **Web App**: http://localhost:3000
+- **Web App**: http://localhost:3001
 - **API**: http://localhost:4000
 - **API Documentation (Swagger)**: http://localhost:4000/api/docs
 - **MinIO Console**: http://localhost:9001 (admin/admin123)
@@ -126,7 +126,7 @@ pnpm dev
 
 ### Create Your First Account
 
-1. Navigate to http://localhost:3000
+1. Navigate to http://localhost:3001
 2. Click "Get Started" or "Sign Up"
 3. Fill in your details:
    - Full name
@@ -301,7 +301,7 @@ cp .env packages/database/.env
 
 ### Port Already in Use
 
-**Problem**: Port 3000 or 4000 already in use
+**Problem**: Port 3001 or 4000 already in use
 
 **Solutions:**
 1. Stop the service using that port
@@ -417,7 +417,7 @@ pnpm lint
 
 ### Default Ports
 
-- **Web App**: 3000
+- **Web App**: 3001
 - **API**: 4000
 - **PostgreSQL**: 5432
 - **Redis**: 6379
