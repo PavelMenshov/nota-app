@@ -21,7 +21,17 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 
 ## 🆕 Recent Updates (February 2026)
 
-### Code Quality & Build Improvements (Latest)
+### Authentication & Cross-Platform Improvements (Latest)
+- ✅ **Fixed Registration/Login Issues**: Resolved connection errors that prevented login on different systems
+- ✅ **Desktop Error Handling**: Desktop app now shows user-friendly error page instead of white screen
+- ✅ **Runtime API Configuration**: Users can configure API URL without environment variables via UI
+- ✅ **Auto-Detection**: Automatic detection of local API servers on common ports
+- ✅ **Mobile Support**: Better error messages and configuration guidance for mobile devices
+- ✅ **Retry Logic**: Exponential backoff retry mechanism for network failures (3 attempts)
+- ✅ **Crash Recovery**: Desktop app handles crashes with restart dialog
+- ✅ **Timeout Configuration**: Configurable timeouts for different network conditions
+
+### Code Quality & Build Improvements
 - ✅ **Fixed TypeScript Errors**: Resolved unused parameter warnings in desktop app
 - ✅ **Port Configuration**: Web app now uses port 3001 by default to avoid conflicts
 - ✅ **Build Verification**: All packages (API, Web, Desktop) build successfully
@@ -34,6 +44,7 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 - ✅ **Offline Support**: Work without internet, sync when connected
 - ✅ **Auto-Updates**: Seamless background updates for latest features
 - ✅ **System Integration**: Native menus, notifications, and file handling
+- ✅ **Error Handling**: Comprehensive error recovery and user-friendly error pages
 
 ### Enhanced Onboarding
 - ✅ **Welcome Page**: New post-login landing page with two options
@@ -649,6 +660,102 @@ pnpm dev
 grep NEXT_PUBLIC_API_URL .env
 # Should be: NEXT_PUBLIC_API_URL="http://localhost:4000"
 ```
+
+### Registration/Login Issues (Cross-Platform & Mobile)
+
+**Problem: Registration/login fails with "Connection Error" or "Unable to connect to the server"**
+
+This usually happens when:
+1. The API server is not running
+2. You're using a different API URL (not localhost:4000)
+3. You're on mobile/remote device trying to connect to localhost
+
+**Solutions:**
+
+1. **Use the API Settings UI** (Easiest method):
+   - On the login/register page, click "▼ Show API Settings"
+   - Click "Detect Servers" to auto-find running API servers
+   - Or manually enter your API server URL (e.g., `http://192.168.1.100:4000` for mobile)
+   - Click "Save & Apply" to persist the settings
+
+2. **Set environment variable** (For development):
+   ```bash
+   # In .env file, set:
+   NEXT_PUBLIC_API_URL="http://your-server-ip:4000"
+   
+   # For mobile devices, use your computer's IP address:
+   # Example: NEXT_PUBLIC_API_URL="http://192.168.1.100:4000"
+   ```
+
+3. **Find your computer's IP address** (For mobile testing):
+   ```bash
+   # On Linux/Mac:
+   ifconfig | grep "inet "
+   
+   # On Windows:
+   ipconfig | findstr "IPv4"
+   
+   # Then use that IP in the API Settings or .env file
+   ```
+
+4. **Verify API is accessible**:
+   ```bash
+   # From your mobile device or different computer, test:
+   curl http://YOUR_COMPUTER_IP:4000/api/health
+   
+   # Should return: {"status":"ok",...}
+   ```
+
+**For mobile/tablet users:**
+- You cannot use `localhost` or `127.0.0.1` on mobile devices
+- You must use your computer's actual IP address (e.g., `192.168.1.100`)
+- Make sure your mobile device is on the same network as your computer
+- Ensure firewall allows connections on port 4000
+
+### Desktop App Issues
+
+**Desktop app shows white screen or blank window**
+
+This is now fixed with error handling, but if you still see it:
+
+1. **Check if web app is running**:
+   ```bash
+   # The desktop app needs the web server running
+   curl http://localhost:3001
+   
+   # If not running, start it:
+   pnpm dev:web
+   ```
+
+2. **Check the desktop app console**:
+   - The app now shows an error page with helpful information
+   - It will automatically retry 3 times with exponential backoff
+   - Check the error page for specific troubleshooting steps
+
+3. **Custom web app URL**:
+   ```bash
+   # If your web app is on a different port/host:
+   export WEB_APP_URL=http://localhost:3001
+   cd apps/desktop
+   pnpm start
+   ```
+
+4. **Development mode**:
+   ```bash
+   # For development, set NODE_ENV:
+   export NODE_ENV=development
+   cd apps/desktop
+   pnpm build && pnpm start
+   
+   # This will open DevTools automatically for debugging
+   ```
+
+**Desktop app crashes or becomes unresponsive**
+
+The app now has crash recovery:
+- If it crashes, you'll see a dialog asking if you want to restart
+- Click "Restart" to reload the app
+- If the crash persists, check the console logs for errors
 
 ---
 
