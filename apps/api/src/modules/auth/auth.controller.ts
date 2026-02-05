@@ -9,6 +9,47 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get authentication endpoints info' })
+  @ApiResponse({ status: 200, description: 'Authentication endpoints information' })
+  getAuthInfo() {
+    return {
+      message: 'EYWA Authentication API',
+      version: '1.0.0',
+      endpoints: {
+        register: {
+          method: 'POST',
+          path: '/api/auth/register',
+          description: 'Register a new user',
+          requiredFields: ['email', 'password', 'name'],
+          example: {
+            email: 'user@example.com',
+            password: 'securePassword123',
+            name: 'John Doe',
+          },
+        },
+        login: {
+          method: 'POST',
+          path: '/api/auth/login',
+          description: 'Login with email and password',
+          requiredFields: ['email', 'password'],
+          example: {
+            email: 'user@example.com',
+            password: 'securePassword123',
+          },
+        },
+        me: {
+          method: 'GET',
+          path: '/api/auth/me',
+          description: 'Get current user profile (requires JWT token)',
+          requiresAuth: true,
+        },
+      },
+      documentation: '/api/docs',
+      note: 'Use POST method for register and login endpoints. Browser address bar uses GET and will not work for these endpoints.',
+    };
+  }
+
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ type: LoginDto })

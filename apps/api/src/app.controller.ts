@@ -16,7 +16,9 @@ export class AppController {
       endpoints: {
         health: '/api/health',
         documentation: '/api/docs',
+        auth: '/api/auth',
       },
+      note: 'Visit /api/docs for interactive API documentation. Visit /api/auth for authentication endpoint information.',
     };
   }
 }
