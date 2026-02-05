@@ -8,14 +8,16 @@
 const http = require('http');
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const MAX_ATTEMPTS = 60; // 60 seconds
-const RETRY_INTERVAL = 1000; // 1 second
+const RETRY_INTERVAL = 1000; // 1 second between retries
+const MAX_WAIT_TIME = 60000; // Maximum wait time in milliseconds (60 seconds)
+const MAX_ATTEMPTS = Math.floor(MAX_WAIT_TIME / RETRY_INTERVAL); // 60 attempts
+const HEALTH_CHECK_TIMEOUT = 2000; // 2 seconds timeout for each health check
 
-function checkHealth(attempt = 1) {
+function checkHealth() {
   return new Promise((resolve, reject) => {
     const url = new URL('/api/health', API_URL);
     
-    const req = http.get(url, { timeout: 2000 }, (res) => {
+    const req = http.get(url, { timeout: HEALTH_CHECK_TIMEOUT }, (res) => {
       if (res.statusCode === 200) {
         console.log('✅ API server is healthy and ready!');
         resolve(true);
@@ -40,11 +42,11 @@ async function waitForApi() {
   
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      await checkHealth(attempt);
+      await checkHealth();
       return;
     } catch (error) {
       if (attempt === MAX_ATTEMPTS) {
-        console.error('❌ API server did not become healthy within 60 seconds');
+        console.error(`❌ API server did not become healthy within ${MAX_WAIT_TIME / 1000} seconds`);
         console.error('   Please ensure the API server is running:');
         console.error('   - Check docker-compose services: docker compose ps');
         console.error('   - Check API logs: cd apps/api && pnpm dev');
