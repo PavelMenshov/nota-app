@@ -351,6 +351,38 @@ AI_PROVIDER="anthropic"
 2. Verify S3 configuration in .env
 3. Check file size limits (default: 10MB)
 
+### Windows-Specific Issues
+
+**Problem**: `EINVAL: invalid argument, readlink` error when running `pnpm dev` in apps/web
+
+**Description**: This error occurs on Windows when Next.js tries to read symlinks in the `.next` directory, which is not fully supported on Windows file systems.
+
+**Solutions:**
+1. **Clear the .next directory** (recommended first step):
+   ```bash
+   # In PowerShell or Command Prompt
+   cd apps\web
+   rmdir /s /q .next
+   pnpm dev
+   ```
+   
+   Or in Git Bash/WSL:
+   ```bash
+   cd apps/web
+   rm -rf .next
+   pnpm dev
+   ```
+
+2. **The configuration fix** has already been applied in `apps/web/next.config.js` - it sets the `outputFileTracingRoot` to the monorepo root, which prevents symlink issues.
+
+3. **If the error persists**, ensure you're using the latest version of Node.js and pnpm:
+   ```bash
+   node --version  # Should be 20.x or higher
+   pnpm --version  # Should be 8.x or higher
+   ```
+
+4. **Alternative**: Use WSL2 (Windows Subsystem for Linux) for development, which has better symlink support and better matches production Linux environments.
+
 ## Next Steps
 
 Now that you're up and running:
