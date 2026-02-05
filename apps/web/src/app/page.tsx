@@ -31,6 +31,9 @@ export default function HomePage() {
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-0.5">
+              <Link href="#desktop" className="text-[13px] text-[#5b6167] px-3 py-2 rounded-full hover:bg-[rgba(20,20,20,0.05)] hover:text-[#141414] transition-all">
+                Desktop
+              </Link>
               <Link href="#core" className="text-[13px] text-[#5b6167] px-3 py-2 rounded-full hover:bg-[rgba(20,20,20,0.05)] hover:text-[#141414] transition-all">
                 Core
               </Link>
@@ -80,6 +83,9 @@ export default function HomePage() {
           {/* Mobile menu */}
           {mobileMenuOpen && (
             <div className="md:hidden py-2.5 border-t border-[rgba(20,20,20,0.07)] pb-3.5">
+              <Link href="#desktop" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 mt-2 rounded-xl border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.7)] text-[#5b6167] font-semibold text-[13px]">
+                Desktop
+              </Link>
               <Link href="#core" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 mt-2 rounded-xl border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.7)] text-[#5b6167] font-semibold text-[13px]">
                 Core
               </Link>
@@ -279,6 +285,121 @@ export default function HomePage() {
                     View spec
                   </Button>
                 </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Desktop App Section */}
+        <section className="py-[60px]" id="desktop">
+          <div className="max-w-[1140px] mx-auto px-6">
+            <div className="rounded-[26px] border border-[rgba(20,20,20,0.10)] bg-gradient-to-br from-[rgba(255,255,255,0.92)] to-[rgba(255,255,255,0.85)] shadow-[0_20px_50px_rgba(20,20,20,0.10)] overflow-hidden">
+              <div className="p-8 md:p-12">
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  {/* Left side - Text content */}
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(31,122,74,0.10)] text-[#1f7a4a] text-xs font-bold mb-4">
+                      ✨ NEW
+                    </div>
+                    <h2 className="text-4xl font-extrabold tracking-tight text-[#141414] mb-4">
+                      Now Available as Desktop App
+                    </h2>
+                    <p className="text-[#5b6167] text-base leading-relaxed mb-6">
+                      Experience EYWA with native desktop performance. Enjoy faster loading times, offline support, 
+                      and seamless system integration on Windows, macOS, and Linux.
+                    </p>
+                    
+                    {/* Feature list */}
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center">
+                          <span className="text-[#1f7a4a] text-sm">⚡</span>
+                        </div>
+                        <span className="text-sm font-medium text-[#141414]">3x faster performance with native rendering</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center">
+                          <span className="text-[#1f7a4a] text-sm">🔒</span>
+                        </div>
+                        <span className="text-sm font-medium text-[#141414]">Enhanced security with sandboxed environment</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center">
+                          <span className="text-[#1f7a4a] text-sm">☁️</span>
+                        </div>
+                        <span className="text-sm font-medium text-[#141414]">Work offline, sync automatically when online</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center">
+                          <span className="text-[#1f7a4a] text-sm">🔄</span>
+                        </div>
+                        <span className="text-sm font-medium text-[#141414]">Automatic updates to always get latest features</span>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="flex flex-wrap gap-3">
+                      <Link href="/auth/register">
+                        <Button size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)]">
+                          Get Started Free
+                        </Button>
+                      </Link>
+                      <Link href="#docs">
+                        <Button variant="outline" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border-[rgba(20,20,20,0.15)] bg-white hover:bg-[rgba(255,255,255,0.92)]">
+                          View Documentation
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Right side - Visual/Stats */}
+                  <div className="space-y-4">
+                    {/* Platform badges */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
+                        <div className="text-2xl mb-2">🪟</div>
+                        <div className="text-xs font-bold text-[#141414]">Windows</div>
+                        <div className="text-[10px] text-[#7a828a] mt-1">10, 11</div>
+                      </div>
+                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
+                        <div className="text-2xl mb-2">🍎</div>
+                        <div className="text-xs font-bold text-[#141414]">macOS</div>
+                        <div className="text-[10px] text-[#7a828a] mt-1">11+</div>
+                      </div>
+                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
+                        <div className="text-2xl mb-2">🐧</div>
+                        <div className="text-xs font-bold text-[#141414]">Linux</div>
+                        <div className="text-[10px] text-[#7a828a] mt-1">Ubuntu, Fedora</div>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="p-6 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-gradient-to-br from-[rgba(31,122,74,0.05)] to-transparent">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-3xl font-bold text-[#1f7a4a]">100%</div>
+                          <div className="text-xs text-[#5b6167] mt-1">Feature Parity</div>
+                        </div>
+                        <div>
+                          <div className="text-3xl font-bold text-[#1f7a4a]">Free</div>
+                          <div className="text-xs text-[#5b6167] mt-1">Open Source</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-[rgba(20,20,20,0.08)]">
+                        <div className="text-xs text-[#7a828a]">
+                          ✓ Same features across web and desktop
+                          <br />
+                          ✓ Seamless sync between all devices
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Download note */}
+                    <p className="text-xs text-center text-[#7a828a] px-4">
+                      Create an account to access download options for your platform
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
