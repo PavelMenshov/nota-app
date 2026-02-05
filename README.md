@@ -21,6 +21,12 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 
 ## 🆕 Recent Updates (February 2026)
 
+### Code Quality & Build Improvements (Latest)
+- ✅ **Fixed TypeScript Errors**: Resolved unused parameter warnings in desktop app
+- ✅ **Port Configuration**: Web app now uses port 3001 by default to avoid conflicts
+- ✅ **Build Verification**: All packages (API, Web, Desktop) build successfully
+- ✅ **Improved Documentation**: Enhanced troubleshooting guide and quick reference
+
 ### Desktop Application
 - ✅ **Native Desktop App**: Built with Electron for Windows, macOS, and Linux
 - ✅ **Cross-Platform**: Single codebase, multiple platform builds
@@ -218,14 +224,16 @@ pnpm dev
 
 # Or start individually:
 # API (http://localhost:4000): cd apps/api && pnpm dev
-# Web (http://localhost:3000): cd apps/web && pnpm dev
+# Web (http://localhost:3001): cd apps/web && pnpm dev
 ```
 
 ### 6. Access the Application
 
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:3001
 - **API**: http://localhost:4000
 - **API Docs (Swagger)**: http://localhost:4000/api/docs
+
+> **📝 Note on Ports**: The web app uses port 3001 by default to avoid conflicts with other applications that commonly use port 3000. You can change this in `apps/web/package.json` if needed.
 
 ### 7. Desktop Application (Optional)
 
@@ -238,8 +246,8 @@ cd apps/desktop
 # Install dependencies
 pnpm install
 
-# Set web app URL (optional, defaults to localhost:3000)
-export WEB_APP_URL=http://localhost:3000
+# Set web app URL (optional, defaults to localhost:3001)
+export WEB_APP_URL=http://localhost:3001
 
 # Build TypeScript
 pnpm build
@@ -509,8 +517,17 @@ pnpm db:push --force-reset
 
 ### Port Conflicts
 ```bash
-# Change ports in docker-compose.yml and .env
-# Default: API=4000, Web=3000, Postgres=5432, Redis=6379
+# If you need to change ports:
+# 1. Update apps/web/package.json (scripts.dev and scripts.start)
+# 2. Update .env (CORS_ORIGIN)
+# 3. Update apps/desktop/src/config.ts (DEFAULT_WEB_APP_URL)
+# 
+# Default ports:
+# - Web: 3001 (can be changed to 3000 or any other port)
+# - API: 4000
+# - PostgreSQL: 5432
+# - Redis: 6379
+# - MinIO: 9000
 ```
 
 ### Build Errors
@@ -519,6 +536,162 @@ pnpm db:push --force-reset
 rm -rf node_modules .next dist
 pnpm install
 pnpm db:generate
+```
+
+**Error: Cannot find module '@eywa/database'**
+```bash
+# Build the database package first
+cd packages/database
+pnpm build
+cd ../..
+
+# Then try building the API
+cd apps/api
+pnpm build
+```
+
+**Error: TypeScript compilation errors in desktop app**
+```bash
+# Make sure all dependencies are installed
+cd apps/desktop
+pnpm install
+
+# Build TypeScript
+pnpm build
+
+# If still failing, check tsconfig.json and ensure strict mode is properly configured
+```
+
+### Desktop App Issues
+
+**Desktop app won't start or shows blank screen**
+```bash
+# Make sure web app is running first
+pnpm dev  # in root directory
+
+# Or start web app separately
+cd apps/web
+pnpm dev
+
+# Then start desktop app
+cd apps/desktop
+pnpm build
+pnpm start
+```
+
+**Desktop app can't connect to web app**
+```bash
+# Verify web app is running on correct port
+# Default is http://localhost:3001
+
+# Set custom web app URL if needed
+export WEB_APP_URL=http://localhost:3001
+cd apps/desktop
+pnpm start
+```
+
+### Development Server Issues
+
+**Error: Port 3001 is already in use**
+```bash
+# Option 1: Kill the process using the port
+# On Linux/Mac:
+lsof -ti:3001 | xargs kill -9
+
+# On Windows:
+netstat -ano | findstr :3001
+taskkill /PID <PID> /F
+
+# Option 2: Use a different port
+cd apps/web
+# Edit package.json and change "dev": "next dev -p 3001" to another port
+```
+
+**Error: ECONNREFUSED connecting to API**
+```bash
+# Make sure API is running
+cd apps/api
+pnpm dev
+
+# Verify API URL in .env
+grep NEXT_PUBLIC_API_URL .env
+# Should be: NEXT_PUBLIC_API_URL="http://localhost:4000"
+```
+
+---
+
+## 🚀 Quick Reference
+
+### Common Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Setup database
+pnpm db:generate  # Generate Prisma client
+pnpm db:push      # Push schema to database
+pnpm db:studio    # Open Prisma Studio GUI
+
+# Development
+pnpm dev          # Start all services (API + Web)
+
+# Individual services
+cd apps/api && pnpm dev        # API only (port 4000)
+cd apps/web && pnpm dev        # Web only (port 3001)
+cd apps/desktop && pnpm build && pnpm start  # Desktop app
+
+# Build for production
+pnpm build        # Build all packages
+
+# Linting
+pnpm lint         # Lint all packages
+```
+
+### Default URLs
+
+- **Web App**: http://localhost:3001
+- **API Server**: http://localhost:4000
+- **API Documentation**: http://localhost:4000/api/docs
+- **Database (Prisma Studio)**: `pnpm db:studio` → http://localhost:5555
+
+### Environment Setup Checklist
+
+- [ ] Node.js 20+ installed
+- [ ] pnpm 8+ installed
+- [ ] Docker and Docker Compose installed
+- [ ] `.env` file created (copied from `.env.example`)
+- [ ] `.env` file copied to `packages/database/.env`
+- [ ] Docker services running: `docker compose up -d`
+- [ ] Prisma client generated: `pnpm db:generate`
+- [ ] Database schema pushed: `pnpm db:push`
+- [ ] All dependencies installed: `pnpm install`
+
+### First Time Setup (TL;DR)
+
+```bash
+# 1. Clone and install
+git clone https://github.com/expusercatherine/eywa-platform.git
+cd eywa-platform
+pnpm install
+
+# 2. Setup environment
+cp .env.example .env
+cp .env packages/database/.env
+
+# 3. Start infrastructure
+docker compose up -d
+
+# 4. Initialize database
+pnpm db:generate
+pnpm db:push
+
+# 5. Start development servers
+pnpm dev
+
+# 6. Open in browser
+# Web: http://localhost:3001
+# API Docs: http://localhost:4000/api/docs
 ```
 
 ---
