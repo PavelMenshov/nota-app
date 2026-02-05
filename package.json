@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:api": "pnpm --filter @eywa/api dev",
+    "dev:web": "pnpm --filter @eywa/web dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
