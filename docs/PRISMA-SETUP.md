@@ -67,7 +67,7 @@ cd eywa-platform
 pnpm install
 
 # Start database
-docker compose up -d postgres
+docker compose up -d eywa-postgres
 
 # Push schema to database
 pnpm db:push
@@ -143,7 +143,7 @@ pnpm install
 **Solution:**
 ```bash
 # Ensure database is running
-docker compose up -d postgres
+docker compose up -d eywa-postgres
 
 # Verify connection in .env
 # Check DATABASE_URL and DIRECT_DATABASE_URL

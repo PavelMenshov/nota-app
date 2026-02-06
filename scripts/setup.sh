@@ -61,7 +61,7 @@ if docker ps | grep -q "$POSTGRES_CONTAINER"; then
     echo -e "${GREEN}✓ Database container is running${NC}"
 else
     echo -e "${YELLOW}Warning: Database container not running. Starting it...${NC}"
-    docker compose up -d postgres
+    docker compose up -d eywa-postgres
     echo "Waiting for database to be ready..."
     sleep 10
     echo -e "${GREEN}✓ Database started${NC}"
@@ -94,6 +94,6 @@ echo "  pnpm db:studio    - Open Prisma Studio"
 echo ""
 echo "Common issues and fixes:"
 echo "  1. Type errors in API: Run 'pnpm db:generate'"
-echo "  2. Database not found: Run 'docker compose up -d postgres && pnpm db:push'"
+echo "  2. Database not found: Run 'docker compose up -d eywa-postgres && pnpm db:push'"
 echo "  3. Module not found: Run 'pnpm install'"
 echo ""
