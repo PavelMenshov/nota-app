@@ -47,16 +47,22 @@ async function checkApiHealth(apiUrl?: string): Promise<boolean> {
   const url = apiUrl || getApiUrl();
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Increased timeout
     
     const response = await fetch(`${url}/api/health`, {
       method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
       signal: controller.signal,
     });
     
     clearTimeout(timeoutId);
     return response.ok;
-  } catch {
+  } catch (error) {
+    // Log in development for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('API health check failed:', error instanceof Error ? error.message : 'Unknown error');
+    }
     return false;
   }
 }

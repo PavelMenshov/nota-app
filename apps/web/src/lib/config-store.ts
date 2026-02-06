@@ -112,10 +112,12 @@ export async function detectLocalApiServers(): Promise<string[]> {
   for (const url of candidates) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // Increased timeout for CORS preflight
       
       const response = await fetch(`${url}/api/health`, {
         method: 'GET',
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'omit', // Don't send credentials for health check
         signal: controller.signal,
       });
       
@@ -124,8 +126,11 @@ export async function detectLocalApiServers(): Promise<string[]> {
       if (response.ok) {
         working.push(url);
       }
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      // Log errors in development for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`Failed to connect to ${url}:`, error instanceof Error ? error.message : 'Unknown error');
+      }
     }
   }
   
