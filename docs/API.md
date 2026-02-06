@@ -26,6 +26,8 @@ Authorization: Bearer <your-jwt-token>
 
 ### Obtaining a Token
 
+**Important Note:** Authentication endpoints (`/api/auth/login` and `/api/auth/register`) use POST requests and cannot be tested by typing the URL in a browser's address bar (which sends GET requests). Use the web application at `http://localhost:3001` or the Swagger UI at `http://localhost:4000/api/docs` to test authentication.
+
 **Register a new account:**
 
 ```bash
@@ -42,7 +44,7 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "clx...",
     "email": "user@example.com",
@@ -60,6 +62,18 @@ Content-Type: application/json
 {
   "email": "user@example.com",
   "password": "SecurePassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "clx...",
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
 }
 ```
 
