@@ -21,22 +21,29 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 
 ## 🆕 Recent Updates (February 2026)
 
-### Authentication Endpoints Clarification (Latest - Feb 5, 2026)
-- ✅ **Fixed "404 on /api/auth" Issue**: Added comprehensive documentation explaining why browser access returns 404
-- ✅ **Added GET Endpoint**: New `/api/auth` endpoint provides API information when accessed via browser
-- ✅ **Fixed Prisma Version Mismatch**: Resolved database package version conflict (5.10.0 → 5.22.0)
-- ✅ **Windows Testing Script**: Added PowerShell script to easily test authentication endpoints
-- ✅ **Comprehensive Guides**: 
-  - [Authentication API Usage Guide](./docs/AUTH_API_USAGE.md) - Explains why POST endpoints don't work in browser
-  - [Web App Auth Integration Guide](./docs/WEB_APP_AUTH_INTEGRATION.md) - **NEW!** How web apps properly use auth endpoints
-  - [Windows Quick Start](./docs/QUICK_START_WINDOWS.md) - Step-by-step setup for Windows users
-  - [Test Script](./scripts/test-auth-api.ps1) - Automated API testing for Windows
+### UI & Documentation Improvements (Latest - Feb 6, 2026)
+- ✅ **Removed API Settings**: Cleaned up login/register pages by removing advanced API settings panel
+- ✅ **Simplified Documentation**: Consolidated from 13 to 6 essential documentation files
+- ✅ **Better User Experience**: Streamlined authentication flow for end users
 
-> **Important for Developers**: 
-> - ❌ `/api/auth/register` and `/api/auth/login` won't work when typed in browser (they're POST endpoints, browser uses GET)
-> - ✅ Your **web application works perfectly** - it sends POST requests via JavaScript/fetch
-> - 📚 See [Web App Auth Integration Guide](./docs/WEB_APP_AUTH_INTEGRATION.md) for complete code examples
-> - 🧪 Use Swagger UI, curl, PowerShell, or Postman for testing
+### How to Use EYWA Authentication (For Users)
+**⚠️ Important: Do NOT type authentication URLs in your browser's address bar!**
+
+**✅ Correct Way to Register/Login:**
+1. Start the web application: `pnpm dev` or `pnpm dev:web`
+2. Open http://localhost:3001 in your browser
+3. Click "Sign Up" or "Sign In" button
+4. Fill in the form and submit
+
+**❌ Why Browser Address Bar Doesn't Work:**
+- Typing `http://localhost:4000/api/auth/register` in the address bar sends a GET request
+- Authentication endpoints require POST requests (industry standard for security)
+- This is how ALL websites work (Google, Facebook, GitHub, etc.)
+- The web application sends POST requests correctly - use the web interface
+
+**🧪 For API Testing:**
+- Use the Swagger UI at http://localhost:4000/api/docs
+- Or use tools like curl, Postman, or PowerShell scripts
 
 ### Authentication & Cross-Platform Improvements
 - ✅ **Fixed Registration/Login Issues**: Resolved connection errors that prevented login on different systems
