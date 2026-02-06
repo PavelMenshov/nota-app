@@ -24,6 +24,7 @@ export function ApiStatus({ onStatusChange }: ApiStatusProps) {
         const response = await fetch(`${url}/api/health`, {
           method: 'GET',
           mode: 'cors',
+          credentials: 'omit',
           signal: controller.signal,
         });
         
@@ -41,7 +42,8 @@ export function ApiStatus({ onStatusChange }: ApiStatusProps) {
     };
 
     checkHealth();
-  }, [onStatusChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, onStatusChange is called but not tracked
 
   if (isChecking) {
     return (
