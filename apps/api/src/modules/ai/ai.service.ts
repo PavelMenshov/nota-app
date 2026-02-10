@@ -10,13 +10,19 @@ import { SummaryDto, FlashcardsDto } from './dto/ai.dto';
 @Injectable()
 export class AIService {
   private readonly apiKey: string | undefined;
+  private readonly provider: string;
+  private readonly openaiKey: string | undefined;
+  private readonly anthropicKey: string | undefined;
   private readonly dailyLimit: number;
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {
-    this.apiKey = this.configService.get('OPENAI_API_KEY') || this.configService.get('ANTHROPIC_API_KEY');
+    this.openaiKey = this.configService.get('OPENAI_API_KEY');
+    this.anthropicKey = this.configService.get('ANTHROPIC_API_KEY');
+    this.apiKey = this.openaiKey || this.anthropicKey;
+    this.provider = this.configService.get('AI_PROVIDER') || 'auto';
     this.dailyLimit = parseInt(this.configService.get('AI_DAILY_LIMIT') || '50', 10);
   }
 
@@ -267,27 +273,79 @@ export class AIService {
       };
     }
 
-    // TODO: Implement actual AI API calls
-    // For OpenAI:
-    // const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${this.apiKey}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     model: 'gpt-4',
-    //     messages: [{ role: 'user', content: prompt }],
-    //     max_tokens: _maxTokens,
-    //   }),
-    // });
+    // Determine which provider to use
+    const useOpenAI =
+      this.provider === 'openai' ||
+      (this.provider === 'auto' && !!this.openaiKey);
 
-    // For Anthropic:
-    // const response = await fetch('https://api.anthropic.com/v1/messages', { ... });
+    if (useOpenAI && !this.openaiKey) {
+      throw new BadRequestException('AI_PROVIDER is set to openai but OPENAI_API_KEY is not configured.');
+    }
+    if (!useOpenAI && !this.anthropicKey) {
+      throw new BadRequestException('AI_PROVIDER is set to anthropic but ANTHROPIC_API_KEY is not configured.');
+    }
 
-    return {
-      text: `[AI Response - API Key Configured but not implemented]\n\nPrompt received: ${prompt.substring(0, 100)}...`,
-      tokensUsed: Math.ceil(prompt.length / 4),
-    };
+    try {
+      if (useOpenAI) {
+        const model = this.configService.get('OPENAI_MODEL') || 'gpt-3.5-turbo';
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.openaiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: _maxTokens,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error(`OpenAI API error (${response.status}): ${errorBody}`);
+          throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
+        }
+
+        const data = await response.json();
+        return {
+          text: data.choices?.[0]?.message?.content ?? '',
+          tokensUsed: data.usage?.total_tokens ?? 0,
+        };
+      } else {
+        const model = this.configService.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': this.anthropicKey!,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: _maxTokens,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error(`Anthropic API error (${response.status}): ${errorBody}`);
+          throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
+        }
+
+        const data = await response.json();
+        return {
+          text: data.content?.[0]?.text ?? '',
+          tokensUsed: (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0),
+        };
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('AI API call failed:', error);
+      throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
+    }
   }
 }
