@@ -20,7 +20,7 @@ import { SourcesService } from './sources.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname, join, basename } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -114,7 +114,7 @@ export class SourcesController {
     @Res() res: Response,
   ) {
     // Sanitize filename to prevent path traversal
-    const safeName = require('path').basename(filename);
+    const safeName = basename(filename);
     const filePath = join(uploadsDir, safeName);
     
     if (!existsSync(filePath)) {

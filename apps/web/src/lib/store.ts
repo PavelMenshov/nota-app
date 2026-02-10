@@ -24,7 +24,8 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) => {
         // Set cookie for Next.js middleware route protection
         if (typeof document !== 'undefined') {
-          document.cookie = `eywa-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `eywa-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secure}`;
         }
         set({ token, user });
       },
