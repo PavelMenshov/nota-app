@@ -119,6 +119,22 @@ async function fetchApi<T>(
         const error = await response.json().catch(() => ({ 
           message: response.status === 409 ? 'User already exists' : 'An error occurred' 
         }));
+        
+        // Auto-logout on 401 Unauthorized (expired/invalid token)
+        if (response.status === 401 && typeof window !== 'undefined') {
+          try {
+            const { useAuthStore } = await import('./store');
+            const { clearAuth } = useAuthStore.getState();
+            clearAuth();
+            // Redirect to login page if not already there
+            if (!window.location.pathname.startsWith('/auth/')) {
+              window.location.href = '/auth/login';
+            }
+          } catch {
+            // Ignore errors during logout cleanup
+          }
+        }
+        
         throw new ApiError(
           error.message || 'An error occurred',
           response.status

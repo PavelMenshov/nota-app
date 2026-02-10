@@ -29,12 +29,12 @@ async function bootstrap() {
   
   // CORS with secure configuration supporting multiple local origins
   const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3001';
-  const allowedOrigins = [
+  const allowedOrigins = [...new Set([
     corsOrigin,
     // Support both localhost and 127.0.0.1 to handle IPv4/IPv6 resolution differences
     corsOrigin.replace('localhost', '127.0.0.1'),
     corsOrigin.replace('127.0.0.1', 'localhost'),
-  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+  ])];
 
   app.enableCors({
     origin: allowedOrigins,

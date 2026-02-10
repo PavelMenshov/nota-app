@@ -114,7 +114,7 @@ export class SourcesController {
     @Res() res: Response,
   ) {
     // Sanitize filename to prevent path traversal
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+    const safeName = require('path').basename(filename);
     const filePath = join(uploadsDir, safeName);
     
     if (!existsSync(filePath)) {

@@ -302,8 +302,8 @@ export class AIService {
         });
 
         if (!response.ok) {
-          const errorBody = await response.text();
-          console.error(`OpenAI API error (${response.status}): ${errorBody}`);
+          await response.text(); // consume body
+          console.error(`OpenAI API error: status ${response.status}`);
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
@@ -329,8 +329,8 @@ export class AIService {
         });
 
         if (!response.ok) {
-          const errorBody = await response.text();
-          console.error(`Anthropic API error (${response.status}): ${errorBody}`);
+          await response.text(); // consume body
+          console.error(`Anthropic API error: status ${response.status}`);
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
