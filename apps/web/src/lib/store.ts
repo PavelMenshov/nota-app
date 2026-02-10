@@ -21,8 +21,20 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       user: null,
-      setAuth: (token, user) => set({ token, user }),
-      clearAuth: () => set({ token: null, user: null }),
+      setAuth: (token, user) => {
+        // Set cookie for Next.js middleware route protection
+        if (typeof document !== 'undefined') {
+          document.cookie = `eywa-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        }
+        set({ token, user });
+      },
+      clearAuth: () => {
+        // Clear the auth cookie
+        if (typeof document !== 'undefined') {
+          document.cookie = 'eywa-token=; path=/; max-age=0';
+        }
+        set({ token: null, user: null });
+      },
       isAuthenticated: () => !!get().token,
     }),
     {

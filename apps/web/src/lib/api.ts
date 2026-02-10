@@ -236,6 +236,12 @@ export const authApi = {
       '/api/auth/me',
       { token }
     ),
+
+  refresh: (token: string) =>
+    fetchApi<{ accessToken: string; user: { id: string; email: string; name: string | null } }>(
+      '/api/auth/refresh',
+      { method: 'POST', token }
+    ),
 };
 
 // Workspaces API
