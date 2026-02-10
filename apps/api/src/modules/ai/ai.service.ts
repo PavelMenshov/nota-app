@@ -307,7 +307,7 @@ export class AIService {
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
-        const data = await response.json();
+        const data = await response.json() as { choices?: { message?: { content?: string } }[]; usage?: { total_tokens?: number } };
         return {
           text: data.choices?.[0]?.message?.content ?? '',
           tokensUsed: data.usage?.total_tokens ?? 0,
@@ -334,7 +334,7 @@ export class AIService {
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
-        const data = await response.json();
+        const data = await response.json() as { content?: { text?: string }[]; usage?: { input_tokens?: number; output_tokens?: number } };
         return {
           text: data.content?.[0]?.text ?? '',
           tokensUsed: (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0),

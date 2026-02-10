@@ -14,17 +14,16 @@ export function ApiStatus({ onStatusChange }: ApiStatusProps) {
 
   useEffect(() => {
     const checkHealth = async () => {
-      const url = getApiUrl();
-      setApiUrl(url);
+      // Show the configured API URL for diagnostics
+      setApiUrl(getApiUrl());
       
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        const response = await fetch(`${url}/api/health`, {
+        // Use relative URL to go through Next.js proxy, avoiding CORS issues
+        const response = await fetch('/api/health', {
           method: 'GET',
-          mode: 'cors',
-          credentials: 'omit',
           signal: controller.signal,
         });
         

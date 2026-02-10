@@ -11,12 +11,33 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
+  Res,
+  NotFoundException as HttpNotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { SourcesService } from './sources.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import type { Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+// Ensure uploads directory exists
+const uploadsDir = join(process.cwd(), 'uploads');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = diskStorage({
+  destination: uploadsDir,
+  filename: (_req, file, cb) => {
+    const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
+    cb(null, uniqueName);
+  },
+});
 
 @ApiTags('sources')
 @Controller()
@@ -69,22 +90,38 @@ export class SourcesController {
     },
   })
   @ApiResponse({ status: 201, description: 'Source uploaded' })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { storage }))
   async uploadSource(
     @Request() req: { user: { userId: string } },
     @Param('pageId') pageId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    // In production, you would upload to S3/cloud storage and get URL
-    // For demo, we'll use a placeholder URL
     const fileData = {
       filename: file.originalname,
-      url: `/uploads/${Date.now()}-${file.originalname}`,
+      url: `/api/sources/files/${file.filename}`,
       size: file.size,
       mimeType: file.mimetype,
     };
     
     return this.sourcesService.uploadSource(pageId, req.user.userId, fileData);
+  }
+
+  @Get('sources/files/:filename')
+  @ApiOperation({ summary: 'Download an uploaded file' })
+  @ApiResponse({ status: 200, description: 'File content' })
+  async getFile(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    // Sanitize filename to prevent path traversal
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+    const filePath = join(uploadsDir, safeName);
+    
+    if (!existsSync(filePath)) {
+      throw new HttpNotFoundException('File not found');
+    }
+    
+    res.sendFile(filePath);
   }
 
   @Delete('pages/:pageId/sources/:sourceId')
