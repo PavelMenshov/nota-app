@@ -10,7 +10,6 @@ import {
   Circle,
   CheckCircle2,
   Clock,
-  AlertCircle,
   Calendar,
   Trash2,
 } from 'lucide-react';
@@ -31,13 +30,6 @@ interface Task {
   creator: { id: string; name: string | null };
   page: { id: string; title: string } | null;
 }
-
-const statusIcons = {
-  TODO: <Circle className="h-4 w-4 text-muted-foreground" />,
-  IN_PROGRESS: <Clock className="h-4 w-4 text-blue-500" />,
-  DONE: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-  CANCELLED: <AlertCircle className="h-4 w-4 text-red-500" />,
-};
 
 const priorityColors = {
   LOW: 'bg-gray-100 text-gray-700',

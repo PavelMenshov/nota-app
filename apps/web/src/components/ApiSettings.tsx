@@ -78,7 +78,7 @@ export function ApiSettings({ onSave }: ApiSettingsProps) {
       <div>
         <h3 className="text-lg font-bold text-[#141414] mb-1">API Server Settings</h3>
         <p className="text-sm text-[#5b6167]">
-          Configure the API server URL if it's not on the default address
+          Configure the API server URL if it&apos;s not on the default address
         </p>
       </div>
 

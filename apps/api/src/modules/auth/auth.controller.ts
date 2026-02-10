@@ -81,4 +81,14 @@ export class AuthController {
   async getProfile(@Request() req: { user: { userId: string } }) {
     return this.authService.getUser(req.user.userId);
   }
+
+  @Post('refresh')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Refresh JWT token' })
+  @ApiResponse({ status: 200, description: 'New token issued' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - token expired or invalid' })
+  async refreshToken(@Request() req: { user: { userId: string } }) {
+    return this.authService.refreshToken(req.user.userId);
+  }
 }

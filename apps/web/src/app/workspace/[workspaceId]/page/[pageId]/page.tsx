@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore, useAppStore } from '@/lib/store';
-import { pagesApi, docApi, canvasApi, aiApi } from '@/lib/api';
+import { pagesApi, docApi, aiApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface PageData {
