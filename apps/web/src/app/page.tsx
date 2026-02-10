@@ -127,7 +127,7 @@ export default function HomePage() {
 
             {/* Subtitle */}
             <p className="mt-3.5 max-w-[62ch] text-[#5b6167] text-[15.5px] leading-[1.7]">
-              EYWA is the academic "page-first" OS: a workspace contains pages, and each page can host surfaces
+              EYWA is the academic &ldquo;page-first&rdquo; OS: a workspace contains pages, and each page can host surfaces
               (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable - without visual noise.
             </p>
 
@@ -240,7 +240,7 @@ export default function HomePage() {
 
                   <div className="border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.80)] rounded-[14px] px-3 py-2.5 text-[#5b6167] text-[13px] leading-[1.6]">
                     <strong className="text-[#141414]">Turn this page into a hub</strong> for your course notes, roadmap, and priorities.
-                    I can create a "Roadmap" database, extract highlights from PDFs into doc blocks, and schedule review sessions.
+                    I can create a &ldquo;Roadmap&rdquo; database, extract highlights from PDFs into doc blocks, and schedule review sessions.
                   </div>
 
                   <div className="border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.80)] rounded-[14px] px-3 py-2.5 text-[#5b6167] text-[13px] leading-[1.6]">
@@ -271,7 +271,7 @@ export default function HomePage() {
               <div>
                 <h3 className="text-lg font-bold tracking-tight">Ship a clean v1 fast.</h3>
                 <p className="mt-1.5 text-[#5b6167] text-[13.5px] leading-[1.6] max-w-[70ch]">
-                  Start with the core page model, PDF annotations, and tasks/calendar. Add export + "Send to Notion" as a lightweight bridge.
+                  Start with the core page model, PDF annotations, and tasks/calendar. Add export + &ldquo;Send to Notion&rdquo; as a lightweight bridge.
                 </p>
               </div>
               <div className="flex gap-2.5 flex-wrap">
@@ -497,9 +497,9 @@ export default function HomePage() {
 
           <div className="mt-[18px] rounded-[26px] border border-[rgba(20,20,20,0.07)] bg-gradient-to-b from-[rgba(255,255,255,0.86)] to-[rgba(255,255,255,0.70)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] p-5 flex items-center justify-between gap-3.5 flex-wrap">
             <div>
-              <h3 className="text-lg font-bold tracking-tight">Want it even closer to Notion's polish?</h3>
+              <h3 className="text-lg font-bold tracking-tight">Want it even closer to Notion&apos;s polish?</h3>
               <p className="mt-1.5 text-[#5b6167] text-[13.5px] leading-[1.6] max-w-[70ch]">
-                I can add a super subtle "page cover + icon" header style, a database-table preview, and micro-interactions (hover/scroll reveal) without turning it into a neon dashboard.
+                I can add a super subtle &ldquo;page cover + icon&rdquo; header style, a database-table preview, and micro-interactions (hover/scroll reveal) without turning it into a neon dashboard.
               </p>
             </div>
             <div className="flex gap-2.5 flex-wrap">
@@ -571,7 +571,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2">Architecture Overview</h3>
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Learn about EYWA's microservices design, tech stack, and how different components work together.
+                Learn about EYWA&apos;s microservices design, tech stack, and how different components work together.
               </p>
               <a href="https://github.com/expusercatherine/eywa-platform#-architecture" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 Explore architecture
