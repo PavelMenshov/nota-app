@@ -8,6 +8,22 @@ function isMobileEnvironment(): boolean {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+// Get the base URL for actual API requests.
+// In the browser, uses relative URLs to leverage the Next.js proxy (avoids CORS issues).
+// During SSR, uses the absolute API URL since there's no browser origin to proxy through.
+function getRequestBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const config = getConfig();
+    // If user explicitly configured an API URL, use it (e.g., non-localhost scenarios)
+    if (config.apiUrl) return config.apiUrl;
+    // In browser, use relative URLs so requests go through Next.js proxy rewrites
+    // This avoids CORS issues since the request stays on the same origin
+    return '';
+  }
+  // SSR: need absolute URL since there's no browser origin
+  return getApiUrl();
+}
+
 // Get a more helpful API URL for error messages
 function getApiUrlInfo(): { url: string; isFallback: boolean } {
   const config = getConfig();
@@ -44,15 +60,13 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Check if the API is reachable
 async function checkApiHealth(apiUrl?: string): Promise<boolean> {
-  const url = apiUrl || getApiUrl();
+  const url = apiUrl || getRequestBaseUrl();
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Increased timeout
     
     const response = await fetch(`${url}/api/health`, {
       method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
       signal: controller.signal,
     });
     
@@ -73,8 +87,8 @@ async function fetchApi<T>(
 ): Promise<T> {
   const { token, retries = 2, retryDelay = 1000, timeout = 10000, ...fetchOptions } = options;
   
-  // Get API URL dynamically for each request
-  const apiUrl = getApiUrl();
+  // Use relative URLs in browser (via Next.js proxy) to avoid CORS issues
+  const apiUrl = getRequestBaseUrl();
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

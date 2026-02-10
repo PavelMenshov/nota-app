@@ -27,12 +27,20 @@ async function bootstrap() {
     }),
   );
   
-  // CORS with secure configuration
+  // CORS with secure configuration supporting multiple local origins
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3001';
+  const allowedOrigins = [
+    corsOrigin,
+    // Support both localhost and 127.0.0.1 to handle IPv4/IPv6 resolution differences
+    corsOrigin.replace('localhost', '127.0.0.1'),
+    corsOrigin.replace('127.0.0.1', 'localhost'),
+  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   });
 
   // Validation with security-focused settings
@@ -72,10 +80,13 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 4000;
-  await app.listen(port);
+  // Bind to 0.0.0.0 to accept connections on all network interfaces,
+  // avoiding issues where localhost resolves to IPv6 (::1) but the server only listens on IPv4 (127.0.0.1)
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 EYWA API is running on http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
   console.log(`🔒 Security: Rate limiting, CORS, and Helmet enabled`);
+  console.log(`🌐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
 }
 
 bootstrap();
