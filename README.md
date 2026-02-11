@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./assets/logo.svg" alt="EYWA Logo" width="100" height="100">
+  <img src="./assets/logo.svg" alt="Nota Logo" width="100" height="100">
 </p>
 
-# EYWA — Academic Workspace
+# Nota — Academic Workspace
 
 > **One workspace for notes, canvas, and PDFs — connected by design.**
 
-EYWA is the academic "page-first" OS: a workspace contains pages, and each page can host surfaces (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable — without visual noise. Calm like Notion — built for PDFs, deadlines, and study loops.
+Nota is the academic "page-first" OS: a workspace contains pages, and each page can host surfaces (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable — without visual noise. Calm like Notion — built for PDFs, deadlines, and study loops.
 
 ## ✨ Overview
 
@@ -26,7 +26,7 @@ Everything is linkable, versioned, and shareable with role-based access (Owner/E
 - ✅ **Simplified Documentation**: Consolidated from 13 to 6 essential documentation files
 - ✅ **Better User Experience**: Streamlined authentication flow for end users
 
-### How to Use EYWA Authentication (For Users)
+### How to Use Nota Authentication (For Users)
 **⚠️ Important: Do NOT type authentication URLs in your browser's address bar!**
 
 **✅ Correct Way to Register/Login:**
@@ -675,7 +675,7 @@ curl http://localhost:4000/api/health
 cd apps/api
 pnpm dev
 
-# Wait for API to show "🚀 EYWA API is running on http://localhost:4000"
+# Wait for API to show "🚀 Nota API is running on http://localhost:4000"
 
 # Terminal 2 - Then start web:
 cd apps/web
@@ -888,7 +888,7 @@ pnpm dev
 ## 📞 Support
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/expusercatherine/eywa-platform/issues)
-- **Email**: team@eywa.app
+- **Email**: team@nota.app
 - **Documentation**: 
   - [Getting Started Guide](./docs/GETTING-STARTED.md)
   - [API Documentation](./docs/API.md)
@@ -908,7 +908,7 @@ pnpm dev
 
 ## 🎨 Design Philosophy
 
-EYWA follows a **"calm UI, strong model"** philosophy:
+Nota follows a **"calm UI, strong model"** philosophy:
 
 - **Workspace → Pages → Surfaces** - Clear hierarchy that makes sense
 - **Versioned** - Every change is tracked and reversible

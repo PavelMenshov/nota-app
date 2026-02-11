@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { EywaIcon } from '@/components/EywaIcon';
+import { NotaIcon } from '@/components/NotaIcon';
 
 // Use environment variable or default to localhost for API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -25,8 +25,8 @@ export default function HomePage() {
           <div className="h-[70px] flex items-center justify-between gap-4">
             {/* Brand */}
             <Link href="#top" className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-              <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
-              <span className="text-base">EYWA</span>
+              <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
+              <span className="text-base">Nota</span>
             </Link>
 
             {/* Desktop Nav */}
@@ -127,7 +127,7 @@ export default function HomePage() {
 
             {/* Subtitle */}
             <p className="mt-3.5 max-w-[62ch] text-[#5b6167] text-[15.5px] leading-[1.7]">
-              EYWA is the academic &ldquo;page-first&rdquo; OS: a workspace contains pages, and each page can host surfaces
+              Nota is the academic &ldquo;page-first&rdquo; OS: a workspace contains pages, and each page can host surfaces
               (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable - without visual noise.
             </p>
 
@@ -155,7 +155,7 @@ export default function HomePage() {
                   <div className="w-2.5 h-2.5 rounded-full bg-[rgba(56,196,112,0.80)]" />
                 </div>
                 <div className="font-mono text-[11px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)]">
-                  EYWA • workspace preview
+                  Nota • workspace preview
                 </div>
                 <div className="font-mono text-[11px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)] opacity-60 hidden sm:block">
                   pages • docs • pdf
@@ -305,7 +305,7 @@ export default function HomePage() {
                       Now Available as Desktop App
                     </h2>
                     <p className="text-[#5b6167] text-base leading-relaxed mb-6">
-                      Experience EYWA with native desktop performance. Enjoy faster loading times, offline support, 
+                      Experience Nota with native desktop performance. Enjoy faster loading times, offline support, 
                       and seamless system integration on Windows, macOS, and Linux.
                     </p>
                     
@@ -521,7 +521,7 @@ export default function HomePage() {
         <Section
           id="docs"
           title="Documentation & Resources"
-          description="Everything you need to get started with EYWA. Explore our guides, API documentation, and community resources."
+          description="Everything you need to get started with Nota. Explore our guides, API documentation, and community resources."
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Getting Started Guide */}
@@ -533,7 +533,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2">Getting Started</h3>
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Quick start guide to set up EYWA, create your first workspace, and understand the core concepts.
+                Quick start guide to set up Nota, create your first workspace, and understand the core concepts.
               </p>
               <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 Read guide
@@ -552,7 +552,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2">API Documentation</h3>
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Comprehensive API reference for integrating EYWA into your applications. RESTful endpoints and WebSocket support.
+                Comprehensive API reference for integrating Nota into your applications. RESTful endpoints and WebSocket support.
               </p>
               <a href={`${API_URL}/api/docs`} target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 View API docs
@@ -571,7 +571,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2">Architecture Overview</h3>
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Learn about EYWA&apos;s microservices design, tech stack, and how different components work together.
+                Learn about Nota&apos;s microservices design, tech stack, and how different components work together.
               </p>
               <a href="https://github.com/expusercatherine/eywa-platform#-architecture" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 Explore architecture
@@ -590,7 +590,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2">User Guide</h3>
               <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Detailed tutorials on using EYWA features: docs, canvas, PDF annotations, tasks, and collaboration tools.
+                Detailed tutorials on using Nota features: docs, canvas, PDF annotations, tasks, and collaboration tools.
               </p>
               <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
                 Browse tutorials
@@ -646,8 +646,8 @@ export default function HomePage() {
             <div className="flex items-start justify-between gap-[18px] flex-wrap">
               <div>
                 <div className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-                  <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
-                  <span>EYWA</span>
+                  <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
+                  <span>Nota</span>
                 </div>
                 <p className="mt-2 text-[#5b6167] text-[13px] max-w-[60ch]">
                   Calm UI, strong model: workspace › pages › surfaces. Versioned, shareable, collaborative - designed for academic flow.
@@ -657,11 +657,11 @@ export default function HomePage() {
                 <div className="mt-4 space-y-2">
                   <h4 className="text-[13px] font-bold text-[#141414] tracking-tight">Contact Our Team</h4>
                   <div className="flex flex-col gap-1.5 text-[12px] text-[#5b6167]">
-                    <a href="mailto:team@eywa.app" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
+                    <a href="mailto:team@nota.app" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      team@eywa.app
+                      team@nota.app
                     </a>
                     <a href="https://github.com/expusercatherine/eywa-platform" target="_blank" rel="noopener noreferrer" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

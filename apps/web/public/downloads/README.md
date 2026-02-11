@@ -27,9 +27,9 @@ pnpm package:linux  # Linux (.AppImage)
 
 After building, move the following files here for distribution:
 
-- **Windows**: `EYWA-Setup.exe` (installer) or `EYWA-portable.exe`
-- **macOS**: `EYWA.dmg` (disk image) or `EYWA.zip`
-- **Linux**: `EYWA.AppImage` or `EYWA.deb`
+- **Windows**: `Nota-Setup.exe` (installer) or `Nota-portable.exe`
+- **macOS**: `Nota.dmg` (disk image) or `Nota.zip`
+- **Linux**: `Nota.AppImage` or `Nota.deb`
 
 ## Production Deployment
 

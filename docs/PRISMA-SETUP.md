@@ -2,7 +2,7 @@
 
 ## The Problem
 
-When starting the EYWA project, you may encounter TypeScript errors like:
+When starting the Nota project, you may encounter TypeScript errors like:
 ```
 Property 'user' does not exist on type 'PrismaService'
 Property 'workspace' does not exist on type 'PrismaService'

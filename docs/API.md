@@ -2,12 +2,12 @@
 
 ## Overview
 
-The EYWA Platform API is a RESTful API built with NestJS that provides endpoints for managing workspaces, pages, documents, tasks, and more.
+The Nota Platform API is a RESTful API built with NestJS that provides endpoints for managing workspaces, pages, documents, tasks, and more.
 
 ## Base URL
 
 - **Development**: `http://localhost:4000/api`
-- **Production**: `https://api.eywa.app/api`
+- **Production**: `https://api.nota.app/api`
 
 ## Interactive Documentation
 
@@ -643,7 +643,7 @@ The API is currently at version 0.1.0. Future versions will be accessible via pa
 
 - **Documentation**: http://localhost:4000/api/docs
 - **GitHub**: https://github.com/expusercatherine/eywa-platform
-- **Email**: support@eywa.app
+- **Email**: support@nota.app
 
 ---
 

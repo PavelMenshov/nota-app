@@ -1,10 +1,10 @@
-# EYWA Desktop Application
+# Nota Desktop Application
 
-Desktop application for EYWA platform built with Electron.
+Desktop application for Nota platform built with Electron.
 
 ## Features
 
-- Native desktop experience for EYWA platform
+- Native desktop experience for Nota platform
 - Cross-platform support (Windows, macOS, Linux)
 - Offline capability
 - Native notifications

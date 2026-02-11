@@ -2,7 +2,7 @@
 
 ## Overview
 
-EYWA follows a modern microservices-inspired architecture with clear separation of concerns, built on a monorepo structure using Turborepo for efficient builds and development.
+Nota follows a modern microservices-inspired architecture with clear separation of concerns, built on a monorepo structure using Turborepo for efficient builds and development.
 
 ## System Architecture
 

@@ -98,9 +98,9 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">E</span>
+                <span className="text-primary-foreground font-bold">N</span>
               </div>
-              <span className="text-xl font-bold">EYWA</span>
+              <span className="text-xl font-bold">Nota</span>
             </Link>
             <div className="hidden md:flex items-center gap-2 ml-4">
               <div className="relative">

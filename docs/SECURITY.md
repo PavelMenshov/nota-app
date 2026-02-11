@@ -2,7 +2,7 @@
 
 ## Overview
 
-EYWA takes security and data protection seriously. This document outlines our security practices, data handling policies, and compliance measures to ensure the safety and privacy of academic work.
+Nota takes security and data protection seriously. This document outlines our security practices, data handling policies, and compliance measures to ensure the safety and privacy of academic work.
 
 ## 🔒 Security Measures
 
@@ -244,7 +244,7 @@ Content-Security-Policy: default-src 'self'
 
 If you discover a security vulnerability, please report it responsibly:
 
-1. **Email**: security@eywa.app
+1. **Email**: security@nota.app
 2. **GitHub**: Private security advisory
 3. **Response**: Within 48 hours acknowledgment
 
@@ -308,7 +308,7 @@ If you discover a security vulnerability, please report it responsibly:
 - **Last Updated**: February 2026
 - **Version**: 1.0
 - **Next Review**: August 2026
-- **Contact**: security@eywa.app
+- **Contact**: security@nota.app
 
 ---
 

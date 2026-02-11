@@ -14,7 +14,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Authentication endpoints information' })
   getAuthInfo() {
     return {
-      message: 'EYWA Authentication API',
+      message: 'Nota Authentication API',
       version: '1.0.0',
       endpoints: {
         register: {

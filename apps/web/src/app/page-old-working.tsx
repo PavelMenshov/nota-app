@@ -9,9 +9,9 @@ export default function HomePage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">E</span>
+              <span className="text-primary-foreground font-bold">N</span>
             </div>
-            <span className="text-xl font-bold">EYWA</span>
+            <span className="text-xl font-bold">Nota</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/auth/login">
@@ -32,7 +32,7 @@ export default function HomePage() {
             <span className="text-primary">Zero Friction.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground">
-            EYWA is a unified academic ecosystem for university students and faculty,
+            Nota is a unified academic ecosystem for university students and faculty,
             combining notes, PDF annotations, interactive whiteboards, tasks, and calendar
             in one intelligent platform.
           </p>
@@ -89,7 +89,7 @@ export default function HomePage() {
       <footer className="border-t mt-20">
         <div className="container mx-auto flex h-16 items-center justify-center px-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 EYWA Platform. Developed by PolyU students.
+            © 2024 Nota Platform. Developed by PolyU students.
           </p>
         </div>
       </footer>

@@ -60,8 +60,8 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('EYWA Platform API')
-    .setDescription('The EYWA Platform API documentation')
+    .setTitle('Nota Platform API')
+    .setDescription('The Nota Platform API documentation')
     .setVersion('0.1.0')
     .addBearerAuth()
     .addTag('auth', 'Authentication endpoints')
@@ -83,7 +83,7 @@ async function bootstrap() {
   // Bind to 0.0.0.0 to accept connections on all network interfaces,
   // avoiding issues where localhost resolves to IPv6 (::1) but the server only listens on IPv4 (127.0.0.1)
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 EYWA API is running on http://localhost:${port}`);
+  console.log(`🚀 Nota API is running on http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
   console.log(`🔒 Security: Rate limiting, CORS, and Helmet enabled`);
   console.log(`🌐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);

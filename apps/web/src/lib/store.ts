@@ -25,21 +25,21 @@ export const useAuthStore = create<AuthState>()(
         // Set cookie for Next.js middleware route protection
         if (typeof document !== 'undefined') {
           const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-          document.cookie = `eywa-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secure}`;
+          document.cookie = `nota-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secure}`;
         }
         set({ token, user });
       },
       clearAuth: () => {
         // Clear the auth cookie
         if (typeof document !== 'undefined') {
-          document.cookie = 'eywa-token=; path=/; max-age=0';
+          document.cookie = 'nota-token=; path=/; max-age=0';
         }
         set({ token: null, user: null });
       },
       isAuthenticated: () => !!get().token,
     }),
     {
-      name: 'eywa-auth',
+      name: 'nota-auth',
     }
   )
 );
