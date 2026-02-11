@@ -12,6 +12,7 @@ interface AuthState {
   token: string | null;
   user: User | null;
   setAuth: (token: string, user: User) => void;
+  updateUser: (user: Partial<User>) => void;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
 }
@@ -28,6 +29,12 @@ export const useAuthStore = create<AuthState>()(
           document.cookie = `nota-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secure}`;
         }
         set({ token, user });
+      },
+      updateUser: (userData) => {
+        const current = get().user;
+        if (current) {
+          set({ user: { ...current, ...userData } });
+        }
       },
       clearAuth: () => {
         // Clear the auth cookie
