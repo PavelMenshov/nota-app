@@ -10,7 +10,6 @@ import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { NotaIcon } from '@/components/NotaIcon';
-import { ApiStatus } from '@/components/ApiStatus';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -134,9 +133,6 @@ export default function LoginPage() {
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </form>
-
-              {/* API Status */}
-              <ApiStatus />
 
               {/* Footer */}
               <div className="text-center">

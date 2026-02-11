@@ -10,7 +10,6 @@ import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { NotaIcon } from '@/components/NotaIcon';
-import { ApiStatus } from '@/components/ApiStatus';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -150,9 +149,6 @@ export default function RegisterPage() {
                   {isLoading ? 'Creating account...' : 'Create account'}
                 </Button>
               </form>
-
-              {/* API Status */}
-              <ApiStatus />
 
               {/* Footer */}
               <div className="text-center">
