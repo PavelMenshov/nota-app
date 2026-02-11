@@ -7,7 +7,7 @@ const authRoutes = ['/auth/login', '/auth/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('eywa-token')?.value;
+  const token = request.cookies.get('nota-token')?.value;
 
   // Redirect unauthenticated users away from protected routes
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));

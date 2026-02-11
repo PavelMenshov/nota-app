@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -14,7 +14,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Authentication endpoints information' })
   getAuthInfo() {
     return {
-      message: 'EYWA Authentication API',
+      message: 'Nota Authentication API',
       version: '1.0.0',
       endpoints: {
         register: {
@@ -90,5 +90,18 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized - token expired or invalid' })
   async refreshToken(@Request() req: { user: { userId: string } }) {
     return this.authService.refreshToken(req.user.userId);
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiResponse({ status: 200, description: 'Profile updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateProfile(
+    @Request() req: { user: { userId: string } },
+    @Body() body: { name?: string; avatarUrl?: string },
+  ) {
+    return this.authService.updateProfile(req.user.userId, body);
   }
 }

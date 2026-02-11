@@ -1,10 +1,10 @@
 # Desktop Application Setup
 
-This guide explains how to set up, develop, and deploy the EYWA desktop application.
+This guide explains how to set up, develop, and deploy the Nota desktop application.
 
 ## Overview
 
-The EYWA desktop application is built with Electron and provides a native desktop experience for all major platforms (Windows, macOS, and Linux). It wraps the web application in a native shell with enhanced features like:
+The Nota desktop application is built with Electron and provides a native desktop experience for all major platforms (Windows, macOS, and Linux). It wraps the web application in a native shell with enhanced features like:
 
 - **Native Performance**: Faster startup and better resource management
 - **Offline Support**: Work without internet connectivity
@@ -120,16 +120,16 @@ pnpm package:linux
 ### Build Outputs
 
 **Windows**:
-- `EYWA-Setup-{version}.exe` - NSIS installer
-- `EYWA-{version}.exe` - Portable executable
+- `Nota-Setup-{version}.exe` - NSIS installer
+- `Nota-{version}.exe` - Portable executable
 
 **macOS**:
-- `EYWA-{version}.dmg` - Disk image
-- `EYWA-{version}.zip` - Compressed app
+- `Nota-{version}.dmg` - Disk image
+- `Nota-{version}.zip` - Compressed app
 
 **Linux**:
-- `EYWA-{version}.AppImage` - Universal Linux app
-- `eywa_{version}_amd64.deb` - Debian package
+- `Nota-{version}.AppImage` - Universal Linux app
+- `nota_{version}_amd64.deb` - Debian package
 
 ## Code Signing (Production)
 
@@ -168,10 +168,10 @@ The app uses `electron-updater` for seamless updates.
 ```yaml
 version: 0.1.0
 files:
-  - url: EYWA-Setup-0.1.0.exe
+  - url: Nota-Setup-0.1.0.exe
     sha512: abc123...
     size: 85000000
-path: EYWA-Setup-0.1.0.exe
+path: Nota-Setup-0.1.0.exe
 sha512: abc123...
 releaseDate: '2026-02-05T09:00:00.000Z'
 ```
@@ -258,9 +258,9 @@ console.log('Renderer:', message);
 ```
 
 Logs are saved to:
-- **Windows**: `%USERPROFILE%\AppData\Roaming\EYWA\logs\`
-- **macOS**: `~/Library/Logs/EYWA/`
-- **Linux**: `~/.config/EYWA/logs/`
+- **Windows**: `%USERPROFILE%\AppData\Roaming\Nota\logs\`
+- **macOS**: `~/Library/Logs/Nota/`
+- **Linux**: `~/.config/Nota/logs/`
 
 ## Troubleshooting
 
@@ -274,7 +274,7 @@ pnpm install
 
 **Error: spawn EACCES (Linux)**
 ```bash
-chmod +x apps/desktop/release/EYWA-*.AppImage
+chmod +x apps/desktop/release/Nota-*.AppImage
 ```
 
 ### Runtime Errors
@@ -287,7 +287,7 @@ chmod +x apps/desktop/release/EYWA-*.AppImage
 **App won't start (macOS)**
 ```bash
 # Remove quarantine attribute
-xattr -cr /Applications/EYWA.app
+xattr -cr /Applications/Nota.app
 ```
 
 ## CI/CD Integration

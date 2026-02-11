@@ -1,6 +1,6 @@
-# Getting Started with EYWA
+# Getting Started with Nota
 
-Welcome to EYWA - Your All-in-One Academic Ecosystem! This guide will help you get up and running with EYWA in minutes.
+Welcome to Nota - Your All-in-One Academic Ecosystem! This guide will help you get up and running with Nota in minutes.
 
 ## 📋 Table of Contents
 
@@ -46,7 +46,7 @@ This will install all dependencies for the monorepo, including the API and web a
 
 ### 3. Start Infrastructure
 
-EYWA requires PostgreSQL, Redis, and MinIO (for file storage). Start them using Docker Compose:
+Nota requires PostgreSQL, Redis, and MinIO (for file storage). Start them using Docker Compose:
 
 ```bash
 docker-compose up -d
@@ -146,7 +146,7 @@ Your first workspace is created! 🎉
 
 ### Create Your First Page
 
-Pages are the core organizational unit in EYWA:
+Pages are the core organizational unit in Nota:
 
 1. In your workspace, click "+ New Page"
 2. Enter a page title (e.g., "Study Notes")
@@ -442,9 +442,9 @@ pnpm lint
 ## Need Help?
 
 - **GitHub Issues**: Report bugs or request features
-- **Email**: support@eywa.app
+- **Email**: support@nota.app
 - **Community**: Join discussions on GitHub
 
 ---
 
-*Happy learning with EYWA! 🚀*
+*Happy learning with Nota! 🚀*

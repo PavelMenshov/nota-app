@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,14 +12,15 @@ import {
   Share2,
   Download,
   Sparkles,
-  MoreHorizontal,
+  Upload,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore, useAppStore } from '@/lib/store';
-import { pagesApi, docApi, aiApi } from '@/lib/api';
+import { pagesApi, docApi, aiApi, sourcesApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface PageData {
@@ -51,6 +52,9 @@ export default function PageEditorPage() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeletingSource, setIsDeletingSource] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -148,6 +152,58 @@ export default function PageEditorPage() {
       });
     } finally {
       setIsGeneratingAI(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/pages/${pageId}/sources/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      toast({ title: 'File uploaded!' });
+      loadPage();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload file',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteSource = async (sourceId: string) => {
+    if (!token) return;
+    setIsDeletingSource(sourceId);
+    try {
+      await sourcesApi.delete(token, pageId, sourceId);
+      toast({ title: 'Source deleted' });
+      loadPage();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete source',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingSource(null);
     }
   };
 
@@ -251,11 +307,30 @@ export default function PageEditorPage() {
 
           <TabsContent value="sources" className="flex-1 m-0">
             <div className="max-w-4xl mx-auto p-8">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">PDF Sources</h3>
-                <Button>
-                  <Files className="h-4 w-4 mr-2" />
-                  Upload PDF
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload PDF
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -272,14 +347,31 @@ export default function PageEditorPage() {
                   {page.sources.map((source) => (
                     <div key={source.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
                       <Files className="h-8 w-8 text-red-500" />
-                      <div className="flex-1">
-                        <p className="font-medium">{source.fileName}</p>
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={`/api/sources/files/${source.fileUrl.split('/').pop()}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium hover:underline text-primary"
+                        >
+                          {source.fileName}
+                        </a>
                         <p className="text-sm text-muted-foreground">
                           {source.pageCount ? `${source.pageCount} pages` : 'PDF document'}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteSource(source.id)}
+                        disabled={isDeletingSource === source.id}
+                      >
+                        {isDeletingSource === source.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   ))}

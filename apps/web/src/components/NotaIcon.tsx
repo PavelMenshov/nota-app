@@ -1,9 +1,9 @@
-interface EywaIconProps {
+interface NotaIconProps {
   className?: string;
   size?: number;
 }
 
-export function EywaIcon({ className = '', size = 34 }: EywaIconProps) {
+export function NotaIcon({ className = '', size = 34 }: NotaIconProps) {
   return (
     <svg
       width={size}
@@ -15,7 +15,7 @@ export function EywaIcon({ className = '', size = 34 }: EywaIconProps) {
     >
       {/* Background gradient */}
       <defs>
-        <linearGradient id="eywa-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="nota-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="rgba(31,122,74,0.18)" />
           <stop offset="100%" stopColor="rgba(31,122,74,0.06)" />
         </linearGradient>
@@ -26,24 +26,19 @@ export function EywaIcon({ className = '', size = 34 }: EywaIconProps) {
         width="34" 
         height="34" 
         rx="10" 
-        fill="url(#eywa-gradient)" 
+        fill="url(#nota-gradient)" 
         stroke="rgba(20,20,20,0.10)" 
         strokeWidth="1"
       />
       
-      {/* E letter - stylized */}
+      {/* N letter - stylized */}
       <path
-        d="M10 10 H20 M10 17 H18 M10 24 H20"
+        d="M10 24 V10 L22 24 V10"
         stroke="#1f7a4a"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <path
-        d="M10 10 V24"
-        stroke="#1f7a4a"
-        strokeWidth="2.5"
-        strokeLinecap="round"
+        fill="none"
       />
       
       {/* Decorative dot */}

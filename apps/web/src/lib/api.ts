@@ -242,6 +242,12 @@ export const authApi = {
       '/api/auth/refresh',
       { method: 'POST', token }
     ),
+
+  updateProfile: (token: string, data: { name?: string; avatarUrl?: string }) =>
+    fetchApi<{ id: string; email: string; name: string | null; avatarUrl: string | null }>(
+      '/api/auth/profile',
+      { method: 'PUT', body: JSON.stringify(data), token }
+    ),
 };
 
 // Workspaces API
@@ -277,6 +283,32 @@ export const workspacesApi = {
 
   delete: (token: string, id: string) =>
     fetchApi<{ success: boolean }>(`/api/workspaces/${id}`, { method: 'DELETE', token }),
+
+  addMember: (token: string, workspaceId: string, data: { email: string; role?: string }) =>
+    fetchApi<{ id: string }>(`/api/workspaces/${workspaceId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  removeMember: (token: string, workspaceId: string, memberId: string) =>
+    fetchApi<{ success: boolean }>(`/api/workspaces/${workspaceId}/members/${memberId}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  updateMemberRole: (token: string, workspaceId: string, memberId: string, role: string) =>
+    fetchApi<{ id: string }>(`/api/workspaces/${workspaceId}/members/${memberId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+      token,
+    }),
+
+  generateShareLink: (token: string, workspaceId: string) =>
+    fetchApi<{ shareLink: string; shareUrl: string }>(`/api/workspaces/${workspaceId}/share`, {
+      method: 'POST',
+      token,
+    }),
 };
 
 // Pages API
@@ -467,6 +499,15 @@ export const aiApi = {
       today: { requests: number; tokens: number; limit: number; remaining: number };
       total: { requests: number; tokens: number };
     }>('/api/ai/usage', { token }),
+};
+
+// Sources API
+export const sourcesApi = {
+  delete: (token: string, pageId: string, sourceId: string) =>
+    fetchApi<{ success: boolean }>(`/api/pages/${pageId}/sources/${sourceId}`, {
+      method: 'DELETE',
+      token,
+    }),
 };
 
 // Export API

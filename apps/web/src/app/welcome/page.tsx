@@ -7,7 +7,7 @@ import { Download, Globe, Laptop, ArrowRight, Check, Zap, Shield, Cloud } from '
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { EywaIcon } from '@/components/EywaIcon';
+import { NotaIcon } from '@/components/NotaIcon';
 import { APP_CONFIG } from '@/lib/app-config';
 
 export default function WelcomePage() {
@@ -86,8 +86,8 @@ export default function WelcomePage() {
         <div className="max-w-[1140px] mx-auto px-6">
           <div className="h-[70px] flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-              <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
-              <span className="text-base">EYWA</span>
+              <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
+              <span className="text-base">Nota</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-[#5b6167] hidden sm:inline">Welcome, {user?.name || user?.email}</span>
@@ -109,7 +109,7 @@ export default function WelcomePage() {
               Choose Your Experience
             </h1>
             <p className="text-lg text-[#5b6167] max-w-2xl mx-auto">
-              Get the most out of EYWA with our native desktop app, or start working immediately in your browser.
+              Get the most out of Nota with our native desktop app, or start working immediately in your browser.
             </p>
           </div>
 
@@ -129,7 +129,7 @@ export default function WelcomePage() {
                 </div>
                 <CardTitle className="text-2xl">Desktop Application</CardTitle>
                 <CardDescription className="text-base">
-                  Download EYWA for {getPlatformName()} and experience the full power of native performance.
+                  Download Nota for {getPlatformName()} and experience the full power of native performance.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

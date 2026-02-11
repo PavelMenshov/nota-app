@@ -3,7 +3,7 @@
  * This allows users to configure the API URL without environment variables
  */
 
-const CONFIG_STORAGE_KEY = 'eywa-config';
+const CONFIG_STORAGE_KEY = 'nota-config';
 
 export interface AppConfig {
   apiUrl?: string;

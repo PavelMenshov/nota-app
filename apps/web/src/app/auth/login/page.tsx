@@ -9,8 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { EywaIcon } from '@/components/EywaIcon';
-import { ApiStatus } from '@/components/ApiStatus';
+import { NotaIcon } from '@/components/NotaIcon';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -77,8 +76,8 @@ export default function LoginPage() {
         <div className="max-w-[1140px] mx-auto px-6">
           <div className="h-[70px] flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-              <EywaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
-              <span className="text-base">EYWA</span>
+              <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
+              <span className="text-base">Nota</span>
             </Link>
             <Link href="/auth/register">
               <Button variant="ghost" size="sm" className="h-10 px-3.5 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.10)] bg-white hover:bg-[rgba(255,255,255,0.92)] hover:border-[rgba(20,20,20,0.16)] shadow-[0_10px_26px_rgba(20,20,20,0.06)] transition-all">
@@ -97,7 +96,7 @@ export default function LoginPage() {
             <div className="space-y-6">
               {/* Header */}
               <div className="space-y-2">
-                <h1 className="text-2xl font-extrabold tracking-tight text-[#141414]">Sign in to EYWA</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-[#141414]">Sign in to Nota</h1>
                 <p className="text-[14px] text-[#5b6167]">Enter your credentials to access your workspace</p>
               </div>
 
@@ -134,9 +133,6 @@ export default function LoginPage() {
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </form>
-
-              {/* API Status */}
-              <ApiStatus />
 
               {/* Footer */}
               <div className="text-center">

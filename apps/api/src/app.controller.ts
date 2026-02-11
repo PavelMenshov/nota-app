@@ -9,7 +9,7 @@ export class AppController {
   @ApiExcludeEndpoint()
   getRoot() {
     return {
-      name: 'EYWA Platform API',
+      name: 'Nota Platform API',
       version: '0.1.0',
       status: 'running',
       timestamp: new Date().toISOString(),

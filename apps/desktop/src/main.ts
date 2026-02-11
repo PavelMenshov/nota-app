@@ -28,7 +28,7 @@ function loadErrorPage() {
     <html>
       <head>
         <meta charset="UTF-8">
-        <title>Connection Error - EYWA</title>
+        <title>Connection Error - Nota</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -121,14 +121,14 @@ function loadErrorPage() {
       <body>
         <div class="container">
           <div class="icon">⚠️</div>
-          <h1>Unable to Connect to EYWA</h1>
-          <p>The desktop app couldn't connect to the EYWA web application.</p>
+          <h1>Unable to Connect to Nota</h1>
+          <p>The desktop app couldn't connect to the Nota web application.</p>
           <div class="url">${WEB_APP_URL}</div>
           
           <div class="steps">
             <h3>To fix this issue:</h3>
             <ol>
-              <li>Make sure the EYWA web server is running on port 3001:<br><code>pnpm dev</code> or <code>pnpm dev:web</code></li>
+              <li>Make sure the Nota web server is running on port 3001:<br><code>pnpm dev</code> or <code>pnpm dev:web</code></li>
               <li>Check if the API server is running on port 4000:<br><code>pnpm dev:api</code></li>
               <li>Verify Docker services are up:<br><code>docker compose up -d</code></li>
               <li>Check that ports 3001 (web) and 4000 (API) are not blocked</li>
@@ -152,7 +152,7 @@ function createWindow() {
     height: APP_CONFIG.DEFAULT_HEIGHT,
     minWidth: APP_CONFIG.MIN_WIDTH,
     minHeight: APP_CONFIG.MIN_HEIGHT,
-    title: 'EYWA - Academic Workspace',
+    title: 'Nota - Academic Workspace',
     icon: path.join(__dirname, '../assets/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -189,7 +189,7 @@ function createWindow() {
     console.error('Renderer process crashed');
     const response = dialog.showMessageBoxSync(mainWindow!, {
       type: 'error',
-      title: 'EYWA Crashed',
+      title: 'Nota Crashed',
       message: 'The application has crashed. Would you like to restart?',
       buttons: ['Restart', 'Close'],
       defaultId: 0,
@@ -214,7 +214,7 @@ function createWindow() {
   });
 
   // Load the web app
-  console.log(`Loading EYWA from: ${WEB_APP_URL}`);
+  console.log(`Loading Nota from: ${WEB_APP_URL}`);
   if (isDev) {
     mainWindow.loadURL(WEB_APP_URL);
     // Open DevTools in development
@@ -326,7 +326,7 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'About EYWA',
+          label: 'About Nota',
           click: () => {
             mainWindow?.webContents.send('menu-action', 'about');
           },

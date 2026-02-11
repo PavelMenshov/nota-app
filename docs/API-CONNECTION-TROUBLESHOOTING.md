@@ -53,7 +53,7 @@ pnpm dev
 
 The API should start on `http://localhost:4000`. You'll see:
 ```
-🚀 EYWA API is running on http://localhost:4000
+🚀 Nota API is running on http://localhost:4000
 📚 API Documentation: http://localhost:4000/api/docs
 🔒 Security: Rate limiting, CORS, and Helmet enabled
 ```
