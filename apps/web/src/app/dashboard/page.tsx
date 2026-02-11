@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, FolderOpen, LogOut, Settings, Search } from 'lucide-react';
+import { Plus, FolderOpen, LogOut, Settings, Search, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,15 @@ export default function DashboardPage() {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const router = useRouter();
   const { token, user, clearAuth, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -82,6 +91,56 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  const handleEditWorkspace = async () => {
+    if (!token || !editingWorkspace || !editName.trim()) return;
+    setIsEditing(true);
+    try {
+      await workspacesApi.update(token, editingWorkspace.id, {
+        name: editName,
+        description: editDesc || undefined,
+      });
+      toast({ title: 'Workspace updated!' });
+      setShowEditModal(false);
+      setEditingWorkspace(null);
+      loadWorkspaces();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update workspace',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDeleteWorkspace = async (id: string) => {
+    if (!token) return;
+    setIsDeleting(true);
+    try {
+      await workspacesApi.delete(token, id);
+      toast({ title: 'Workspace deleted' });
+      setShowDeleteConfirm(null);
+      loadWorkspaces();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete workspace',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEditModal = (workspace: Workspace) => {
+    setEditingWorkspace(workspace);
+    setEditName(workspace.name);
+    setEditDesc(workspace.description || '');
+    setShowEditModal(true);
+    setActiveMenu(null);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -116,9 +175,28 @@ export default function DashboardPage() {
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
             </span>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
+            <div className="relative">
+              <Button variant="ghost" size="icon" onClick={() => setShowProfileDropdown(!showProfileDropdown)}>
+                <Settings className="h-5 w-5" />
+              </Button>
+              {showProfileDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-background border rounded-lg shadow-lg z-20 p-4">
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </Button>
+                </div>
+              )}
+            </div>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />
             </Button>
@@ -156,30 +234,75 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {workspaces.map((workspace) => (
-              <Link key={workspace.id} href={`/workspace/${workspace.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FolderOpen className="h-5 w-5 text-primary" />
+              <div key={workspace.id} className="relative group">
+                <Link href={`/workspace/${workspace.id}`}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <FolderOpen className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg">{workspace.name}</CardTitle>
+                          <CardDescription>
+                            {workspace._count.pages} {workspace._count.pages === 1 ? 'page' : 'pages'}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg">{workspace.name}</CardTitle>
-                        <CardDescription>
-                          {workspace._count.pages} {workspace._count.pages === 1 ? 'page' : 'pages'}
-                        </CardDescription>
+                    </CardHeader>
+                    {workspace.description && (
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {workspace.description}
+                        </p>
+                      </CardContent>
+                    )}
+                  </Card>
+                </Link>
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 bg-background/80 hover:bg-background shadow-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveMenu(activeMenu === workspace.id ? null : workspace.id);
+                      }}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                    {activeMenu === workspace.id && (
+                      <div className="absolute right-0 top-full mt-1 w-40 bg-background border rounded-lg shadow-lg z-20 py-1">
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openEditModal(workspace);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </button>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowDeleteConfirm(workspace.id);
+                            setActiveMenu(null);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  {workspace.description && (
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {workspace.description}
-                      </p>
-                    </CardContent>
-                  )}
-                </Card>
-              </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -225,6 +348,86 @@ export default function DashboardPage() {
                   disabled={!newWorkspaceName.trim() || isCreating}
                 >
                   {isCreating ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Workspace Modal */}
+      {showEditModal && editingWorkspace && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Edit Workspace</CardTitle>
+              <CardDescription>Update workspace name and description</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <Input
+                  placeholder="Workspace name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description (optional)</label>
+                <Input
+                  placeholder="Brief description..."
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleEditWorkspace}
+                  disabled={!editName.trim() || isEditing}
+                >
+                  {isEditing ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle>Delete Workspace</CardTitle>
+              <CardDescription>
+                Are you sure? This will permanently delete this workspace and all its pages.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowDeleteConfirm(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => handleDeleteWorkspace(showDeleteConfirm)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </Button>
               </div>
             </CardContent>

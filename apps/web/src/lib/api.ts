@@ -501,6 +501,15 @@ export const aiApi = {
     }>('/api/ai/usage', { token }),
 };
 
+// Sources API
+export const sourcesApi = {
+  delete: (token: string, pageId: string, sourceId: string) =>
+    fetchApi<{ success: boolean }>(`/api/pages/${pageId}/sources/${sourceId}`, {
+      method: 'DELETE',
+      token,
+    }),
+};
+
 // Export API
 export const exportApi = {
   create: (token: string, type: 'PDF' | 'DOCX' | 'MARKDOWN', config: { pageIds?: string[]; workspaceId?: string }) =>
