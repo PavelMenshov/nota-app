@@ -16,6 +16,8 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/s3-request-presigner": "^3.995.0",
     "@eywa/database": "workspace:*",
     "@eywa/shared": "workspace:*",
     "@nestjs/common": "^10.3.0",
@@ -32,11 +34,13 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "docx": "^9.5.3",
     "helmet": "^7.1.0",
     "multer": "^2.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.17.2",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.4",

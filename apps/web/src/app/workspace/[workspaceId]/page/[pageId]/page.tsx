@@ -20,8 +20,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore, useAppStore } from '@/lib/store';
-import { pagesApi, docApi, aiApi, sourcesApi } from '@/lib/api';
+import { pagesApi, docApi, aiApi, sourcesApi, canvasApi, exportApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import CanvasEditor, { CanvasState } from '@/components/canvas/CanvasEditor';
 
 interface PageData {
   id: string;
@@ -54,7 +55,22 @@ export default function PageEditorPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeletingSource, setIsDeletingSource] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ...export handler
+  const handleExport = async (format: 'PDF' | 'DOCX' | 'MARKDOWN') => {
+    if (!token) return;
+    setIsExporting(true);
+    try {
+      const job = await exportApi.create(token, format, { pageIds: [pageId] });
+      toast({ title: `Export started (${format})`, description: `Job ID: ${job.id}` });
+    } catch (error) {
+      toast({ title: 'Export failed', variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -241,7 +257,7 @@ export default function PageEditorPage() {
             <Button variant="ghost" size="icon">
               <Share2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => handleExport('PDF')} disabled={isExporting} title="Export as PDF">
               <Download className="h-4 w-4" />
             </Button>
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
@@ -293,16 +309,17 @@ export default function PageEditorPage() {
           </TabsContent>
 
           <TabsContent value="canvas" className="flex-1 m-0">
-            <div className="h-full flex items-center justify-center bg-muted/20">
-              <div className="text-center">
-                <Palette className="h-16 w-16 mx-auto text-muted-foreground/50" />
-                <h3 className="mt-4 text-lg font-semibold">Canvas Editor</h3>
-                <p className="text-muted-foreground mt-2">
-                  Interactive whiteboard coming soon.<br />
-                  Will support sticky notes, shapes, connectors, and real-time collaboration.
-                </p>
-              </div>
-            </div>
+            <CanvasEditor
+              initialContent={page.canvas?.content as CanvasState | null}
+              onSave={async (content) => {
+                if (!token) return;
+                try {
+                  await canvasApi.update(token, pageId, { content });
+                } catch {
+                  // silent — auto-save
+                }
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="sources" className="flex-1 m-0">
