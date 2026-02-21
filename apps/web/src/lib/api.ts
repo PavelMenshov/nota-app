@@ -524,6 +524,15 @@ export const exportApi = {
 
   list: (token: string) =>
     fetchApi<Array<{ id: string; type: string; status: string; createdAt: string }>>('/api/export', { token }),
+
+  sendToNotion: (
+    token: string,
+    data: { pageId: string; notionToken: string; parentPageId?: string },
+  ) =>
+    fetchApi<{ success: boolean; notionPageId: string; notionUrl: string }>(
+      '/api/export/send-to-notion',
+      { method: 'POST', body: JSON.stringify(data), token },
+    ),
 };
 
 export default fetchApi;

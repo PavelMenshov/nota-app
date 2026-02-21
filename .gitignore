@@ -44,6 +44,9 @@ temp/
 # Upload directories (development)
 uploads/
 
+# Export output (development)
+exports/
+
 # Desktop app builds
 apps/desktop/release/
 apps/desktop/dist/

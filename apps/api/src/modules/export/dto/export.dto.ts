@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsArray, IsString, IsBoolean, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsArray, IsString, IsBoolean, ValidateNested, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ExportConfigDto {
@@ -34,4 +34,21 @@ export class CreateExportJobDto {
   @ValidateNested()
   @Type(() => ExportConfigDto)
   config!: ExportConfigDto;
+}
+
+export class SendToNotionDto {
+  @ApiProperty({ description: 'Page ID to send to Notion' })
+  @IsString()
+  @IsNotEmpty()
+  pageId!: string;
+
+  @ApiProperty({ description: 'Notion integration token' })
+  @IsString()
+  @IsNotEmpty()
+  notionToken!: string;
+
+  @ApiPropertyOptional({ description: 'Notion parent page ID (creates under this page)' })
+  @IsOptional()
+  @IsString()
+  parentPageId?: string;
 }
