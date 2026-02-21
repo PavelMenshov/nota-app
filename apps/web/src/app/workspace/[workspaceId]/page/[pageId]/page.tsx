@@ -14,6 +14,11 @@ import {
   Sparkles,
   Upload,
   Trash2,
+  Pencil,
+  Bookmark,
+  BookmarkCheck,
+  MessageSquareText,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import CanvasEditor, { CanvasState } from '@/components/canvas/CanvasEditor';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import DocumentViewer from '@/components/pdf/DocumentViewer';
+import DrawingCanvas from '@/components/notes/DrawingCanvas';
 import { useRealtime } from '@/hooks/use-realtime';
 
 interface PageData {
@@ -76,6 +82,22 @@ export default function PageEditorPage() {
     }>;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drawing overlay state
+  const [isDrawingActive, setIsDrawingActive] = useState(false);
+  const [drawingStrokes, setDrawingStrokes] = useState<Array<{ points: Array<{ x: number; y: number }>; color: string; width: number }>>([]);
+
+  // Bookmarks state
+  interface Bookmark { id: string; label: string; position: number; createdAt: string }
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const docTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // AI Explain state
+  const [selectedText, setSelectedText] = useState('');
+  const [aiExplainResult, setAiExplainResult] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [showExplainPopup, setShowExplainPopup] = useState(false);
 
   // Real-time collaboration
   const { connected: realtimeConnected, presenceUsers } = useRealtime({
@@ -240,6 +262,69 @@ export default function PageEditorPage() {
     }
   };
 
+  // Bookmark handlers
+  const handleAddBookmark = () => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    const position = textarea.selectionStart;
+    const contextText = docContent.substring(
+      Math.max(0, position - 30),
+      Math.min(docContent.length, position + 30),
+    ).trim();
+    const label = contextText.length > 40 ? contextText.substring(0, 40) + '...' : contextText || `Position ${position}`;
+    const newBookmark: Bookmark = {
+      id: `bm-${Date.now()}`,
+      label,
+      position,
+      createdAt: new Date().toISOString(),
+    };
+    setBookmarks((prev) => [...prev, newBookmark]);
+    toast({ title: 'Bookmark added' });
+  };
+
+  const handleGoToBookmark = (bookmark: Bookmark) => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    textarea.focus();
+    textarea.setSelectionRange(bookmark.position, bookmark.position);
+    setShowBookmarks(false);
+  };
+
+  const handleDeleteBookmark = (bookmarkId: string) => {
+    setBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
+  };
+
+  // AI Explain handler
+  const handleExplainSelection = async () => {
+    if (!token || !selectedText.trim()) return;
+    setIsExplaining(true);
+    setShowExplainPopup(true);
+    setAiExplainResult(null);
+    try {
+      const result = await aiApi.explain(token, pageId, { text: selectedText });
+      setAiExplainResult(result.explanation);
+    } catch (error) {
+      setAiExplainResult(
+        error instanceof Error ? error.message : 'Failed to generate explanation. Please try again.',
+      );
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  // Track text selection in doc textarea
+  const handleDocMouseUp = () => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start !== end) {
+      setSelectedText(docContent.substring(start, end));
+    } else {
+      setSelectedText('');
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
@@ -389,13 +474,114 @@ export default function PageEditorPage() {
           </div>
 
           <TabsContent value="doc" className="flex-1 m-0">
-            <div className="max-w-4xl mx-auto p-8">
-              <textarea
-                className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Start writing your notes here..."
-                value={docContent}
-                onChange={(e) => setDocContent(e.target.value)}
-              />
+            <div className="max-w-4xl mx-auto p-8 relative">
+              {/* Doc toolbar */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <Button
+                  variant={isDrawingActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsDrawingActive(!isDrawingActive)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {isDrawingActive ? 'Stop Drawing' : 'Draw'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleAddBookmark}>
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Add Bookmark
+                </Button>
+                <Button
+                  variant={showBookmarks ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowBookmarks(!showBookmarks)}
+                >
+                  <BookmarkCheck className="h-4 w-4 mr-2" />
+                  Bookmarks ({bookmarks.length})
+                </Button>
+                {selectedText && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExplainSelection}
+                    disabled={isExplaining}
+                  >
+                    <MessageSquareText className="h-4 w-4 mr-2" />
+                    AI Explain Selection
+                  </Button>
+                )}
+              </div>
+
+              {/* Bookmarks panel */}
+              {showBookmarks && bookmarks.length > 0 && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2">Bookmarks</h4>
+                  <div className="space-y-1">
+                    {bookmarks.map((bm) => (
+                      <div key={bm.id} className="flex items-center gap-2 text-sm">
+                        <button
+                          className="flex-1 text-left text-primary hover:underline truncate"
+                          onClick={() => handleGoToBookmark(bm)}
+                        >
+                          <BookmarkCheck className="h-3 w-3 inline mr-1" />
+                          {bm.label}
+                        </button>
+                        <button
+                          className="text-destructive hover:text-destructive/80 text-xs"
+                          onClick={() => handleDeleteBookmark(bm.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Explain popup */}
+              {showExplainPopup && (
+                <div className="mb-4 border rounded-lg bg-primary/5 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-1">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI Explanation
+                    </h4>
+                    <button onClick={() => { setShowExplainPopup(false); setAiExplainResult(null); }}>
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                  {selectedText && (
+                    <p className="text-xs text-muted-foreground italic mb-2 line-clamp-2">
+                      &ldquo;{selectedText}&rdquo;
+                    </p>
+                  )}
+                  {isExplaining ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      <span className="text-sm text-muted-foreground">Generating explanation...</span>
+                    </div>
+                  ) : aiExplainResult ? (
+                    <div className="text-sm whitespace-pre-wrap">{aiExplainResult}</div>
+                  ) : null}
+                </div>
+              )}
+
+              {/* Drawing canvas + textarea container */}
+              <div className="relative">
+                <DrawingCanvas
+                  isActive={isDrawingActive}
+                  onToggle={() => setIsDrawingActive(!isDrawingActive)}
+                  strokes={drawingStrokes}
+                  onStrokesChange={setDrawingStrokes}
+                />
+                <textarea
+                  ref={docTextareaRef}
+                  className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Start writing your notes here..."
+                  value={docContent}
+                  onChange={(e) => setDocContent(e.target.value)}
+                  onMouseUp={handleDocMouseUp}
+                  onKeyUp={handleDocMouseUp}
+                />
+              </div>
             </div>
           </TabsContent>
 
@@ -537,7 +723,7 @@ export default function PageEditorPage() {
                 AI Study Assistant
               </CardTitle>
               <CardDescription>
-                Generate summaries or flashcards from your page content
+                Generate summaries, flashcards, or explain selected text from your notes
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-auto space-y-4">

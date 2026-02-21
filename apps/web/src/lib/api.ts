@@ -494,6 +494,13 @@ export const aiApi = {
       token,
     }),
 
+  explain: (token: string, pageId: string, options: { text: string }) =>
+    fetchApi<{ explanation: string; tokensUsed: number }>('/api/ai/explain', {
+      method: 'POST',
+      body: JSON.stringify({ pageId, ...options }),
+      token,
+    }),
+
   usage: (token: string) =>
     fetchApi<{
       today: { requests: number; tokens: number; limit: number; remaining: number };

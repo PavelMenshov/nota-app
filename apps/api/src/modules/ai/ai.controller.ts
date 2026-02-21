@@ -11,7 +11,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AIService } from './ai.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SummaryDto, FlashcardsDto } from './dto/ai.dto';
+import { SummaryDto, FlashcardsDto, ExplainDto } from './dto/ai.dto';
 
 @ApiTags('ai')
 @Controller('ai')
@@ -38,6 +38,16 @@ export class AIController {
     @Body() dto: FlashcardsDto,
   ) {
     return this.aiService.generateFlashcards(req.user.userId, dto);
+  }
+
+  @Post('explain')
+  @ApiOperation({ summary: 'Explain selected text using AI' })
+  @ApiResponse({ status: 200, description: 'Explanation generated' })
+  async explainText(
+    @Request() req: { user: { userId: string } },
+    @Body() dto: ExplainDto,
+  ) {
+    return this.aiService.explainText(req.user.userId, dto);
   }
 
   @Get('usage')

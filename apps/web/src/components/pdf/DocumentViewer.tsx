@@ -5,7 +5,7 @@ import { FileText, Presentation, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DocumentViewerProps {
-  sourceId: string;
+  sourceId?: string;
   fileName: string;
   fileUrl: string;
 }
@@ -37,7 +37,7 @@ function getFileLabel(ext: string): string {
   }
 }
 
-export default function DocumentViewer({ sourceId, fileName, fileUrl }: DocumentViewerProps) {
+export default function DocumentViewer({ fileName, fileUrl }: DocumentViewerProps) {
   const ext = getFileExtension(fileName);
   const downloadUrl = `/api/sources/files/${fileUrl.split('/').pop()}`;
 
