@@ -1,10 +1,28 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateExportJobDto } from './dto/export.dto';
+import { CreateExportJobDto, SendToNotionDto } from './dto/export.dto';
+import * as fs from 'fs';
+import * as path from 'path';
+import PDFDocument from 'pdfkit';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  PageBreak,
+} from 'docx';
+
+const EXPORTS_DIR = path.join(process.cwd(), 'exports');
 
 @Injectable()
 export class ExportService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {
+    if (!fs.existsSync(EXPORTS_DIR)) {
+      fs.mkdirSync(EXPORTS_DIR, { recursive: true });
+    }
+  }
 
   async createExportJob(userId: string, dto: CreateExportJobDto) {
     // Validate access to pages/workspace
@@ -26,8 +44,7 @@ export class ExportService {
       },
     });
 
-    // In production, this would trigger a background job
-    // For demo, we'll process it immediately (simplified)
+    // Process immediately (in production this would be a background job)
     this.processExportJob(job.id);
 
     return job;
@@ -73,6 +90,70 @@ export class ExportService {
     return { downloadUrl: job.resultUrl };
   }
 
+  async sendToNotion(userId: string, dto: SendToNotionDto) {
+    await this.checkPageAccess(dto.pageId, userId);
+
+    const page = await this.prisma.page.findUnique({
+      where: { id: dto.pageId },
+      include: { doc: true },
+    });
+
+    if (!page) {
+      throw new NotFoundException('Page not found');
+    }
+
+    const text = page.doc?.plainText || '';
+
+    // Build Notion blocks from content
+    const blocks = text
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
+      .slice(0, 100) // Notion API limit
+      .map((line) => ({
+        object: 'block' as const,
+        type: 'paragraph' as const,
+        paragraph: {
+          rich_text: [{ type: 'text' as const, text: { content: line.slice(0, 2000) } }],
+        },
+      }));
+
+    // Notion requires a parent page
+    if (!dto.parentPageId) {
+      throw new BadRequestException(
+        'parentPageId is required. Provide a Notion page ID where the new page will be created.',
+      );
+    }
+
+    // Build request body
+    const body = {
+      parent: { page_id: dto.parentPageId },
+      properties: {
+        title: [{ text: { content: page.title } }],
+      },
+      children: blocks,
+    };
+
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${dto.notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Unknown Notion API error' }));
+      throw new BadRequestException(
+        `Notion API error: ${(error as { message?: string }).message || response.statusText}`,
+      );
+    }
+
+    const notionPage = await response.json() as { id: string; url: string };
+    return { success: true, notionPageId: notionPage.id, notionUrl: notionPage.url };
+  }
+
   private async processExportJob(jobId: string) {
     // Update status to processing
     await this.prisma.exportJob.update({
@@ -89,8 +170,7 @@ export class ExportService {
 
       const config = job.config as { pageIds?: string[]; workspaceId?: string };
 
-      // Get content to export
-      let content = '';
+      // Collect pages
       const pages: Array<{ id: string; title: string; doc: { plainText: string | null } | null }> = [];
 
       if (config.pageIds) {
@@ -109,22 +189,20 @@ export class ExportService {
         pages.push(...workspacePages);
       }
 
-      // Generate content based on export type
-      for (const page of pages) {
-        content += `# ${page.title}\n\n`;
-        if (page.doc?.plainText) {
-          content += page.doc.plainText + '\n\n';
-        }
-        content += '---\n\n';
+      let resultUrl: string;
+
+      switch (job.type) {
+        case 'PDF':
+          resultUrl = await this.generatePdf(jobId, pages);
+          break;
+        case 'DOCX':
+          resultUrl = await this.generateDocx(jobId, pages);
+          break;
+        case 'MARKDOWN':
+        default:
+          resultUrl = await this.generateMarkdown(jobId, pages);
+          break;
       }
-
-      // In production, you would:
-      // - Generate actual PDF/DOCX using libraries like pdf-lib, docx, etc.
-      // - Upload to cloud storage
-      // - Store the URL
-
-      // For demo, we'll create a placeholder
-      const resultUrl = `/exports/${jobId}.${job.type.toLowerCase()}`;
 
       await this.prisma.exportJob.update({
         where: { id: jobId },
@@ -142,6 +220,88 @@ export class ExportService {
         },
       });
     }
+  }
+
+  private async generatePdf(
+    jobId: string,
+    pages: Array<{ title: string; doc: { plainText: string | null } | null }>,
+  ): Promise<string> {
+    const filePath = path.join(EXPORTS_DIR, `${jobId}.pdf`);
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
+
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) doc.addPage();
+        doc.fontSize(20).font('Helvetica-Bold').text(pages[i].title, { align: 'left' });
+        doc.moveDown();
+        const text = pages[i].doc?.plainText || '(No content)';
+        doc.fontSize(12).font('Helvetica').text(text, { align: 'left', lineGap: 4 });
+      }
+
+      doc.end();
+      stream.on('finish', () => resolve(`/exports/${jobId}.pdf`));
+      stream.on('error', reject);
+    });
+  }
+
+  private async generateDocx(
+    jobId: string,
+    pages: Array<{ title: string; doc: { plainText: string | null } | null }>,
+  ): Promise<string> {
+    const filePath = path.join(EXPORTS_DIR, `${jobId}.docx`);
+
+    const children: Paragraph[] = [];
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) {
+        children.push(new Paragraph({ children: [new PageBreak()] }));
+      }
+      children.push(
+        new Paragraph({
+          text: pages[i].title,
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.LEFT,
+        }),
+      );
+      const text = pages[i].doc?.plainText || '(No content)';
+      const lines = text.split('\n');
+      for (const line of lines) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: line, size: 24 })],
+          }),
+        );
+      }
+    }
+
+    const docxDoc = new Document({
+      sections: [{ children }],
+    });
+
+    const buffer = await Packer.toBuffer(docxDoc);
+    fs.writeFileSync(filePath, buffer);
+
+    return `/exports/${jobId}.docx`;
+  }
+
+  private async generateMarkdown(
+    jobId: string,
+    pages: Array<{ title: string; doc: { plainText: string | null } | null }>,
+  ): Promise<string> {
+    const filePath = path.join(EXPORTS_DIR, `${jobId}.md`);
+
+    let content = '';
+    for (const page of pages) {
+      content += `# ${page.title}\n\n`;
+      if (page.doc?.plainText) {
+        content += page.doc.plainText + '\n\n';
+      }
+      content += '---\n\n';
+    }
+
+    fs.writeFileSync(filePath, content, 'utf-8');
+    return `/exports/${jobId}.md`;
   }
 
   private async checkPageAccess(pageId: string, userId: string) {

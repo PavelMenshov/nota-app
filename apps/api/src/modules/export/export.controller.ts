@@ -10,7 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ExportService } from './export.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateExportJobDto } from './dto/export.dto';
+import { CreateExportJobDto, SendToNotionDto } from './dto/export.dto';
 
 @ApiTags('export')
 @Controller('export')
@@ -54,5 +54,15 @@ export class ExportController {
     @Param('id') id: string,
   ) {
     return this.exportService.downloadExport(id, req.user.userId);
+  }
+
+  @Post('send-to-notion')
+  @ApiOperation({ summary: 'Send page content to Notion' })
+  @ApiResponse({ status: 201, description: 'Page created in Notion' })
+  async sendToNotion(
+    @Request() req: { user: { userId: string } },
+    @Body() dto: SendToNotionDto,
+  ) {
+    return this.exportService.sendToNotion(req.user.userId, dto);
   }
 }

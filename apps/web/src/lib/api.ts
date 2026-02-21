@@ -508,6 +508,54 @@ export const sourcesApi = {
       method: 'DELETE',
       token,
     }),
+
+  getWithAnnotations: (token: string, pageId: string, sourceId: string) =>
+    fetchApi<{
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      pageCount: number | null;
+      annotations: Array<{
+        id: string;
+        type: string;
+        content: string | null;
+        color: string | null;
+        pageNumber: number;
+        selectedText: string | null;
+        position: unknown;
+        user: { id: string; name: string | null; email: string; avatarUrl: string | null };
+      }>;
+    }>(`/api/pages/${pageId}/sources/${sourceId}`, { token }),
+
+  createAnnotation: (
+    token: string,
+    sourceId: string,
+    data: {
+      type: string;
+      content?: string;
+      color?: string;
+      pageNumber: number;
+      selectedText?: string;
+      position?: unknown;
+    },
+  ) =>
+    fetchApi<{ id: string }>(`/api/sources/${sourceId}/annotations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  deleteAnnotation: (token: string, annotationId: string) =>
+    fetchApi<{ success: boolean }>(`/api/sources/annotations/${annotationId}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  extractHighlights: (token: string, pageId: string, sourceId: string) =>
+    fetchApi<{ success: boolean; extracted: number }>(
+      `/api/pages/${pageId}/sources/${sourceId}/extract-highlights`,
+      { method: 'POST', token },
+    ),
 };
 
 // Export API
@@ -524,6 +572,15 @@ export const exportApi = {
 
   list: (token: string) =>
     fetchApi<Array<{ id: string; type: string; status: string; createdAt: string }>>('/api/export', { token }),
+
+  sendToNotion: (
+    token: string,
+    data: { pageId: string; notionToken: string; parentPageId?: string },
+  ) =>
+    fetchApi<{ success: boolean; notionPageId: string; notionUrl: string }>(
+      '/api/export/send-to-notion',
+      { method: 'POST', body: JSON.stringify(data), token },
+    ),
 };
 
 export default fetchApi;

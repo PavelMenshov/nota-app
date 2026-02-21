@@ -17,6 +17,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { SourcesService } from './sources.service';
+import { FilesService } from '../files/files.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
 import { diskStorage } from 'multer';
@@ -25,7 +26,7 @@ import { existsSync, mkdirSync } from 'fs';
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (fallback for multer temp storage)
 const uploadsDir = join(process.cwd(), 'uploads');
 if (!existsSync(uploadsDir)) {
   mkdirSync(uploadsDir, { recursive: true });
@@ -44,7 +45,10 @@ const storage = diskStorage({
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SourcesController {
-  constructor(private sourcesService: SourcesService) {}
+  constructor(
+    private sourcesService: SourcesService,
+    private filesService: FilesService,
+  ) {}
 
   @Get('pages/:pageId/sources')
   @ApiOperation({ summary: 'Get all sources (PDFs) for a page' })
@@ -96,9 +100,12 @@ export class SourcesController {
     @Param('pageId') pageId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
+    // Upload via FilesService (will use S3/MinIO if configured, disk otherwise)
+    const { url } = await this.filesService.uploadFromPath(file.path, file.originalname, file.mimetype);
+
     const fileData = {
       filename: file.originalname,
-      url: `/api/sources/files/${file.filename}`,
+      url,
       size: file.size,
       mimeType: file.mimetype,
     };
@@ -115,13 +122,18 @@ export class SourcesController {
   ) {
     // Sanitize filename to prevent path traversal
     const safeName = basename(filename);
-    const filePath = join(uploadsDir, safeName);
     
-    if (!existsSync(filePath)) {
+    const { stream, localPath } = await this.filesService.getFileStream(safeName);
+    
+    if (stream) {
+      // S3 stream
+      res.setHeader('Content-Type', 'application/pdf');
+      (stream as NodeJS.ReadableStream).pipe(res);
+    } else if (localPath) {
+      res.sendFile(localPath);
+    } else {
       throw new HttpNotFoundException('File not found');
     }
-    
-    res.sendFile(filePath);
   }
 
   @Delete('pages/:pageId/sources/:sourceId')
