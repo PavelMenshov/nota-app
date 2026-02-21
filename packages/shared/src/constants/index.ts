@@ -157,7 +157,13 @@ export const AI_LIMITS = {
 export const FILE_LIMITS = {
   MAX_PDF_SIZE: 50 * 1024 * 1024, // 50MB
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_DOCUMENT_SIZE: 50 * 1024 * 1024, // 50MB
   ALLOWED_PDF_TYPES: ['application/pdf'],
+  ALLOWED_DOCUMENT_TYPES: [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  ],
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
 } as const;
 

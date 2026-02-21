@@ -53,8 +53,10 @@ export class SourcesService {
   ) {
     await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
 
-    if (!file.mimeType.includes('pdf')) {
-      throw new BadRequestException('Only PDF files are allowed');
+    if (!file.mimeType.includes('pdf') &&
+        !file.mimeType.includes('wordprocessingml') &&
+        !file.mimeType.includes('presentationml')) {
+      throw new BadRequestException('Only PDF, DOCX, and PPTX files are allowed');
     }
 
     const source = await this.prisma.source.create({
