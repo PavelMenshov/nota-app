@@ -1,0 +1,122 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import * as fs from 'fs';
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
+@Injectable()
+export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
+  private s3: S3Client | null = null;
+  private bucket: string;
+  private useS3: boolean;
+  private localUploadsDir: string;
+
+  constructor(private configService: ConfigService) {
+    const endpoint = this.configService.get<string>('S3_ENDPOINT');
+    const accessKey = this.configService.get<string>('S3_ACCESS_KEY');
+    const secretKey = this.configService.get<string>('S3_SECRET_KEY');
+    this.bucket = this.configService.get<string>('S3_BUCKET') || 'nota-files';
+
+    this.useS3 = !!(endpoint && accessKey && secretKey);
+    this.localUploadsDir = path.join(process.cwd(), 'uploads');
+
+    if (this.useS3) {
+      this.s3 = new S3Client({
+        endpoint,
+        region: this.configService.get<string>('S3_REGION') || 'us-east-1',
+        credentials: {
+          accessKeyId: accessKey!,
+          secretAccessKey: secretKey!,
+        },
+        forcePathStyle: true, // Required for MinIO
+      });
+      this.logger.log(`S3/MinIO storage configured (endpoint: ${endpoint})`);
+    } else {
+      if (!fs.existsSync(this.localUploadsDir)) {
+        fs.mkdirSync(this.localUploadsDir, { recursive: true });
+      }
+      this.logger.log('Using local file storage (set S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY for S3/MinIO)');
+    }
+  }
+
+  async upload(
+    file: Buffer,
+    originalName: string,
+    mimeType: string,
+  ): Promise<{ key: string; url: string }> {
+    const ext = path.extname(originalName);
+    const key = `${uuidv4()}${ext}`;
+
+    if (this.useS3 && this.s3) {
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: file,
+          ContentType: mimeType,
+        }),
+      );
+      return { key, url: `/api/sources/files/${key}` };
+    }
+
+    // Fallback: local disk
+    const filePath = path.join(this.localUploadsDir, key);
+    fs.writeFileSync(filePath, file);
+    return { key, url: `/api/sources/files/${key}` };
+  }
+
+  async getFileStream(key: string): Promise<{ stream: NodeJS.ReadableStream | null; localPath: string | null }> {
+    if (this.useS3 && this.s3) {
+      const response = await this.s3.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      return { stream: response.Body as NodeJS.ReadableStream, localPath: null };
+    }
+
+    const localPath = path.join(this.localUploadsDir, path.basename(key));
+    if (fs.existsSync(localPath)) {
+      return { stream: null, localPath };
+    }
+    return { stream: null, localPath: null };
+  }
+
+  async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
+    if (this.useS3 && this.s3) {
+      return getSignedUrl(
+        this.s3,
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        { expiresIn },
+      );
+    }
+    // Fallback: return local URL
+    return `/api/sources/files/${key}`;
+  }
+
+  async delete(key: string): Promise<void> {
+    if (this.useS3 && this.s3) {
+      await this.s3.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      return;
+    }
+
+    const localPath = path.join(this.localUploadsDir, path.basename(key));
+    if (fs.existsSync(localPath)) {
+      fs.unlinkSync(localPath);
+    }
+  }
+}

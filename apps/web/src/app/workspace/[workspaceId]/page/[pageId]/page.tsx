@@ -24,6 +24,7 @@ import { pagesApi, docApi, aiApi, sourcesApi, canvasApi, exportApi } from '@/lib
 import { useToast } from '@/hooks/use-toast';
 import CanvasEditor, { CanvasState } from '@/components/canvas/CanvasEditor';
 import PDFViewer from '@/components/pdf/PDFViewer';
+import { useRealtime } from '@/hooks/use-realtime';
 
 interface PageData {
   id: string;
@@ -74,6 +75,12 @@ export default function PageEditorPage() {
     }>;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Real-time collaboration
+  const { connected: realtimeConnected, presenceUsers } = useRealtime({
+    pageId,
+    token,
+  });
 
   // ...export handler
   const handleExport = async (format: 'PDF' | 'DOCX' | 'MARKDOWN') => {
@@ -311,6 +318,28 @@ export default function PageEditorPage() {
             />
           </div>
           <div className="flex items-center gap-2">
+            {/* Presence indicators */}
+            {presenceUsers.length > 0 && (
+              <div className="flex items-center -space-x-2 mr-2">
+                {presenceUsers.slice(0, 5).map((u) => (
+                  <div
+                    key={u.userId}
+                    className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium border-2 border-background"
+                    title={u.name}
+                  >
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {presenceUsers.length > 5 && (
+                  <div className="h-7 w-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs border-2 border-background">
+                    +{presenceUsers.length - 5}
+                  </div>
+                )}
+              </div>
+            )}
+            {realtimeConnected && (
+              <div className="h-2 w-2 rounded-full bg-green-500 mr-1" title="Connected" />
+            )}
             <Button variant="ghost" size="sm" onClick={() => setShowAIModal(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
               AI
