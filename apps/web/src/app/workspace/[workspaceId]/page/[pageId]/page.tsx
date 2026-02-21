@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -23,6 +23,7 @@ import { useAuthStore, useAppStore } from '@/lib/store';
 import { pagesApi, docApi, aiApi, sourcesApi, canvasApi, exportApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import CanvasEditor, { CanvasState } from '@/components/canvas/CanvasEditor';
+import PDFViewer from '@/components/pdf/PDFViewer';
 
 interface PageData {
   id: string;
@@ -56,6 +57,22 @@ export default function PageEditorPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDeletingSource, setIsDeletingSource] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [viewingSource, setViewingSource] = useState<{
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    pageCount: number | null;
+    annotations: Array<{
+      id: string;
+      type: string;
+      content: string | null;
+      color: string | null;
+      pageNumber: number;
+      selectedText: string | null;
+      position: { x: number; y: number } | null;
+      user?: { id: string; name: string | null; email: string };
+    }>;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ...export handler
@@ -71,6 +88,50 @@ export default function PageEditorPage() {
       setIsExporting(false);
     }
   };
+
+  const handleOpenSource = useCallback(async (sourceId: string) => {
+    if (!token) return;
+    try {
+      const data = await sourcesApi.getWithAnnotations(token, pageId, sourceId);
+      setViewingSource({
+        ...data,
+        annotations: data.annotations.map((a) => ({
+          ...a,
+          position: a.position as { x: number; y: number } | null,
+        })),
+      });
+    } catch {
+      toast({ title: 'Failed to load PDF', variant: 'destructive' });
+    }
+  }, [token, pageId, toast]);
+
+  const handleCreateAnnotation = useCallback(async (data: {
+    type: string;
+    content: string;
+    color: string;
+    pageNumber: number;
+    selectedText?: string;
+    position: { x: number; y: number };
+  }) => {
+    if (!token || !viewingSource) return;
+    try {
+      await sourcesApi.createAnnotation(token, viewingSource.id, data);
+      // Refresh
+      await handleOpenSource(viewingSource.id);
+    } catch {
+      toast({ title: 'Failed to create annotation', variant: 'destructive' });
+    }
+  }, [token, viewingSource, handleOpenSource, toast]);
+
+  const handleDeleteAnnotation = useCallback(async (annotationId: string) => {
+    if (!token || !viewingSource) return;
+    try {
+      await sourcesApi.deleteAnnotation(token, annotationId);
+      await handleOpenSource(viewingSource.id);
+    } catch {
+      toast({ title: 'Failed to delete annotation', variant: 'destructive' });
+    }
+  }, [token, viewingSource, handleOpenSource, toast]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -323,78 +384,97 @@ export default function PageEditorPage() {
           </TabsContent>
 
           <TabsContent value="sources" className="flex-1 m-0">
-            <div className="max-w-4xl mx-auto p-8">
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".pdf"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">PDF Sources</h3>
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload PDF
-                    </>
-                  )}
-                </Button>
+            {viewingSource ? (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+                  <Button variant="ghost" size="sm" onClick={() => setViewingSource(null)}>
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Back to list
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <PDFViewer
+                    sourceId={viewingSource.id}
+                    fileName={viewingSource.fileName}
+                    fileUrl={viewingSource.fileUrl}
+                    pageCount={viewingSource.pageCount}
+                    annotations={viewingSource.annotations}
+                    onCreateAnnotation={handleCreateAnnotation}
+                    onDeleteAnnotation={handleDeleteAnnotation}
+                  />
+                </div>
               </div>
+            ) : (
+              <div className="max-w-4xl mx-auto p-8">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">PDF Sources</h3>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
 
-              {page.sources.length === 0 ? (
-                <div className="text-center py-20 border-2 border-dashed rounded-lg">
-                  <Files className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                  <h4 className="mt-4 font-medium">No sources yet</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Upload PDFs to annotate and reference in your notes
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {page.sources.map((source) => (
-                    <div key={source.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
-                      <Files className="h-8 w-8 text-red-500" />
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={`/api/sources/files/${source.fileUrl.split('/').pop()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium hover:underline text-primary"
+                {page.sources.length === 0 ? (
+                  <div className="text-center py-20 border-2 border-dashed rounded-lg">
+                    <Files className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                    <h4 className="mt-4 font-medium">No sources yet</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Upload PDFs to annotate and reference in your notes
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {page.sources.map((source) => (
+                      <div key={source.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                        <Files className="h-8 w-8 text-red-500" />
+                        <div className="flex-1 min-w-0">
+                          <button
+                            className="font-medium hover:underline text-primary text-left"
+                            onClick={() => handleOpenSource(source.id)}
+                          >
+                            {source.fileName}
+                          </button>
+                          <p className="text-sm text-muted-foreground">
+                            {source.pageCount ? `${source.pageCount} pages` : 'PDF document'}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteSource(source.id)}
+                          disabled={isDeletingSource === source.id}
                         >
-                          {source.fileName}
-                        </a>
-                        <p className="text-sm text-muted-foreground">
-                          {source.pageCount ? `${source.pageCount} pages` : 'PDF document'}
-                        </p>
+                          {isDeletingSource === source.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteSource(source.id)}
-                        disabled={isDeletingSource === source.id}
-                      >
-                        {isDeletingSource === source.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
