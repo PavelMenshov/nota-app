@@ -53,9 +53,12 @@ export class SourcesService {
   ) {
     await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
 
-    if (!file.mimeType.includes('pdf') &&
-        !file.mimeType.includes('wordprocessingml') &&
-        !file.mimeType.includes('presentationml')) {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+    if (!allowedMimeTypes.includes(file.mimeType)) {
       throw new BadRequestException('Only PDF, DOCX, and PPTX files are allowed');
     }
 

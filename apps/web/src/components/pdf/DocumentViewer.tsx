@@ -73,25 +73,27 @@ export default function DocumentViewer({ fileName, fileUrl }: DocumentViewerProp
           className="w-full h-full border-0"
           style={{ minHeight: '700px' }}
           title={fileName}
-          sandbox="allow-scripts allow-same-origin allow-popups"
+          sandbox="allow-scripts allow-popups"
         />
 
-        {/* Fallback message */}
-        <div className="text-center py-12 px-4">
-          <div className="flex justify-center mb-4">
-            {getFileIcon(ext)}
+        {/* Fallback download option */}
+        <noscript>
+          <div className="text-center py-12 px-4">
+            <div className="flex justify-center mb-4">
+              {getFileIcon(ext)}
+            </div>
+            <h4 className="font-medium text-lg">{fileName}</h4>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+              The document viewer could not load. You can download the file to view it locally.
+            </p>
+            <Button className="mt-4" asChild>
+              <a href={downloadUrl} download={fileName}>
+                <Download className="h-4 w-4 mr-2" />
+                Download {getFileLabel(ext)}
+              </a>
+            </Button>
           </div>
-          <h4 className="font-medium text-lg">{fileName}</h4>
-          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-            If the document does not load in the viewer above, you can download it to view locally.
-          </p>
-          <Button className="mt-4" asChild>
-            <a href={downloadUrl} download={fileName}>
-              <Download className="h-4 w-4 mr-2" />
-              Download {getFileLabel(ext)}
-            </a>
-          </Button>
-        </div>
+        </noscript>
       </div>
     </div>
   );
