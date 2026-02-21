@@ -24,6 +24,12 @@ export function useRealtime({ pageId, token, onDocUpdate, onCanvasUpdate }: UseR
   const [connected, setConnected] = useState(false);
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([]);
 
+  // Store callbacks in refs to avoid reconnecting when they change
+  const onDocUpdateRef = useRef(onDocUpdate);
+  const onCanvasUpdateRef = useRef(onCanvasUpdate);
+  onDocUpdateRef.current = onDocUpdate;
+  onCanvasUpdateRef.current = onCanvasUpdate;
+
   useEffect(() => {
     if (!token || !pageId) return;
 
@@ -77,11 +83,11 @@ export function useRealtime({ pageId, token, onDocUpdate, onCanvasUpdate }: UseR
     });
 
     socket.on('doc_update', (data: { senderId: string; update: Uint8Array | number[] }) => {
-      onDocUpdate?.(data.update);
+      onDocUpdateRef.current?.(data.update);
     });
 
     socket.on('canvas_update', (data: { senderId: string; update: Uint8Array | number[] }) => {
-      onCanvasUpdate?.(data.update);
+      onCanvasUpdateRef.current?.(data.update);
     });
 
     socket.on('error', (err: { message: string }) => {
@@ -95,7 +101,7 @@ export function useRealtime({ pageId, token, onDocUpdate, onCanvasUpdate }: UseR
       setConnected(false);
       setPresenceUsers([]);
     };
-  }, [token, pageId, onDocUpdate, onCanvasUpdate]);
+  }, [token, pageId]);
 
   const sendDocUpdate = useCallback((update: Uint8Array | number[]) => {
     socketRef.current?.emit('doc_update', { update });

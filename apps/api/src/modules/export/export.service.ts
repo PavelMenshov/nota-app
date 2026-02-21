@@ -117,23 +117,21 @@ export class ExportService {
         },
       }));
 
-    // Build request body
-    const body: Record<string, unknown> = {
-      parent: dto.parentPageId
-        ? { page_id: dto.parentPageId }
-        : { page_id: dto.parentPageId }, // Notion requires a parent
-      properties: {
-        title: [{ text: { content: page.title } }],
-      },
-      children: blocks,
-    };
-
-    // If no parentPageId, we need the user's workspace
+    // Notion requires a parent page
     if (!dto.parentPageId) {
       throw new BadRequestException(
         'parentPageId is required. Provide a Notion page ID where the new page will be created.',
       );
     }
+
+    // Build request body
+    const body = {
+      parent: { page_id: dto.parentPageId },
+      properties: {
+        title: [{ text: { content: page.title } }],
+      },
+      children: blocks,
+    };
 
     const response = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',

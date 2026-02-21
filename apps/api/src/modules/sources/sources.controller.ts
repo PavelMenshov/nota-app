@@ -22,7 +22,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
 import { diskStorage } from 'multer';
 import { extname, join, basename } from 'path';
-import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -101,10 +101,7 @@ export class SourcesController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     // Upload via FilesService (will use S3/MinIO if configured, disk otherwise)
-    const buffer = readFileSync(file.path);
-    const { url } = await this.filesService.upload(buffer, file.originalname, file.mimetype);
-    // Remove temp file from multer disk
-    try { unlinkSync(file.path); } catch { /* ignore */ }
+    const { url } = await this.filesService.uploadFromPath(file.path, file.originalname, file.mimetype);
 
     const fileData = {
       filename: file.originalname,

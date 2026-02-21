@@ -73,6 +73,33 @@ export class FilesService {
     return { key, url: `/api/sources/files/${key}` };
   }
 
+  async uploadFromPath(
+    sourcePath: string,
+    originalName: string,
+    mimeType: string,
+  ): Promise<{ key: string; url: string }> {
+    const ext = path.extname(originalName);
+    const key = `${uuidv4()}${ext}`;
+
+    if (this.useS3 && this.s3) {
+      const stream = fs.createReadStream(sourcePath);
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: stream,
+          ContentType: mimeType,
+        }),
+      );
+      return { key, url: `/api/sources/files/${key}` };
+    }
+
+    // Fallback: rename/move the file instead of reading into memory
+    const destPath = path.join(this.localUploadsDir, key);
+    fs.renameSync(sourcePath, destPath);
+    return { key, url: `/api/sources/files/${key}` };
+  }
+
   async getFileStream(key: string): Promise<{ stream: NodeJS.ReadableStream | null; localPath: string | null }> {
     if (this.useS3 && this.s3) {
       const response = await this.s3.send(
