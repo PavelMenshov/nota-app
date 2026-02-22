@@ -363,7 +363,7 @@ export const pagesApi = {
     }>>(`/api/pages/${pageId}/activity`, { token }),
 
   generateShareLink: (token: string, pageId: string) =>
-    fetchApi<{ shareLink: string; shareUrl: string }>(`/api/pages/${pageId}/share`, {
+    fetchApi<{ shareLink: string; shareLinkEnabled: boolean; shareRole: string }>(`/api/pages/${pageId}/share`, {
       method: 'POST',
       token,
     }),

@@ -40,6 +40,20 @@ import DocumentViewer from '@/components/pdf/DocumentViewer';
 import DrawingCanvas from '@/components/notes/DrawingCanvas';
 import { useRealtime } from '@/hooks/use-realtime';
 
+interface DocComment {
+  id: string;
+  content: string;
+  resolved: boolean;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string };
+  replies?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: { id: string; name: string | null; email: string };
+  }>;
+}
+
 interface PageData {
   id: string;
   title: string;
@@ -113,7 +127,7 @@ export default function PageEditorPage() {
 
   // Doc comments state
   const [showComments, setShowComments] = useState(false);
-  const [docComments, setDocComments] = useState<Array<{ id: string; content: string; resolved: boolean; createdAt: string; user: { id: string; name: string | null; email: string }; replies?: Array<{ id: string; content: string; createdAt: string; user: { id: string; name: string | null; email: string } }> }>>([]);
+  const [docComments, setDocComments] = useState<DocComment[]>([]);
   const [newComment, setNewComment] = useState('');
 
   // Canvas snapshots state
@@ -396,10 +410,10 @@ export default function PageEditorPage() {
     if (!token) return;
     try {
       const doc = await docApi.get(token, pageId);
-      const docData = doc as unknown as { comments?: Array<{ id: string; content: string; resolved: boolean; createdAt: string; user: { id: string; name: string | null; email: string }; replies?: Array<{ id: string; content: string; createdAt: string; user: { id: string; name: string | null; email: string } }> }> };
+      const docData = doc as unknown as { comments?: DocComment[] };
       setDocComments(docData.comments || []);
-    } catch {
-      // silent
+    } catch (error) {
+      console.error('Failed to load comments:', error);
     }
   };
 
@@ -496,7 +510,10 @@ export default function PageEditorPage() {
     if (!token) return;
     try {
       const result = await pagesApi.generateShareLink(token, pageId);
-      setShareLink(result.shareUrl || result.shareLink);
+      const url = typeof window !== 'undefined'
+        ? `${window.location.origin}/workspace/${workspaceId}/page/${pageId}?share=${result.shareLink}`
+        : result.shareLink;
+      setShareLink(url);
       setShowShareModal(true);
     } catch {
       toast({ title: 'Failed to generate share link', variant: 'destructive' });
