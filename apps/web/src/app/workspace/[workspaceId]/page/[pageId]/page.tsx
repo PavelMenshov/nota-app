@@ -19,6 +19,13 @@ import {
   BookmarkCheck,
   MessageSquareText,
   X,
+  History,
+  MessageCircle,
+  Clock,
+  RotateCcw,
+  Copy,
+  Link2,
+  ArrowRightFromLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,6 +105,28 @@ export default function PageEditorPage() {
   const [aiExplainResult, setAiExplainResult] = useState<string | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
   const [showExplainPopup, setShowExplainPopup] = useState(false);
+
+  // Doc snapshots/version history state
+  const [showVersions, setShowVersions] = useState(false);
+  const [docSnapshots, setDocSnapshots] = useState<Array<{ id: string; version: number; label: string | null; createdAt: string }>>([]);
+  const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false);
+
+  // Doc comments state
+  const [showComments, setShowComments] = useState(false);
+  const [docComments, setDocComments] = useState<Array<{ id: string; content: string; resolved: boolean; createdAt: string; user: { id: string; name: string | null; email: string }; replies?: Array<{ id: string; content: string; createdAt: string; user: { id: string; name: string | null; email: string } }> }>>([]);
+  const [newComment, setNewComment] = useState('');
+
+  // Canvas snapshots state
+  const [showCanvasVersions, setShowCanvasVersions] = useState(false);
+  const [canvasSnapshots, setCanvasSnapshots] = useState<Array<{ id: string; version: number; label: string | null; createdAt: string }>>([]);
+
+  // Page activity state
+  const [showActivity, setShowActivity] = useState(false);
+  const [activityLog, setActivityLog] = useState<Array<{ id: string; action: string; details: unknown; createdAt: string; user: { id: string; name: string | null; email: string } }>>([]);
+
+  // Share link state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState('');
 
   // Real-time collaboration
   const { connected: realtimeConnected, presenceUsers } = useRealtime({
@@ -325,6 +354,160 @@ export default function PageEditorPage() {
     }
   };
 
+  // Doc snapshots handlers
+  const loadDocSnapshots = async () => {
+    if (!token) return;
+    setIsLoadingSnapshots(true);
+    try {
+      const snapshots = await docApi.getSnapshots(token, pageId);
+      setDocSnapshots(snapshots);
+    } catch {
+      toast({ title: 'Failed to load versions', variant: 'destructive' });
+    } finally {
+      setIsLoadingSnapshots(false);
+    }
+  };
+
+  const handleCreateDocSnapshot = async () => {
+    if (!token) return;
+    try {
+      await docApi.createSnapshot(token, pageId);
+      toast({ title: 'Version saved' });
+      loadDocSnapshots();
+    } catch {
+      toast({ title: 'Failed to save version', variant: 'destructive' });
+    }
+  };
+
+  const handleRestoreDocSnapshot = async (snapshotId: string) => {
+    if (!token) return;
+    try {
+      await docApi.restoreSnapshot(token, pageId, snapshotId);
+      toast({ title: 'Version restored' });
+      loadPage();
+      setShowVersions(false);
+    } catch {
+      toast({ title: 'Failed to restore version', variant: 'destructive' });
+    }
+  };
+
+  // Doc comments handlers
+  const loadDocComments = async () => {
+    if (!token) return;
+    try {
+      const doc = await docApi.get(token, pageId);
+      const docData = doc as unknown as { comments?: Array<{ id: string; content: string; resolved: boolean; createdAt: string; user: { id: string; name: string | null; email: string }; replies?: Array<{ id: string; content: string; createdAt: string; user: { id: string; name: string | null; email: string } }> }> };
+      setDocComments(docData.comments || []);
+    } catch {
+      // silent
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!token || !newComment.trim()) return;
+    try {
+      await docApi.createComment(token, pageId, { content: newComment.trim() });
+      setNewComment('');
+      toast({ title: 'Comment added' });
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to add comment', variant: 'destructive' });
+    }
+  };
+
+  const handleResolveComment = async (commentId: string) => {
+    if (!token) return;
+    try {
+      await docApi.resolveComment(token, pageId, commentId);
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to resolve comment', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!token) return;
+    try {
+      await docApi.deleteComment(token, pageId, commentId);
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to delete comment', variant: 'destructive' });
+    }
+  };
+
+  // Canvas snapshots handlers
+  const loadCanvasSnapshots = async () => {
+    if (!token) return;
+    try {
+      const snapshots = await canvasApi.getSnapshots(token, pageId);
+      setCanvasSnapshots(snapshots);
+    } catch {
+      toast({ title: 'Failed to load canvas versions', variant: 'destructive' });
+    }
+  };
+
+  const handleCreateCanvasSnapshot = async () => {
+    if (!token) return;
+    try {
+      await canvasApi.createSnapshot(token, pageId);
+      toast({ title: 'Canvas version saved' });
+      loadCanvasSnapshots();
+    } catch {
+      toast({ title: 'Failed to save canvas version', variant: 'destructive' });
+    }
+  };
+
+  const handleRestoreCanvasSnapshot = async (snapshotId: string) => {
+    if (!token) return;
+    try {
+      await canvasApi.restoreSnapshot(token, pageId, snapshotId);
+      toast({ title: 'Canvas version restored' });
+      loadPage();
+      setShowCanvasVersions(false);
+    } catch {
+      toast({ title: 'Failed to restore canvas version', variant: 'destructive' });
+    }
+  };
+
+  const handleConvertToOutline = async () => {
+    if (!token) return;
+    try {
+      const result = await canvasApi.convertToOutline(token, pageId);
+      toast({ title: `Converted ${result.addedElements} elements to outline` });
+      loadPage();
+    } catch {
+      toast({ title: 'Failed to convert to outline', variant: 'destructive' });
+    }
+  };
+
+  // Page activity handler
+  const loadActivity = async () => {
+    if (!token) return;
+    try {
+      const activity = await pagesApi.getActivity(token, pageId);
+      setActivityLog(activity);
+    } catch {
+      toast({ title: 'Failed to load activity', variant: 'destructive' });
+    }
+  };
+
+  // Share link handler
+  const handleGenerateShareLink = async () => {
+    if (!token) return;
+    try {
+      const result = await pagesApi.generateShareLink(token, pageId);
+      setShareLink(result.shareUrl || result.shareLink);
+      setShowShareModal(true);
+    } catch {
+      toast({ title: 'Failed to generate share link', variant: 'destructive' });
+    }
+  };
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard.writeText(shareLink);
+    toast({ title: 'Link copied to clipboard' });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
@@ -430,7 +613,10 @@ export default function PageEditorPage() {
               <Sparkles className="h-4 w-4 mr-2" />
               AI
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => { loadActivity(); setShowActivity(true); }} title="Activity history">
+              <Clock className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleGenerateShareLink} title="Share page">
               <Share2 className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => handleExport('PDF')} disabled={isExporting} title="Export as PDF">
@@ -496,6 +682,22 @@ export default function PageEditorPage() {
                 >
                   <BookmarkCheck className="h-4 w-4 mr-2" />
                   Bookmarks ({bookmarks.length})
+                </Button>
+                <Button
+                  variant={showVersions ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowVersions(!showVersions); if (!showVersions) loadDocSnapshots(); }}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  Versions
+                </Button>
+                <Button
+                  variant={showComments ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowComments(!showComments); if (!showComments) loadDocComments(); }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Comments
                 </Button>
                 {selectedText && (
                   <Button
@@ -564,6 +766,112 @@ export default function PageEditorPage() {
                 </div>
               )}
 
+              {/* Version history panel */}
+              {showVersions && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-1">
+                      <History className="h-4 w-4" />
+                      Doc Version History
+                    </h4>
+                    <Button variant="outline" size="sm" onClick={handleCreateDocSnapshot}>
+                      <Save className="h-3 w-3 mr-1" />
+                      Save Version
+                    </Button>
+                  </div>
+                  {isLoadingSnapshots ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      <span className="text-sm text-muted-foreground">Loading...</span>
+                    </div>
+                  ) : docSnapshots.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">No versions saved yet</p>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {docSnapshots.map((snap) => (
+                        <div key={snap.id} className="flex items-center justify-between text-sm p-2 hover:bg-muted/50 rounded">
+                          <div>
+                            <span className="font-medium">v{snap.version}</span>
+                            {snap.label && <span className="text-muted-foreground ml-2">{snap.label}</span>}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {new Date(snap.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleRestoreDocSnapshot(snap.id)}>
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Restore
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Comments panel */}
+              {showComments && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    Comments
+                  </h4>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="flex-1 h-8 text-sm"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
+                    />
+                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()}>
+                      Post
+                    </Button>
+                  </div>
+                  {docComments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No comments yet</p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {docComments.map((comment) => (
+                        <div key={comment.id} className={`text-sm p-2 rounded border ${comment.resolved ? 'opacity-50 bg-muted/20' : 'bg-background'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{comment.user.name || comment.user.email}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => handleResolveComment(comment.id)}
+                                title={comment.resolved ? 'Unresolve' : 'Resolve'}
+                              >
+                                {comment.resolved ? '↩ Reopen' : '✓ Resolve'}
+                              </button>
+                              <button
+                                className="text-xs text-destructive hover:text-destructive/80"
+                                onClick={() => handleDeleteComment(comment.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="mt-1">{comment.content}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </span>
+                          {comment.replies && comment.replies.length > 0 && (
+                            <div className="ml-3 mt-2 space-y-1 border-l-2 pl-2">
+                              {comment.replies.map((reply) => (
+                                <div key={reply.id} className="text-xs">
+                                  <span className="font-medium">{reply.user.name || reply.user.email}</span>
+                                  <p>{reply.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Drawing canvas + textarea container */}
               <div className="relative">
                 <DrawingCanvas
@@ -586,17 +894,69 @@ export default function PageEditorPage() {
           </TabsContent>
 
           <TabsContent value="canvas" className="flex-1 m-0">
-            <CanvasEditor
-              initialContent={page.canvas?.content as CanvasState | null}
-              onSave={async (content) => {
-                if (!token) return;
-                try {
-                  await canvasApi.update(token, pageId, { content });
-                } catch {
-                  // silent — auto-save
-                }
-              }}
-            />
+            <div className="flex flex-col h-full">
+              {/* Canvas toolbar */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30 flex-wrap">
+                <Button
+                  variant={showCanvasVersions ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowCanvasVersions(!showCanvasVersions); if (!showCanvasVersions) loadCanvasSnapshots(); }}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  Versions
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleCreateCanvasSnapshot}>
+                  <Save className="h-3 w-3 mr-1" />
+                  Save Version
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleConvertToOutline}>
+                  <ArrowRightFromLine className="h-4 w-4 mr-2" />
+                  Convert to Outline
+                </Button>
+              </div>
+
+              {/* Canvas version history panel */}
+              {showCanvasVersions && (
+                <div className="mx-4 mt-2 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2">Canvas Version History</h4>
+                  {canvasSnapshots.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No versions saved yet</p>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {canvasSnapshots.map((snap) => (
+                        <div key={snap.id} className="flex items-center justify-between text-sm p-2 hover:bg-muted/50 rounded">
+                          <div>
+                            <span className="font-medium">v{snap.version}</span>
+                            {snap.label && <span className="text-muted-foreground ml-2">{snap.label}</span>}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {new Date(snap.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleRestoreCanvasSnapshot(snap.id)}>
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Restore
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex-1">
+                <CanvasEditor
+                  initialContent={page.canvas?.content as CanvasState | null}
+                  onSave={async (content) => {
+                    if (!token) return;
+                    try {
+                      await canvasApi.update(token, pageId, { content });
+                    } catch {
+                      // silent — auto-save
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="sources" className="flex-1 m-0">
@@ -762,6 +1122,71 @@ export default function PageEditorPage() {
                 <Button variant="outline" onClick={() => setShowAIModal(false)}>
                   Close
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Activity History Modal */}
+      {showActivity && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg max-h-[80vh] flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Activity History
+              </CardTitle>
+              <CardDescription>See who changed what and when</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-auto space-y-2">
+              {activityLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No activity recorded yet</p>
+              ) : (
+                activityLog.map((entry) => (
+                  <div key={entry.id} className="flex items-start gap-3 text-sm p-2 border rounded">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium shrink-0">
+                      {(entry.user.name || entry.user.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p>
+                        <span className="font-medium">{entry.user.name || entry.user.email}</span>
+                        {' '}<span className="text-muted-foreground">{entry.action}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div className="flex justify-end pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowActivity(false)}>Close</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" />
+                Share Page
+              </CardTitle>
+              <CardDescription>Share this page with others using a link</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input value={shareLink} readOnly className="flex-1 text-sm" />
+                <Button size="sm" onClick={handleCopyShareLink}>
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy
+                </Button>
+              </div>
+              <div className="flex justify-end pt-2 border-t">
+                <Button variant="outline" onClick={() => setShowShareModal(false)}>Close</Button>
               </div>
             </CardContent>
           </Card>
