@@ -309,6 +309,12 @@ export const workspacesApi = {
       method: 'POST',
       token,
     }),
+
+  joinByShareLink: (token: string, shareLink: string) =>
+    fetchApi<{ id: string; name: string }>(`/api/workspaces/join/${shareLink}`, {
+      method: 'POST',
+      token,
+    }),
 };
 
 // Pages API
@@ -346,6 +352,21 @@ export const pagesApi = {
       `/api/pages/search?workspaceId=${workspaceId}&q=${encodeURIComponent(query)}`,
       { token }
     ),
+
+  getActivity: (token: string, pageId: string) =>
+    fetchApi<Array<{
+      id: string;
+      action: string;
+      details: unknown;
+      createdAt: string;
+      user: { id: string; name: string | null; email: string };
+    }>>(`/api/pages/${pageId}/activity`, { token }),
+
+  generateShareLink: (token: string, pageId: string) =>
+    fetchApi<{ shareLink: string; shareLinkEnabled: boolean; shareRole: string }>(`/api/pages/${pageId}/share`, {
+      method: 'POST',
+      token,
+    }),
 };
 
 // Doc API
@@ -361,6 +382,44 @@ export const docApi = {
       body: JSON.stringify(data),
       token,
     }),
+
+  createSnapshot: (token: string, pageId: string, label?: string) =>
+    fetchApi<{ id: string; version: number }>(`/api/pages/${pageId}/doc/snapshots`, {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+      token,
+    }),
+
+  getSnapshots: (token: string, pageId: string) =>
+    fetchApi<Array<{ id: string; version: number; label: string | null; createdAt: string }>>(
+      `/api/pages/${pageId}/doc/snapshots`,
+      { token },
+    ),
+
+  restoreSnapshot: (token: string, pageId: string, snapshotId: string) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/doc/snapshots/${snapshotId}/restore`, {
+      method: 'POST',
+      token,
+    }),
+
+  createComment: (token: string, pageId: string, data: { content: string; parentId?: string; position?: unknown }) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/doc/comments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  resolveComment: (token: string, pageId: string, commentId: string) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/doc/comments/${commentId}/resolve`, {
+      method: 'PUT',
+      token,
+    }),
+
+  deleteComment: (token: string, pageId: string, commentId: string) =>
+    fetchApi<{ success: boolean }>(`/api/pages/${pageId}/doc/comments/${commentId}`, {
+      method: 'DELETE',
+      token,
+    }),
 };
 
 // Canvas API
@@ -374,6 +433,35 @@ export const canvasApi = {
       body: JSON.stringify(data),
       token,
     }),
+
+  createSnapshot: (token: string, pageId: string, label?: string) =>
+    fetchApi<{ id: string; version: number }>(`/api/pages/${pageId}/canvas/snapshots`, {
+      method: 'POST',
+      body: JSON.stringify({ label }),
+      token,
+    }),
+
+  getSnapshots: (token: string, pageId: string) =>
+    fetchApi<Array<{ id: string; version: number; label: string | null; createdAt: string }>>(
+      `/api/pages/${pageId}/canvas/snapshots`,
+      { token },
+    ),
+
+  restoreSnapshot: (token: string, pageId: string, snapshotId: string) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/canvas/snapshots/${snapshotId}/restore`, {
+      method: 'POST',
+      token,
+    }),
+
+  convertToOutline: (token: string, pageId: string, elementIds?: string[]) =>
+    fetchApi<{ success: boolean; addedElements: number }>(
+      `/api/pages/${pageId}/canvas/convert-to-outline`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ elementIds }),
+        token,
+      },
+    ),
 };
 
 // Tasks API
@@ -489,6 +577,13 @@ export const aiApi = {
       flashcardSet: { id: string; title: string; cards: Array<{ id: string; front: string; back: string }> };
       tokensUsed: number;
     }>('/api/ai/flashcards', {
+      method: 'POST',
+      body: JSON.stringify({ pageId, ...options }),
+      token,
+    }),
+
+  explain: (token: string, pageId: string, options: { text: string }) =>
+    fetchApi<{ explanation: string; tokensUsed: number }>('/api/ai/explain', {
       method: 'POST',
       body: JSON.stringify({ pageId, ...options }),
       token,

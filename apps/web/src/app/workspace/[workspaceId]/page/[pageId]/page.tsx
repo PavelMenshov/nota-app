@@ -14,6 +14,18 @@ import {
   Sparkles,
   Upload,
   Trash2,
+  Pencil,
+  Bookmark,
+  BookmarkCheck,
+  MessageSquareText,
+  X,
+  History,
+  MessageCircle,
+  Clock,
+  RotateCcw,
+  Copy,
+  Link2,
+  ArrowRightFromLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +36,23 @@ import { pagesApi, docApi, aiApi, sourcesApi, canvasApi, exportApi } from '@/lib
 import { useToast } from '@/hooks/use-toast';
 import CanvasEditor, { CanvasState } from '@/components/canvas/CanvasEditor';
 import PDFViewer from '@/components/pdf/PDFViewer';
+import DocumentViewer from '@/components/pdf/DocumentViewer';
+import DrawingCanvas from '@/components/notes/DrawingCanvas';
 import { useRealtime } from '@/hooks/use-realtime';
+
+interface DocComment {
+  id: string;
+  content: string;
+  resolved: boolean;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string };
+  replies?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: { id: string; name: string | null; email: string };
+  }>;
+}
 
 interface PageData {
   id: string;
@@ -76,6 +104,44 @@ export default function PageEditorPage() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Drawing overlay state
+  const [isDrawingActive, setIsDrawingActive] = useState(false);
+  const [drawingStrokes, setDrawingStrokes] = useState<Array<{ points: Array<{ x: number; y: number }>; color: string; width: number }>>([]);
+
+  // Bookmarks state
+  interface Bookmark { id: string; label: string; position: number; createdAt: string }
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const docTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // AI Explain state
+  const [selectedText, setSelectedText] = useState('');
+  const [aiExplainResult, setAiExplainResult] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [showExplainPopup, setShowExplainPopup] = useState(false);
+
+  // Doc snapshots/version history state
+  const [showVersions, setShowVersions] = useState(false);
+  const [docSnapshots, setDocSnapshots] = useState<Array<{ id: string; version: number; label: string | null; createdAt: string }>>([]);
+  const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false);
+
+  // Doc comments state
+  const [showComments, setShowComments] = useState(false);
+  const [docComments, setDocComments] = useState<DocComment[]>([]);
+  const [newComment, setNewComment] = useState('');
+
+  // Canvas snapshots state
+  const [showCanvasVersions, setShowCanvasVersions] = useState(false);
+  const [canvasSnapshots, setCanvasSnapshots] = useState<Array<{ id: string; version: number; label: string | null; createdAt: string }>>([]);
+
+  // Page activity state
+  const [showActivity, setShowActivity] = useState(false);
+  const [activityLog, setActivityLog] = useState<Array<{ id: string; action: string; details: unknown; createdAt: string; user: { id: string; name: string | null; email: string } }>>([]);
+
+  // Share link state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+
   // Real-time collaboration
   const { connected: realtimeConnected, presenceUsers } = useRealtime({
     pageId,
@@ -108,7 +174,7 @@ export default function PageEditorPage() {
         })),
       });
     } catch {
-      toast({ title: 'Failed to load PDF', variant: 'destructive' });
+      toast({ title: 'Failed to load document', variant: 'destructive' });
     }
   }, [token, pageId, toast]);
 
@@ -239,6 +305,226 @@ export default function PageEditorPage() {
     }
   };
 
+  // Bookmark handlers
+  const handleAddBookmark = () => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    const position = textarea.selectionStart;
+    const contextText = docContent.substring(
+      Math.max(0, position - 30),
+      Math.min(docContent.length, position + 30),
+    ).trim();
+    const label = contextText.length > 40 ? contextText.substring(0, 40) + '...' : contextText || `Position ${position}`;
+    const newBookmark: Bookmark = {
+      id: `bm-${Date.now()}`,
+      label,
+      position,
+      createdAt: new Date().toISOString(),
+    };
+    setBookmarks((prev) => [...prev, newBookmark]);
+    toast({ title: 'Bookmark added' });
+  };
+
+  const handleGoToBookmark = (bookmark: Bookmark) => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    textarea.focus();
+    textarea.setSelectionRange(bookmark.position, bookmark.position);
+    setShowBookmarks(false);
+  };
+
+  const handleDeleteBookmark = (bookmarkId: string) => {
+    setBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
+  };
+
+  // AI Explain handler
+  const handleExplainSelection = async () => {
+    if (!token || !selectedText.trim()) return;
+    setIsExplaining(true);
+    setShowExplainPopup(true);
+    setAiExplainResult(null);
+    try {
+      const result = await aiApi.explain(token, pageId, { text: selectedText });
+      setAiExplainResult(result.explanation);
+    } catch (error) {
+      setAiExplainResult(
+        error instanceof Error ? error.message : 'Failed to generate explanation. Please try again.',
+      );
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  // Track text selection in doc textarea
+  const handleDocMouseUp = () => {
+    const textarea = docTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start !== end) {
+      setSelectedText(docContent.substring(start, end));
+    } else {
+      setSelectedText('');
+    }
+  };
+
+  // Doc snapshots handlers
+  const loadDocSnapshots = async () => {
+    if (!token) return;
+    setIsLoadingSnapshots(true);
+    try {
+      const snapshots = await docApi.getSnapshots(token, pageId);
+      setDocSnapshots(snapshots);
+    } catch {
+      toast({ title: 'Failed to load versions', variant: 'destructive' });
+    } finally {
+      setIsLoadingSnapshots(false);
+    }
+  };
+
+  const handleCreateDocSnapshot = async () => {
+    if (!token) return;
+    try {
+      await docApi.createSnapshot(token, pageId);
+      toast({ title: 'Version saved' });
+      loadDocSnapshots();
+    } catch {
+      toast({ title: 'Failed to save version', variant: 'destructive' });
+    }
+  };
+
+  const handleRestoreDocSnapshot = async (snapshotId: string) => {
+    if (!token) return;
+    try {
+      await docApi.restoreSnapshot(token, pageId, snapshotId);
+      toast({ title: 'Version restored' });
+      loadPage();
+      setShowVersions(false);
+    } catch {
+      toast({ title: 'Failed to restore version', variant: 'destructive' });
+    }
+  };
+
+  // Doc comments handlers
+  const loadDocComments = async () => {
+    if (!token) return;
+    try {
+      const doc = await docApi.get(token, pageId);
+      const docData = doc as unknown as { comments?: DocComment[] };
+      setDocComments(docData.comments || []);
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!token || !newComment.trim()) return;
+    try {
+      await docApi.createComment(token, pageId, { content: newComment.trim() });
+      setNewComment('');
+      toast({ title: 'Comment added' });
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to add comment', variant: 'destructive' });
+    }
+  };
+
+  const handleResolveComment = async (commentId: string) => {
+    if (!token) return;
+    try {
+      await docApi.resolveComment(token, pageId, commentId);
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to resolve comment', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!token) return;
+    try {
+      await docApi.deleteComment(token, pageId, commentId);
+      loadDocComments();
+    } catch {
+      toast({ title: 'Failed to delete comment', variant: 'destructive' });
+    }
+  };
+
+  // Canvas snapshots handlers
+  const loadCanvasSnapshots = async () => {
+    if (!token) return;
+    try {
+      const snapshots = await canvasApi.getSnapshots(token, pageId);
+      setCanvasSnapshots(snapshots);
+    } catch {
+      toast({ title: 'Failed to load canvas versions', variant: 'destructive' });
+    }
+  };
+
+  const handleCreateCanvasSnapshot = async () => {
+    if (!token) return;
+    try {
+      await canvasApi.createSnapshot(token, pageId);
+      toast({ title: 'Canvas version saved' });
+      loadCanvasSnapshots();
+    } catch {
+      toast({ title: 'Failed to save canvas version', variant: 'destructive' });
+    }
+  };
+
+  const handleRestoreCanvasSnapshot = async (snapshotId: string) => {
+    if (!token) return;
+    try {
+      await canvasApi.restoreSnapshot(token, pageId, snapshotId);
+      toast({ title: 'Canvas version restored' });
+      loadPage();
+      setShowCanvasVersions(false);
+    } catch {
+      toast({ title: 'Failed to restore canvas version', variant: 'destructive' });
+    }
+  };
+
+  const handleConvertToOutline = async () => {
+    if (!token) return;
+    try {
+      const result = await canvasApi.convertToOutline(token, pageId);
+      toast({ title: `Converted ${result.addedElements} elements to outline` });
+      loadPage();
+    } catch {
+      toast({ title: 'Failed to convert to outline', variant: 'destructive' });
+    }
+  };
+
+  // Page activity handler
+  const loadActivity = async () => {
+    if (!token) return;
+    try {
+      const activity = await pagesApi.getActivity(token, pageId);
+      setActivityLog(activity);
+    } catch {
+      toast({ title: 'Failed to load activity', variant: 'destructive' });
+    }
+  };
+
+  // Share link handler
+  const handleGenerateShareLink = async () => {
+    if (!token) return;
+    try {
+      const result = await pagesApi.generateShareLink(token, pageId);
+      const url = typeof window !== 'undefined'
+        ? `${window.location.origin}/workspace/${workspaceId}/page/${pageId}?share=${result.shareLink}`
+        : result.shareLink;
+      setShareLink(url);
+      setShowShareModal(true);
+    } catch {
+      toast({ title: 'Failed to generate share link', variant: 'destructive' });
+    }
+  };
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard.writeText(shareLink);
+    toast({ title: 'Link copied to clipboard' });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
@@ -344,7 +630,10 @@ export default function PageEditorPage() {
               <Sparkles className="h-4 w-4 mr-2" />
               AI
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => { loadActivity(); setShowActivity(true); }} title="Activity history">
+              <Clock className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleGenerateShareLink} title="Share page">
               <Share2 className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => handleExport('PDF')} disabled={isExporting} title="Export as PDF">
@@ -388,28 +677,303 @@ export default function PageEditorPage() {
           </div>
 
           <TabsContent value="doc" className="flex-1 m-0">
-            <div className="max-w-4xl mx-auto p-8">
-              <textarea
-                className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Start writing your notes here..."
-                value={docContent}
-                onChange={(e) => setDocContent(e.target.value)}
-              />
+            <div className="max-w-4xl mx-auto p-8 relative">
+              {/* Doc toolbar */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <Button
+                  variant={isDrawingActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsDrawingActive(!isDrawingActive)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {isDrawingActive ? 'Stop Drawing' : 'Draw'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleAddBookmark}>
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Add Bookmark
+                </Button>
+                <Button
+                  variant={showBookmarks ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowBookmarks(!showBookmarks)}
+                >
+                  <BookmarkCheck className="h-4 w-4 mr-2" />
+                  Bookmarks ({bookmarks.length})
+                </Button>
+                <Button
+                  variant={showVersions ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowVersions(!showVersions); if (!showVersions) loadDocSnapshots(); }}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  Versions
+                </Button>
+                <Button
+                  variant={showComments ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowComments(!showComments); if (!showComments) loadDocComments(); }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Comments
+                </Button>
+                {selectedText && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExplainSelection}
+                    disabled={isExplaining}
+                  >
+                    <MessageSquareText className="h-4 w-4 mr-2" />
+                    AI Explain Selection
+                  </Button>
+                )}
+              </div>
+
+              {/* Bookmarks panel */}
+              {showBookmarks && bookmarks.length > 0 && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2">Bookmarks</h4>
+                  <div className="space-y-1">
+                    {bookmarks.map((bm) => (
+                      <div key={bm.id} className="flex items-center gap-2 text-sm">
+                        <button
+                          className="flex-1 text-left text-primary hover:underline truncate"
+                          onClick={() => handleGoToBookmark(bm)}
+                        >
+                          <BookmarkCheck className="h-3 w-3 inline mr-1" />
+                          {bm.label}
+                        </button>
+                        <button
+                          className="text-destructive hover:text-destructive/80 text-xs"
+                          onClick={() => handleDeleteBookmark(bm.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Explain popup */}
+              {showExplainPopup && (
+                <div className="mb-4 border rounded-lg bg-primary/5 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-1">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI Explanation
+                    </h4>
+                    <button onClick={() => { setShowExplainPopup(false); setAiExplainResult(null); }}>
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                  {selectedText && (
+                    <p className="text-xs text-muted-foreground italic mb-2 line-clamp-2">
+                      &ldquo;{selectedText}&rdquo;
+                    </p>
+                  )}
+                  {isExplaining ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      <span className="text-sm text-muted-foreground">Generating explanation...</span>
+                    </div>
+                  ) : aiExplainResult ? (
+                    <div className="text-sm whitespace-pre-wrap">{aiExplainResult}</div>
+                  ) : null}
+                </div>
+              )}
+
+              {/* Version history panel */}
+              {showVersions && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-1">
+                      <History className="h-4 w-4" />
+                      Doc Version History
+                    </h4>
+                    <Button variant="outline" size="sm" onClick={handleCreateDocSnapshot}>
+                      <Save className="h-3 w-3 mr-1" />
+                      Save Version
+                    </Button>
+                  </div>
+                  {isLoadingSnapshots ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      <span className="text-sm text-muted-foreground">Loading...</span>
+                    </div>
+                  ) : docSnapshots.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">No versions saved yet</p>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {docSnapshots.map((snap) => (
+                        <div key={snap.id} className="flex items-center justify-between text-sm p-2 hover:bg-muted/50 rounded">
+                          <div>
+                            <span className="font-medium">v{snap.version}</span>
+                            {snap.label && <span className="text-muted-foreground ml-2">{snap.label}</span>}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {new Date(snap.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleRestoreDocSnapshot(snap.id)}>
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Restore
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Comments panel */}
+              {showComments && (
+                <div className="mb-4 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    Comments
+                  </h4>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="flex-1 h-8 text-sm"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
+                    />
+                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()}>
+                      Post
+                    </Button>
+                  </div>
+                  {docComments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No comments yet</p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {docComments.map((comment) => (
+                        <div key={comment.id} className={`text-sm p-2 rounded border ${comment.resolved ? 'opacity-50 bg-muted/20' : 'bg-background'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{comment.user.name || comment.user.email}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => handleResolveComment(comment.id)}
+                                title={comment.resolved ? 'Unresolve' : 'Resolve'}
+                              >
+                                {comment.resolved ? '↩ Reopen' : '✓ Resolve'}
+                              </button>
+                              <button
+                                className="text-xs text-destructive hover:text-destructive/80"
+                                onClick={() => handleDeleteComment(comment.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="mt-1">{comment.content}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </span>
+                          {comment.replies && comment.replies.length > 0 && (
+                            <div className="ml-3 mt-2 space-y-1 border-l-2 pl-2">
+                              {comment.replies.map((reply) => (
+                                <div key={reply.id} className="text-xs">
+                                  <span className="font-medium">{reply.user.name || reply.user.email}</span>
+                                  <p>{reply.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Drawing canvas + textarea container */}
+              <div className="relative">
+                <DrawingCanvas
+                  isActive={isDrawingActive}
+                  onToggle={() => setIsDrawingActive(!isDrawingActive)}
+                  strokes={drawingStrokes}
+                  onStrokesChange={setDrawingStrokes}
+                />
+                <textarea
+                  ref={docTextareaRef}
+                  className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Start writing your notes here..."
+                  value={docContent}
+                  onChange={(e) => setDocContent(e.target.value)}
+                  onMouseUp={handleDocMouseUp}
+                  onKeyUp={handleDocMouseUp}
+                />
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="canvas" className="flex-1 m-0">
-            <CanvasEditor
-              initialContent={page.canvas?.content as CanvasState | null}
-              onSave={async (content) => {
-                if (!token) return;
-                try {
-                  await canvasApi.update(token, pageId, { content });
-                } catch {
-                  // silent — auto-save
-                }
-              }}
-            />
+            <div className="flex flex-col h-full">
+              {/* Canvas toolbar */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30 flex-wrap">
+                <Button
+                  variant={showCanvasVersions ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowCanvasVersions(!showCanvasVersions); if (!showCanvasVersions) loadCanvasSnapshots(); }}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  Versions
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleCreateCanvasSnapshot}>
+                  <Save className="h-3 w-3 mr-1" />
+                  Save Version
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleConvertToOutline}>
+                  <ArrowRightFromLine className="h-4 w-4 mr-2" />
+                  Convert to Outline
+                </Button>
+              </div>
+
+              {/* Canvas version history panel */}
+              {showCanvasVersions && (
+                <div className="mx-4 mt-2 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2">Canvas Version History</h4>
+                  {canvasSnapshots.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No versions saved yet</p>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {canvasSnapshots.map((snap) => (
+                        <div key={snap.id} className="flex items-center justify-between text-sm p-2 hover:bg-muted/50 rounded">
+                          <div>
+                            <span className="font-medium">v{snap.version}</span>
+                            {snap.label && <span className="text-muted-foreground ml-2">{snap.label}</span>}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {new Date(snap.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleRestoreCanvasSnapshot(snap.id)}>
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Restore
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex-1">
+                <CanvasEditor
+                  initialContent={page.canvas?.content as CanvasState | null}
+                  onSave={async (content) => {
+                    if (!token) return;
+                    try {
+                      await canvasApi.update(token, pageId, { content });
+                    } catch {
+                      // silent — auto-save
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="sources" className="flex-1 m-0">
@@ -421,15 +985,23 @@ export default function PageEditorPage() {
                   </Button>
                 </div>
                 <div className="flex-1">
-                  <PDFViewer
-                    sourceId={viewingSource.id}
-                    fileName={viewingSource.fileName}
-                    fileUrl={viewingSource.fileUrl}
-                    pageCount={viewingSource.pageCount}
-                    annotations={viewingSource.annotations}
-                    onCreateAnnotation={handleCreateAnnotation}
-                    onDeleteAnnotation={handleDeleteAnnotation}
-                  />
+                  {viewingSource.fileName.match(/\.(docx|pptx)$/i) ? (
+                    <DocumentViewer
+                      sourceId={viewingSource.id}
+                      fileName={viewingSource.fileName}
+                      fileUrl={viewingSource.fileUrl}
+                    />
+                  ) : (
+                    <PDFViewer
+                      sourceId={viewingSource.id}
+                      fileName={viewingSource.fileName}
+                      fileUrl={viewingSource.fileUrl}
+                      pageCount={viewingSource.pageCount}
+                      annotations={viewingSource.annotations}
+                      onCreateAnnotation={handleCreateAnnotation}
+                      onDeleteAnnotation={handleDeleteAnnotation}
+                    />
+                  )}
                 </div>
               </div>
             ) : (
@@ -437,12 +1009,12 @@ export default function PageEditorPage() {
                 <input
                   type="file"
                   ref={fileInputRef}
-                  accept=".pdf"
+                  accept=".pdf,.docx,.pptx"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold">PDF Sources</h3>
+                  <h3 className="text-lg font-semibold">Document Sources</h3>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
@@ -455,7 +1027,7 @@ export default function PageEditorPage() {
                     ) : (
                       <>
                         <Upload className="h-4 w-4 mr-2" />
-                        Upload PDF
+                        Upload File
                       </>
                     )}
                   </Button>
@@ -466,40 +1038,50 @@ export default function PageEditorPage() {
                     <Files className="h-12 w-12 mx-auto text-muted-foreground/50" />
                     <h4 className="mt-4 font-medium">No sources yet</h4>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Upload PDFs to annotate and reference in your notes
+                      Upload PDF, DOCX, or PPTX files to annotate and reference in your notes
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {page.sources.map((source) => (
-                      <div key={source.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
-                        <Files className="h-8 w-8 text-red-500" />
-                        <div className="flex-1 min-w-0">
-                          <button
-                            className="font-medium hover:underline text-primary text-left"
-                            onClick={() => handleOpenSource(source.id)}
+                    {page.sources.map((source) => {
+                      const ext = source.fileName.split('.').pop()?.toLowerCase() || '';
+                      const isPdf = ext === 'pdf';
+                      const isDocx = ext === 'docx' || ext === 'doc';
+                      const isPptx = ext === 'pptx' || ext === 'ppt';
+                      const iconColor = isPdf ? 'text-red-500' : isDocx ? 'text-blue-500' : isPptx ? 'text-orange-500' : 'text-gray-500';
+                      const typeLabel = isPdf
+                        ? (source.pageCount ? `${source.pageCount} pages` : 'PDF document')
+                        : isDocx ? 'Word document' : isPptx ? 'PowerPoint presentation' : 'Document';
+                      return (
+                        <div key={source.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                          <Files className={`h-8 w-8 ${iconColor}`} />
+                          <div className="flex-1 min-w-0">
+                            <button
+                              className="font-medium hover:underline text-primary text-left"
+                              onClick={() => handleOpenSource(source.id)}
+                            >
+                              {source.fileName}
+                            </button>
+                            <p className="text-sm text-muted-foreground">
+                              {typeLabel}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteSource(source.id)}
+                            disabled={isDeletingSource === source.id}
                           >
-                            {source.fileName}
-                          </button>
-                          <p className="text-sm text-muted-foreground">
-                            {source.pageCount ? `${source.pageCount} pages` : 'PDF document'}
-                          </p>
+                            {isDeletingSource === source.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteSource(source.id)}
-                          disabled={isDeletingSource === source.id}
-                        >
-                          {isDeletingSource === source.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -518,7 +1100,7 @@ export default function PageEditorPage() {
                 AI Study Assistant
               </CardTitle>
               <CardDescription>
-                Generate summaries or flashcards from your page content
+                Generate summaries, flashcards, or explain selected text from your notes
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-auto space-y-4">
@@ -557,6 +1139,71 @@ export default function PageEditorPage() {
                 <Button variant="outline" onClick={() => setShowAIModal(false)}>
                   Close
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Activity History Modal */}
+      {showActivity && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg max-h-[80vh] flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Activity History
+              </CardTitle>
+              <CardDescription>See who changed what and when</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-auto space-y-2">
+              {activityLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No activity recorded yet</p>
+              ) : (
+                activityLog.map((entry) => (
+                  <div key={entry.id} className="flex items-start gap-3 text-sm p-2 border rounded">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium shrink-0">
+                      {(entry.user.name || entry.user.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p>
+                        <span className="font-medium">{entry.user.name || entry.user.email}</span>
+                        {' '}<span className="text-muted-foreground">{entry.action}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div className="flex justify-end pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowActivity(false)}>Close</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" />
+                Share Page
+              </CardTitle>
+              <CardDescription>Share this page with others using a link</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input value={shareLink} readOnly className="flex-1 text-sm" />
+                <Button size="sm" onClick={handleCopyShareLink}>
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy
+                </Button>
+              </div>
+              <div className="flex justify-end pt-2 border-t">
+                <Button variant="outline" onClick={() => setShowShareModal(false)}>Close</Button>
               </div>
             </CardContent>
           </Card>

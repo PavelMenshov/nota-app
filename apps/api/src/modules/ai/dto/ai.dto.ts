@@ -42,3 +42,14 @@ export class FlashcardsDto {
   @MaxLength(100)
   title?: string;
 }
+
+export class ExplainDto {
+  @ApiProperty({ example: 'cuid123', description: 'Page ID for context' })
+  @IsString()
+  pageId!: string;
+
+  @ApiProperty({ example: 'Mitochondria is the powerhouse of the cell', description: 'Text to explain' })
+  @IsString()
+  @MaxLength(5000)
+  text!: string;
+}

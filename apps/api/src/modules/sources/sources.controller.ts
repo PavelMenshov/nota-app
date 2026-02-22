@@ -83,7 +83,7 @@ export class SourcesController {
   }
 
   @Post('pages/:pageId/sources/upload')
-  @ApiOperation({ summary: 'Upload a PDF source' })
+  @ApiOperation({ summary: 'Upload a document source (PDF, DOCX, PPTX)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -122,14 +122,24 @@ export class SourcesController {
   ) {
     // Sanitize filename to prevent path traversal
     const safeName = basename(filename);
+
+    // Determine content type from extension
+    const ext = extname(safeName).toLowerCase();
+    const contentTypeMap: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    };
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
     
     const { stream, localPath } = await this.filesService.getFileStream(safeName);
     
     if (stream) {
       // S3 stream
-      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Type', contentType);
       (stream as NodeJS.ReadableStream).pipe(res);
     } else if (localPath) {
+      res.setHeader('Content-Type', contentType);
       res.sendFile(localPath);
     } else {
       throw new HttpNotFoundException('File not found');
