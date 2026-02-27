@@ -9,7 +9,7 @@
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
     "build": "prisma generate && tsc",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && tsc"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
