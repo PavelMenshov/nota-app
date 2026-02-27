@@ -622,6 +622,15 @@ export default function WorkspacePage() {
     }
   };
 
+  const getTabIcon = (tab: OpenTab) => {
+    switch (tab.type) {
+      case 'source': return getFileIcon(tab.title);
+      case 'panel': return <Settings className="h-3.5 w-3.5" />;
+      case 'integration': return <ExternalLink className="h-3.5 w-3.5" />;
+      default: return <FileText className="h-3.5 w-3.5" />;
+    }
+  };
+
   const roleIcon = (role: string) => {
     switch (role) {
       case 'OWNER': return <Crown className="h-3 w-3" />;
@@ -847,7 +856,7 @@ export default function WorkspacePage() {
                   }`}
                   onClick={() => setActiveTabId(tab.id)}
                 >
-                  {tab.type === 'source' ? getFileIcon(tab.title) : tab.type === 'panel' ? <Settings className="h-3.5 w-3.5" /> : tab.type === 'integration' ? <ExternalLink className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                  {getTabIcon(tab)}
                   <span className="truncate">{tab.title}</span>
                   <button
                     className="ml-auto hover:bg-muted rounded-sm p-0.5 opacity-60 hover:opacity-100 transition-opacity"
@@ -1422,7 +1431,7 @@ export default function WorkspacePage() {
                     src={activeTab.integrationUrl}
                     className="w-full h-full border-0"
                     title={activeTab.title}
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"
+                    sandbox="allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
                   />
                 </div>
               </div>

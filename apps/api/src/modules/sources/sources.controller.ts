@@ -108,7 +108,7 @@ export class SourcesController {
       url = result.url;
     } catch (error) {
       // Handle S3/MinIO connection errors (AggregateError) and other upload failures
-      const message = error instanceof Error ? error.message : 'File storage upload failed';
+      const message = error instanceof Error ? error.message : 'File storage upload failed. Please check storage configuration.';
       throw new BadRequestException(`Upload failed: ${message}`);
     }
 
