@@ -598,6 +598,49 @@ export const aiApi = {
 
 // Sources API
 export const sourcesApi = {
+  upload: async (token: string, pageId: string, file: File) => {
+    const apiUrl = getRequestBaseUrl();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const response = await fetch(`${apiUrl}/api/pages/${pageId}/sources/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new ApiError(error.message || 'Upload failed', response.status);
+    }
+
+    return response.json() as Promise<{
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      fileSize: number;
+      mimeType: string;
+    }>;
+  },
+
+  list: (token: string, pageId: string) =>
+    fetchApi<Array<{
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      fileSize: number;
+      mimeType: string;
+      pageCount: number | null;
+    }>>(`/api/pages/${pageId}/sources`, { token }),
+
   delete: (token: string, pageId: string, sourceId: string) =>
     fetchApi<{ success: boolean }>(`/api/pages/${pageId}/sources/${sourceId}`, {
       method: 'DELETE',
