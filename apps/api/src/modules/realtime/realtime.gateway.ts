@@ -7,6 +7,7 @@ import {
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { RealtimeService } from './realtime.service';
@@ -24,6 +25,8 @@ interface AuthenticatedSocket extends Socket {
   },
 })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private readonly logger = new Logger(RealtimeGateway.name);
+
   @WebSocketServer()
   server!: Server;
 
@@ -46,9 +49,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       const payload = this.jwtService.verify(token);
       client.userId = payload.sub;
 
-      console.log(`Client connected: ${client.id}, User: ${client.userId}`);
+      this.logger.log(`Client connected: ${client.id}, User: ${client.userId}`);
     } catch {
-      console.log('WebSocket authentication failed');
+      this.logger.warn('WebSocket authentication failed');
       client.disconnect();
     }
   }
@@ -62,7 +65,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         userId: client.userId,
       });
     }
-    console.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('join_page')

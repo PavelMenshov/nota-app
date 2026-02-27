@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SummaryDto, FlashcardsDto, ExplainDto } from './dto/ai.dto';
@@ -9,6 +9,7 @@ import { SummaryDto, FlashcardsDto, ExplainDto } from './dto/ai.dto';
 
 @Injectable()
 export class AIService {
+  private readonly logger = new Logger(AIService.name);
   private readonly apiKey: string | undefined;
   private readonly provider: string;
   private readonly openaiKey: string | undefined;
@@ -292,7 +293,7 @@ export class AIService {
     // Check if API key is configured
     if (!this.apiKey) {
       // Return mock response for demo
-      console.warn('AI API key not configured. Returning mock response.');
+      this.logger.warn('AI API key not configured. Returning mock response.');
       return {
         text: `[AI Response Placeholder]\n\nTo enable real AI features, please configure your API key:\n\n1. For OpenAI: Set OPENAI_API_KEY in .env.local\n2. For Anthropic: Set ANTHROPIC_API_KEY in .env.local\n\nOnce configured, this will provide real AI-generated summaries and flashcards based on your content.`,
         tokensUsed: 100,
@@ -329,7 +330,7 @@ export class AIService {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`OpenAI API error: status ${response.status}, body: ${errorText.substring(0, 200)}`);
+          this.logger.error(`OpenAI API error: status ${response.status}, body: ${errorText.substring(0, 500)}`);
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
@@ -356,7 +357,7 @@ export class AIService {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Anthropic API error: status ${response.status}, body: ${errorText.substring(0, 200)}`);
+          this.logger.error(`Anthropic API error: status ${response.status}, body: ${errorText.substring(0, 500)}`);
           throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
         }
 
@@ -370,7 +371,7 @@ export class AIService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      console.error('AI API call failed:', error);
+      this.logger.error('AI API call failed:', error);
       throw new BadRequestException('Failed to get a response from the AI service. Please try again later.');
     }
   }
