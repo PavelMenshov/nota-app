@@ -18,7 +18,7 @@ const WEB_APP_URL = process.env.WEB_APP_URL || APP_CONFIG.DEFAULT_WEB_APP_URL;
 
 // Track load attempts for retry logic
 let loadAttempts = 0;
-const MAX_LOAD_ATTEMPTS = 3;
+const MAX_LOAD_ATTEMPTS = 5;
 
 function loadErrorPage() {
   if (!mainWindow) return;
@@ -178,9 +178,10 @@ function createWindow() {
       loadErrorPage();
     } else {
       console.log(`Retrying load... (attempt ${loadAttempts + 1}/${MAX_LOAD_ATTEMPTS})`);
+      const delay = Math.min(Math.pow(2, loadAttempts) * 1000, 10000); // Exponential backoff capped at 10s
       setTimeout(() => {
         mainWindow?.loadURL(WEB_APP_URL);
-      }, Math.pow(2, loadAttempts) * 1000); // Exponential backoff: 2s, 4s, 8s
+      }, delay);
     }
   });
 

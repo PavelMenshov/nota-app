@@ -4,7 +4,7 @@
   "description": "Nota Desktop Application",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "tsc && electron .",
+    "dev": "tsc && node ../../scripts/wait-for-web.js && electron .",
     "build": "tsc",
     "start": "electron .",
     "package": "electron-builder",
