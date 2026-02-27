@@ -48,6 +48,8 @@ import DocumentViewer from '@/components/pdf/DocumentViewer';
 
 type PanelView = 'members' | 'settings' | 'integrations';
 
+const FOLDER_ICON = '📁';
+
 interface PageData {
   id: string;
   title: string;
@@ -246,7 +248,7 @@ export default function WorkspacePage() {
         parentId: createParentId || undefined,
       });
       if (showCreateModal === 'folder') {
-        await pagesApi.update(token, page.id, { icon: '📁' });
+        await pagesApi.update(token, page.id, { icon: FOLDER_ICON });
       }
       toast({ title: showCreateModal === 'folder' ? 'Folder created!' : 'Page created!' });
       setShowCreateModal(null);
@@ -526,7 +528,7 @@ export default function WorkspacePage() {
 
   const { roots, childMap } = buildPageTree(filteredPages);
 
-  const isFolder = (page: PageData) => page.icon === '📁';
+  const isFolder = (page: PageData) => page.icon === FOLDER_ICON;
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
