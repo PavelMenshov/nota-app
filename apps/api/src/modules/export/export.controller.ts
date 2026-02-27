@@ -65,7 +65,14 @@ export class ExportController {
 
     // downloadUrl is like /exports/{jobId}.pdf
     const fileName = path.basename(downloadUrl);
-    const filePath = path.join(EXPORTS_DIR, fileName);
+    // Sanitize fileName to prevent path traversal
+    const safeName = path.basename(fileName);
+    const filePath = path.resolve(EXPORTS_DIR, safeName);
+
+    // Verify the resolved path is within EXPORTS_DIR
+    if (!filePath.startsWith(path.resolve(EXPORTS_DIR))) {
+      throw new NotFoundException('Export file not found');
+    }
 
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('Export file not found');
@@ -80,7 +87,7 @@ export class ExportController {
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
 
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
     res.sendFile(filePath);
   }
 

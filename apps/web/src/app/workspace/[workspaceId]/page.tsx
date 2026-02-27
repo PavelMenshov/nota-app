@@ -931,19 +931,19 @@ export default function WorkspacePage() {
                   <div className="border-b bg-muted/10 px-6 py-1.5 flex items-center gap-1 overflow-x-auto">
                     <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Bold" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '**' + selected + '**' + text.substring(e) }})); }
                       }}>
                         <span className="font-bold text-xs">B</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Italic" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '*' + selected + '*' + text.substring(e) }})); }
                       }}>
                         <span className="italic text-xs">I</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Underline" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '__' + selected + '__' + text.substring(e) }})); }
                       }}>
                         <span className="underline text-xs">U</span>
@@ -951,19 +951,19 @@ export default function WorkspacePage() {
                     </div>
                     <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 1" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '# ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs font-bold">H1</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 2" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '## ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs font-bold">H2</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 3" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '### ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs font-bold">H3</span>
@@ -971,25 +971,25 @@ export default function WorkspacePage() {
                     </div>
                     <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Bullet List" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '- ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs">•</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Numbered List" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '1. ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs">1.</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Quote" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '> ' + text.substring(lineStart) }})); }
                       }}>
                         <span className="text-xs">&ldquo;</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Code Block" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '`' + selected + '`' + text.substring(e) }})); }
                       }}>
                         <span className="text-xs font-mono">&lt;/&gt;</span>
@@ -997,13 +997,13 @@ export default function WorkspacePage() {
                     </div>
                     <div className="flex items-center gap-0.5">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Horizontal Rule" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const text = content.content; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '\n---\n' + text.substring(s) }})); }
                       }}>
                         <span className="text-xs">—</span>
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Link" onClick={() => {
-                        const ta = document.querySelector(`textarea`) as HTMLTextAreaElement;
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
                       }}>
                         <span className="text-xs">🔗</span>
@@ -1029,6 +1029,7 @@ export default function WorkspacePage() {
                   <div className="flex-1 overflow-auto">
                     <div className="max-w-4xl mx-auto p-8">
                       <textarea
+                        data-page-id={pageId}
                         className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f7a4a]"
                         placeholder="Start writing your notes here..."
                         value={content.content}

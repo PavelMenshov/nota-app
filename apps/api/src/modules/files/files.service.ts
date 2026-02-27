@@ -82,7 +82,7 @@ export class FilesService {
     const key = `${uuidv4()}${ext}`;
 
     if (this.useS3 && this.s3) {
-      const fileBuffer = fs.readFileSync(sourcePath);
+      const fileBuffer = await fs.promises.readFile(sourcePath);
       await this.s3.send(
         new PutObjectCommand({
           Bucket: this.bucket,
