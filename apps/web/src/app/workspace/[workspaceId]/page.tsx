@@ -482,12 +482,22 @@ export default function WorkspacePage() {
         }
         const result = await exportApi.get(token, jobId);
         if (result.status === 'COMPLETED' && result.resultUrl) {
-          const link = document.createElement('a');
-          link.href = `/api${result.resultUrl}`;
-          link.download = '';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          // Download file with auth token
+          const response = await fetch(`/api/export/${jobId}/download`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const ext = result.resultUrl.split('.').pop() || format.toLowerCase();
+            link.download = `export.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
           toast({ title: 'Export complete!', description: `Your ${format} file is downloading.` });
         } else if (result.status === 'FAILED') {
           toast({ title: 'Export failed', description: 'The export job failed. Please try again.', variant: 'destructive' });

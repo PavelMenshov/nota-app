@@ -82,15 +82,17 @@ export class FilesService {
     const key = `${uuidv4()}${ext}`;
 
     if (this.useS3 && this.s3) {
-      const stream = fs.createReadStream(sourcePath);
+      const fileBuffer = fs.readFileSync(sourcePath);
       await this.s3.send(
         new PutObjectCommand({
           Bucket: this.bucket,
           Key: key,
-          Body: stream,
+          Body: fileBuffer,
           ContentType: mimeType,
         }),
       );
+      // Clean up temp file after successful upload
+      try { fs.unlinkSync(sourcePath); } catch { /* ignore cleanup errors */ }
       return { key, url: `/api/sources/files/${key}` };
     }
 
