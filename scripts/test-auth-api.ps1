@@ -1,8 +1,8 @@
-# EYWA Authentication API Test Script
+# Nota Authentication API Test Script
 # This script tests the authentication endpoints
 
 Write-Host "=====================================" -ForegroundColor Cyan
-Write-Host "EYWA Authentication API Test Script" -ForegroundColor Cyan
+Write-Host "Nota Authentication API Test Script" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 

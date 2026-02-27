@@ -1,7 +1,7 @@
 {
-  "name": "@eywa/desktop",
+  "name": "@nota/desktop",
   "version": "0.1.0",
-  "description": "EYWA Desktop Application",
+  "description": "Nota Desktop Application",
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsc && electron .",
@@ -13,8 +13,8 @@
     "package:linux": "electron-builder --linux"
   },
   "build": {
-    "appId": "com.eywa.desktop",
-    "productName": "EYWA",
+    "appId": "com.nota.desktop",
+    "productName": "Nota",
     "directories": {
       "output": "release",
       "buildResources": "assets"

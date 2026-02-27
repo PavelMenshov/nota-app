@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
-import { Prisma } from '@eywa/database';
+import { Prisma } from '@nota/database';
 
 @Injectable()
 export class SourcesService {

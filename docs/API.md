@@ -642,7 +642,7 @@ The API is currently at version 0.1.0. Future versions will be accessible via pa
 ## Support
 
 - **Documentation**: http://localhost:4000/api/docs
-- **GitHub**: https://github.com/expusercatherine/eywa-platform
+- **GitHub**: https://github.com/PavelMenshov/nota-platform
 - **Email**: support@nota.app
 
 ---

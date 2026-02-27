@@ -41,7 +41,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore, useAppStore } from '@/lib/store';
-import { workspacesApi, pagesApi, docApi, sourcesApi, authApi } from '@/lib/api';
+import { workspacesApi, pagesApi, docApi, sourcesApi, authApi, exportApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import DocumentViewer from '@/components/pdf/DocumentViewer';
@@ -142,6 +142,20 @@ export default function WorkspacePage() {
   // Show add menu
   const [showAddMenu, setShowAddMenu] = useState(false);
 
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  // Document type for create modal
+  const [newItemType, setNewItemType] = useState<'document' | 'presentation' | 'spreadsheet'>('document');
+
+  // Export menu state
+  const [showExportMenu, setShowExportMenu] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push('/auth/login');
@@ -149,6 +163,13 @@ export default function WorkspacePage() {
     }
     loadWorkspace();
   }, [workspaceId, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (workspace) {
+      setWsName(workspace.name);
+      setWsDescription(workspace.description || '');
+    }
+  }, [workspace]);
 
   const loadWorkspace = async () => {
     if (!token) return;
@@ -269,26 +290,30 @@ export default function WorkspacePage() {
     }
   };
 
+  const showConfirmDialog = (title: string, description: string, onConfirm: () => void) => {
+    setConfirmDialog({ open: true, title, description, onConfirm });
+  };
+
   const handleDeletePage = async (pageId: string) => {
     if (!token) return;
-    if (!confirm('Are you sure you want to delete this item?')) return;
-
-    try {
-      await pagesApi.delete(token, pageId);
-      toast({ title: 'Deleted' });
-      // Close related tabs
-      setOpenTabs((prev) => prev.filter((t) => t.pageId !== pageId));
-      if (activeTabId?.includes(pageId)) {
-        setActiveTabId(null);
+    showConfirmDialog('Delete Item', 'Are you sure you want to delete this item?', async () => {
+      try {
+        await pagesApi.delete(token, pageId);
+        toast({ title: 'Deleted' });
+        // Close related tabs
+        setOpenTabs((prev) => prev.filter((t) => t.pageId !== pageId));
+        if (activeTabId?.includes(pageId)) {
+          setActiveTabId(null);
+        }
+        loadWorkspace();
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete',
+          variant: 'destructive',
+        });
       }
-      loadWorkspace();
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete',
-        variant: 'destructive',
-      });
-    }
+    });
   };
 
   const handleSavePage = async (pageId: string) => {
@@ -392,18 +417,19 @@ export default function WorkspacePage() {
 
   const handleRemoveMember = async (memberId: string) => {
     if (!token) return;
-    if (!confirm('Remove this member?')) return;
-    try {
-      await workspacesApi.removeMember(token, workspaceId, memberId);
-      toast({ title: 'Member removed' });
-      loadWorkspace();
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove member',
-        variant: 'destructive',
-      });
-    }
+    showConfirmDialog('Remove Member', 'Remove this member?', async () => {
+      try {
+        await workspacesApi.removeMember(token, workspaceId, memberId);
+        toast({ title: 'Member removed' });
+        loadWorkspace();
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to remove member',
+          variant: 'destructive',
+        });
+      }
+    });
   };
 
   const handleChangeRole = async (memberId: string, newRole: string) => {
@@ -442,6 +468,51 @@ export default function WorkspacePage() {
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
     toast({ title: 'Link copied to clipboard!' });
+  };
+
+  const handleExport = async (pageId: string, format: 'PDF' | 'DOCX' | 'MARKDOWN') => {
+    if (!token) return;
+    try {
+      const job = await exportApi.create(token, format, { pageIds: [pageId] });
+      toast({ title: `Export started (${format})`, description: `Job ID: ${job.id}` });
+      const pollExport = async (jobId: string, attempts = 0) => {
+        if (attempts > 30) {
+          toast({ title: 'Export timeout', description: 'Export is taking too long. Check back later.', variant: 'destructive' });
+          return;
+        }
+        const result = await exportApi.get(token, jobId);
+        if (result.status === 'COMPLETED' && result.resultUrl) {
+          // Download file with auth token
+          const response = await fetch(`/api/export/${jobId}/download`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const ext = result.resultUrl.split('.').pop() || format.toLowerCase();
+            link.download = `export.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
+          toast({ title: 'Export complete!', description: `Your ${format} file is downloading.` });
+        } else if (result.status === 'FAILED') {
+          toast({ title: 'Export failed', description: 'The export job failed. Please try again.', variant: 'destructive' });
+        } else {
+          setTimeout(() => pollExport(jobId, attempts + 1), 1000);
+        }
+      };
+      setTimeout(() => pollExport(job.id), 1000);
+    } catch (err) {
+      toast({
+        title: 'Export Error',
+        description: err instanceof Error ? err.message : 'Failed to start export',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Settings actions
@@ -830,6 +901,25 @@ export default function WorkspacePage() {
                           <Upload className="h-3.5 w-3.5 mr-1.5" />
                           Attach File
                         </Button>
+                        <div className="relative group/export">
+                          <Button size="sm" variant="outline" onClick={() => setShowExportMenu(prev => prev === pageId ? null : pageId)}>
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
+                            Export
+                          </Button>
+                          {showExportMenu === pageId && (
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-background border rounded-lg shadow-lg z-20 py-1">
+                              {(['PDF', 'DOCX', 'MARKDOWN'] as const).map((format) => (
+                                <button
+                                  key={format}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                                  onClick={() => { handleExport(pageId, format); setShowExportMenu(null); }}
+                                >
+                                  {format === 'PDF' ? '📄' : format === 'DOCX' ? '📝' : '📋'} Export as {format}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <Button size="sm" onClick={() => handleSavePage(pageId)} disabled={isSaving}>
                           <Save className="h-4 w-4 mr-2" />
                           {isSaving ? 'Saving...' : 'Save'}
@@ -837,6 +927,89 @@ export default function WorkspacePage() {
                       </div>
                     </div>
                   </header>
+                  {/* Document Toolbar */}
+                  <div className="border-b bg-muted/10 px-6 py-1.5 flex items-center gap-1 overflow-x-auto">
+                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Bold" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '**' + selected + '**' + text.substring(e) }})); }
+                      }}>
+                        <span className="font-bold text-xs">B</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Italic" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '*' + selected + '*' + text.substring(e) }})); }
+                      }}>
+                        <span className="italic text-xs">I</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Underline" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '__' + selected + '__' + text.substring(e) }})); }
+                      }}>
+                        <span className="underline text-xs">U</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 1" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '# ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs font-bold">H1</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 2" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '## ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs font-bold">H2</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 3" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '### ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs font-bold">H3</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Bullet List" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '- ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs">•</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Numbered List" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '1. ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs">1.</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Quote" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '> ' + text.substring(lineStart) }})); }
+                      }}>
+                        <span className="text-xs">&ldquo;</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Code Block" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '`' + selected + '`' + text.substring(e) }})); }
+                      }}>
+                        <span className="text-xs font-mono">&lt;/&gt;</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Horizontal Rule" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const text = content.content; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '\n---\n' + text.substring(s) }})); }
+                      }}>
+                        <span className="text-xs">—</span>
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Link" onClick={() => {
+                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
+                      }}>
+                        <span className="text-xs">🔗</span>
+                      </Button>
+                    </div>
+                  </div>
                   {/* Attached files */}
                   {content.sources.length > 0 && (
                     <div className="px-6 py-2 border-b bg-muted/20 flex items-center gap-2 overflow-x-auto">
@@ -856,6 +1029,7 @@ export default function WorkspacePage() {
                   <div className="flex-1 overflow-auto">
                     <div className="max-w-4xl mx-auto p-8">
                       <textarea
+                        data-page-id={pageId}
                         className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f7a4a]"
                         placeholder="Start writing your notes here..."
                         value={content.content}
@@ -1266,20 +1440,67 @@ export default function WorkspacePage() {
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateItem()}
                 />
               </div>
+              {showCreateModal === 'page' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Document Type</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'document', label: 'Document', icon: '📝' },
+                      { value: 'presentation', label: 'Presentation', icon: '📊' },
+                      { value: 'spreadsheet', label: 'Spreadsheet', icon: '📋' },
+                    ].map((type) => (
+                      <button
+                        key={type.value}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border text-sm transition-colors ${
+                          newItemType === type.value
+                            ? 'border-[#1f7a4a] bg-[#1f7a4a]/5 text-[#1f7a4a]'
+                            : 'border-border hover:bg-muted'
+                        }`}
+                        onClick={() => setNewItemType(type.value as typeof newItemType)}
+                      >
+                        <span className="text-xl">{type.icon}</span>
+                        <span>{type.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setShowCreateModal(null); setNewItemTitle(''); setCreateParentId(null); }}
+                  onClick={() => { setShowCreateModal(null); setNewItemTitle(''); setCreateParentId(null); setNewItemType('document'); }}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={handleCreateItem}
+                  onClick={() => { handleCreateItem(); setNewItemType('document'); }}
                   disabled={!newItemTitle.trim() || isCreatingItem}
                 >
                   {isCreatingItem ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {confirmDialog?.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>{confirmDialog.title}</CardTitle>
+              <CardDescription>{confirmDialog.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => setConfirmDialog(null)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}>
+                  Delete
                 </Button>
               </div>
             </CardContent>

@@ -6,11 +6,18 @@ import {
   Param,
   UseGuards,
   Request,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ExportService } from './export.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateExportJobDto, SendToNotionDto } from './dto/export.dto';
+import type { Response } from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const EXPORTS_DIR = path.join(process.cwd(), 'exports');
 
 @ApiTags('export')
 @Controller('export')
@@ -47,13 +54,41 @@ export class ExportController {
   }
 
   @Get(':id/download')
-  @ApiOperation({ summary: 'Download completed export' })
-  @ApiResponse({ status: 200, description: 'Download URL' })
+  @ApiOperation({ summary: 'Download completed export file' })
+  @ApiResponse({ status: 200, description: 'Export file download' })
   async downloadExport(
     @Request() req: { user: { userId: string } },
     @Param('id') id: string,
+    @Res() res: Response,
   ) {
-    return this.exportService.downloadExport(id, req.user.userId);
+    const { downloadUrl } = await this.exportService.downloadExport(id, req.user.userId);
+
+    // downloadUrl is like /exports/{jobId}.pdf
+    const fileName = path.basename(downloadUrl);
+    // Sanitize fileName to prevent path traversal
+    const safeName = path.basename(fileName);
+    const filePath = path.resolve(EXPORTS_DIR, safeName);
+
+    // Verify the resolved path is within EXPORTS_DIR
+    if (!filePath.startsWith(path.resolve(EXPORTS_DIR))) {
+      throw new NotFoundException('Export file not found');
+    }
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Export file not found');
+    }
+
+    const ext = path.extname(fileName).toLowerCase();
+    const contentTypeMap: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.md': 'text/markdown',
+    };
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+    res.sendFile(filePath);
   }
 
   @Post('send-to-notion')

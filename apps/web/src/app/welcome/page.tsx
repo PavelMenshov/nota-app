@@ -146,7 +146,7 @@ export default function WelcomePage() {
                     </div>
                   ))}
                 </div>
-                <a href={getDownloadUrl()} download>
+                <a href={getDownloadUrl()} target="_blank" rel="noopener noreferrer">
                   <Button 
                     className="w-full h-12 text-sm font-bold rounded-xl bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)] hover:from-[#1f7a4a] hover:to-[rgba(31,122,74,0.86)] hover:border-[rgba(31,122,74,0.55)] transition-all"
                   >
