@@ -87,11 +87,12 @@ interface Workspace {
 
 interface OpenTab {
   id: string;
-  type: 'page' | 'source' | 'panel';
+  type: 'page' | 'source' | 'panel' | 'integration';
   title: string;
   pageId: string;
   sourceId?: string;
   panelView?: PanelView;
+  integrationUrl?: string;
 }
 
 export default function WorkspacePage() {
@@ -256,6 +257,16 @@ export default function WorkspacePage() {
       title,
       pageId: '',
       panelView,
+    });
+  }, [openTab]);
+
+  const openIntegrationTab = useCallback((id: string, title: string, url: string) => {
+    openTab({
+      id: `integration-${id}`,
+      type: 'integration',
+      title,
+      pageId: '',
+      integrationUrl: url,
     });
   }, [openTab]);
 
@@ -611,6 +622,15 @@ export default function WorkspacePage() {
     }
   };
 
+  const getTabIcon = (tab: OpenTab) => {
+    switch (tab.type) {
+      case 'source': return getFileIcon(tab.title);
+      case 'panel': return <Settings className="h-3.5 w-3.5" />;
+      case 'integration': return <ExternalLink className="h-3.5 w-3.5" />;
+      default: return <FileText className="h-3.5 w-3.5" />;
+    }
+  };
+
   const roleIcon = (role: string) => {
     switch (role) {
       case 'OWNER': return <Crown className="h-3 w-3" />;
@@ -825,21 +845,21 @@ export default function WorkspacePage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Tab Bar */}
           {openTabs.length > 0 && (
-            <div className="border-b bg-muted/20 flex items-center overflow-x-auto shrink-0">
+            <div className="border-b bg-muted/30 flex items-center overflow-x-auto shrink-0 h-10 px-1 gap-0.5">
               {openTabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className={`flex items-center gap-1.5 px-3 py-2 border-r text-sm cursor-pointer shrink-0 max-w-[200px] ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-t-md text-sm cursor-pointer shrink-0 max-w-[200px] transition-colors ${
                     activeTabId === tab.id
-                      ? 'bg-background border-b-2 border-b-[#1f7a4a] font-medium'
-                      : 'text-muted-foreground hover:bg-muted/50'
+                      ? 'bg-background text-foreground font-medium shadow-sm border border-b-0 border-border -mb-px relative z-10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   }`}
                   onClick={() => setActiveTabId(tab.id)}
                 >
-                  {tab.type === 'source' ? getFileIcon(tab.title) : tab.type === 'panel' ? <Settings className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                  {getTabIcon(tab)}
                   <span className="truncate">{tab.title}</span>
                   <button
-                    className="ml-1 hover:bg-muted rounded p-0.5"
+                    className="ml-auto hover:bg-muted rounded-sm p-0.5 opacity-60 hover:opacity-100 transition-opacity"
                     onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
                   >
                     <X className="h-3 w-3" />
@@ -914,7 +934,7 @@ export default function WorkspacePage() {
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
                                   onClick={() => { handleExport(pageId, format); setShowExportMenu(null); }}
                                 >
-                                  {format === 'PDF' ? '📄' : format === 'DOCX' ? '📝' : '📋'} Export as {format}
+                                  Export as {format}
                                 </button>
                               ))}
                             </div>
@@ -1226,23 +1246,17 @@ export default function WorkspacePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://zoom.us/start/videomeeting" target="_blank" rel="noopener noreferrer">
-                          <Phone className="h-4 w-4 mr-2" />
-                          Start Call
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('zoom-call', 'Zoom — Call', 'https://zoom.us/start/videomeeting')}>
+                        <Phone className="h-4 w-4 mr-2" />
+                        Start Call
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://zoom.us/signin#/chat" target="_blank" rel="noopener noreferrer">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Chat
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('zoom-chat', 'Zoom — Chat', 'https://zoom.us/signin#/chat')}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Chat
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://zoom.us/profile" target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4 mr-2" />
-                          Files
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('zoom-files', 'Zoom — Files', 'https://zoom.us/profile')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Files
                       </Button>
                     </div>
                   </CardContent>
@@ -1263,23 +1277,17 @@ export default function WorkspacePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://teams.microsoft.com/v2/" target="_blank" rel="noopener noreferrer">
-                          <Phone className="h-4 w-4 mr-2" />
-                          Start Call
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('teams-call', 'Teams — Call', 'https://teams.microsoft.com/v2/')}>
+                        <Phone className="h-4 w-4 mr-2" />
+                        Start Call
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://teams.microsoft.com/v2/" target="_blank" rel="noopener noreferrer">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Chat
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('teams-chat', 'Teams — Chat', 'https://teams.microsoft.com/v2/')}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Chat
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://teams.microsoft.com/v2/" target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4 mr-2" />
-                          Files
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('teams-files', 'Teams — Files', 'https://teams.microsoft.com/v2/')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Files
                       </Button>
                     </div>
                   </CardContent>
@@ -1300,23 +1308,17 @@ export default function WorkspacePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://outlook.live.com/mail/" target="_blank" rel="noopener noreferrer">
-                          <Mail className="h-4 w-4 mr-2" />
-                          Open Mail
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('outlook-mail', 'Outlook — Mail', 'https://outlook.live.com/mail/')}>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Open Mail
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://outlook.live.com/calendar/" target="_blank" rel="noopener noreferrer">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Calendar
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('outlook-calendar', 'Outlook — Calendar', 'https://outlook.live.com/calendar/')}>
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Calendar
                       </Button>
-                      <Button variant="outline" className="justify-start" asChild>
-                        <a href="https://onedrive.live.com/" target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4 mr-2" />
-                          OneDrive Files
-                        </a>
+                      <Button variant="outline" className="justify-start" onClick={() => openIntegrationTab('onedrive', 'OneDrive', 'https://onedrive.live.com/')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        OneDrive Files
                       </Button>
                     </div>
                   </CardContent>
@@ -1407,6 +1409,31 @@ export default function WorkspacePage() {
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
+            )}
+
+            {/* Integration Tab */}
+            {activeTab?.type === 'integration' && activeTab.integrationUrl && (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">{activeTab.title}</span>
+                  <div className="flex-1" />
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
+                    <a href={activeTab.integrationUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3" />
+                      Open in new tab
+                    </a>
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <iframe
+                    src={activeTab.integrationUrl}
+                    className="w-full h-full border-0"
+                    title={activeTab.title}
+                    sandbox="allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
+                  />
+                </div>
               </div>
             )}
           </main>

@@ -96,9 +96,6 @@ export class WorkspacesService {
           },
         },
         pages: {
-          where: {
-            parentId: null,
-          },
           orderBy: {
             order: 'asc',
           },
