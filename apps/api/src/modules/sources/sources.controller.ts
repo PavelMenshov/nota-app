@@ -13,6 +13,7 @@ import {
   UploadedFile,
   Res,
   NotFoundException as HttpNotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -101,7 +102,15 @@ export class SourcesController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     // Upload via FilesService (will use S3/MinIO if configured, disk otherwise)
-    const { url } = await this.filesService.uploadFromPath(file.path, file.originalname, file.mimetype);
+    let url: string;
+    try {
+      const result = await this.filesService.uploadFromPath(file.path, file.originalname, file.mimetype);
+      url = result.url;
+    } catch (error) {
+      // Handle S3/MinIO connection errors (AggregateError) and other upload failures
+      const message = error instanceof Error ? error.message : 'File storage upload failed';
+      throw new BadRequestException(`Upload failed: ${message}`);
+    }
 
     const fileData = {
       filename: file.originalname,
