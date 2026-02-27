@@ -57,7 +57,7 @@ The `apps/api/package.json` includes a `prebuild` script to ensure Prisma is gen
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
-cd eywa-platform
+cd nota-platform
 
 # 2. Run the automated setup script
 ./scripts/setup.sh
@@ -67,7 +67,7 @@ cd eywa-platform
 pnpm install
 
 # Start database
-docker compose up -d eywa-postgres
+docker compose up -d nota-postgres
 
 # Push schema to database
 pnpm db:push
@@ -119,7 +119,7 @@ pnpm install
 1. **Prisma Schema** (`packages/database/prisma/schema.prisma`) defines your database models
 2. **Prisma Generate** creates TypeScript types and the Prisma Client in `node_modules/@prisma/client`
 3. **Database Package** (`packages/database`) exports these types for use across the monorepo
-4. **API & Web** import from `@eywa/database` which includes all Prisma types
+4. **API & Web** import from `@nota/database` which includes all Prisma types
 
 ## Troubleshooting
 
@@ -143,7 +143,7 @@ pnpm install
 **Solution:**
 ```bash
 # Ensure database is running
-docker compose up -d eywa-postgres
+docker compose up -d nota-postgres
 
 # Verify connection in .env
 # Check DATABASE_URL and DIRECT_DATABASE_URL
@@ -191,7 +191,7 @@ pnpm db:generate
 ## Architecture
 
 ```
-eywa-platform/
+nota-platform/
 ├── packages/
 │   └── database/           # Prisma package
 │       ├── prisma/
@@ -200,8 +200,8 @@ eywa-platform/
 │       │   └── index.ts        # Exports Prisma Client
 │       └── package.json        # postinstall: prisma generate
 ├── apps/
-│   ├── api/                # Uses @eywa/database
-│   └── web/                # Uses @eywa/database
+│   ├── api/                # Uses @nota/database
+│   └── web/                # Uses @nota/database
 ├── package.json            # postinstall: pnpm db:generate
 └── scripts/
     └── setup.sh            # Automated setup script

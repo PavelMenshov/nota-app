@@ -32,8 +32,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/expusercatherine/eywa-platform.git
-cd eywa-platform
+git clone https://github.com/PavelMenshov/nota-platform.git
+cd nota-platform
 ```
 
 ### 2. Install Dependencies
@@ -59,9 +59,9 @@ docker-compose ps
 ```
 
 You should see three services running:
-- `eywa-postgres` on port 5432
-- `eywa-redis` on port 6379
-- `eywa-minio` on ports 9000 and 9001
+- `nota-postgres` on port 5432
+- `nota-redis` on port 6379
+- `nota-minio` on ports 9000 and 9001
 
 ### 4. Configure Environment
 
@@ -346,7 +346,7 @@ AI_PROVIDER="anthropic"
 **Solutions:**
 1. Check MinIO is running:
    ```bash
-   docker-compose ps eywa-minio
+   docker-compose ps nota-minio
    ```
 2. Verify S3 configuration in .env
 3. Check file size limits (default: 10MB)
@@ -437,7 +437,7 @@ pnpm lint
 - [Architecture Overview](../README.md#-architecture)
 - [API Documentation](http://localhost:4000/api/docs)
 - [Security Guide](./SECURITY.md)
-- [GitHub Repository](https://github.com/expusercatherine/eywa-platform)
+- [GitHub Repository](https://github.com/PavelMenshov/nota-platform)
 
 ## Need Help?
 

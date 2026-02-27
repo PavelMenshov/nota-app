@@ -1,10 +1,10 @@
 {
-  "name": "@eywa/api",
+  "name": "@nota/api",
   "version": "0.1.0",
-  "description": "EYWA Platform API Server",
+  "description": "Nota Platform API Server",
   "main": "dist/main.js",
   "scripts": {
-    "prebuild": "pnpm --filter @eywa/database generate",
+    "prebuild": "pnpm --filter @nota/database generate",
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main",
@@ -18,8 +18,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",
     "@aws-sdk/s3-request-presigner": "^3.995.0",
-    "@eywa/database": "workspace:*",
-    "@eywa/shared": "workspace:*",
+    "@nota/database": "workspace:*",
+    "@nota/shared": "workspace:*",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.3.0",

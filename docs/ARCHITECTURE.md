@@ -52,7 +52,7 @@ Nota follows a modern microservices-inspired architecture with clear separation 
 ## Project Structure
 
 ```
-eywa-platform/
+nota-platform/
 ├── apps/                      # Application packages
 │   ├── api/                   # NestJS Backend API
 │   │   └── src/

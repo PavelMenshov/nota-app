@@ -1,9 +1,9 @@
 // Configuration constants for the desktop application
 export const APP_CONFIG = {
   // URLs
-  GITHUB_REPO: 'https://github.com/expusercatherine/eywa-platform',
-  DOCS_URL: 'https://github.com/expusercatherine/eywa-platform/tree/main/docs',
-  ISSUES_URL: 'https://github.com/expusercatherine/eywa-platform/issues',
+  GITHUB_REPO: 'https://github.com/PavelMenshov/nota-platform',
+  DOCS_URL: 'https://github.com/PavelMenshov/nota-platform/tree/main/docs',
+  ISSUES_URL: 'https://github.com/PavelMenshov/nota-platform/issues',
   
   // Window settings
   DEFAULT_WIDTH: 1400,

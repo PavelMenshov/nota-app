@@ -17,9 +17,9 @@ docker compose ps
 ```
 
 You should see three services running:
-- `eywa-postgres` on port 5432
-- `eywa-redis` on port 6379
-- `eywa-minio` on ports 9000 and 9001
+- `nota-postgres` on port 5432
+- `nota-redis` on port 6379
+- `nota-minio` on ports 9000 and 9001
 
 ### Step 2: Set Up Environment Variables
 
@@ -113,7 +113,7 @@ The web app will start on `http://localhost:3001` after the API is ready.
 **Cause**: PostgreSQL is not running or credentials are wrong.
 
 **Solution**:
-1. Verify PostgreSQL is running: `docker compose ps eywa-postgres`
+1. Verify PostgreSQL is running: `docker compose ps nota-postgres`
 2. Check `DATABASE_URL` in `.env` is correct
 3. Ensure database exists: The `pnpm db:push` command should create it
 

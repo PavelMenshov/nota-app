@@ -1,7 +1,7 @@
 {
-  "name": "eywa-platform",
+  "name": "nota-platform",
   "version": "0.1.0",
-  "description": "EYWA - All-in-One Academic Ecosystem",
+  "description": "Nota - All-in-One Academic Ecosystem",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -9,16 +9,16 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "dev:api": "pnpm --filter @eywa/api dev",
-    "dev:web": "pnpm --filter @eywa/web dev",
+    "dev:api": "pnpm --filter @nota/api dev",
+    "dev:web": "pnpm --filter @nota/web dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "start": "turbo run start",
-    "db:generate": "pnpm --filter @eywa/database generate",
-    "db:push": "pnpm --filter @eywa/database push",
-    "db:migrate": "pnpm --filter @eywa/database migrate",
-    "db:studio": "pnpm --filter @eywa/database studio",
+    "db:generate": "pnpm --filter @nota/database generate",
+    "db:push": "pnpm --filter @nota/database push",
+    "db:migrate": "pnpm --filter @nota/database migrate",
+    "db:studio": "pnpm --filter @nota/database studio",
     "setup": "pnpm install && pnpm db:generate && pnpm db:push",
     "postinstall": "pnpm db:generate",
     "clean:next": "node scripts/clean-next.js"

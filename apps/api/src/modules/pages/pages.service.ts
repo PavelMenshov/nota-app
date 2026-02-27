@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreatePageDto, UpdatePageDto } from './dto/pages.dto';
-import { Prisma } from '@eywa/database';
+import { Prisma } from '@nota/database';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

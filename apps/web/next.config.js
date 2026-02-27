@@ -3,7 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@eywa/shared'],
+  transpilePackages: ['@nota/shared'],
   devIndicators: false,
   // Fix for Windows readlink error (EINVAL) with .next directory
   // This sets the output file tracing root to the monorepo root

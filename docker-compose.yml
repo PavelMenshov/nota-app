@@ -1,26 +1,26 @@
 services:
   # PostgreSQL Database
-  eywa-postgres:
+  nota-postgres:
     image: postgres:16-alpine
-    container_name: eywa-postgres
+    container_name: nota-postgres
     environment:
-      POSTGRES_USER: eywa
-      POSTGRES_PASSWORD: eywa_dev_password
-      POSTGRES_DB: eywa
+      POSTGRES_USER: nota
+      POSTGRES_PASSWORD: nota_dev_password
+      POSTGRES_DB: nota
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U eywa -d eywa']
+      test: ['CMD-SHELL', 'pg_isready -U nota -d nota']
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Redis Cache
-  eywa-redis:
+  nota-redis:
     image: redis:7-alpine
-    container_name: eywa-redis
+    container_name: nota-redis
     ports:
       - '6379:6379'
     volumes:
@@ -32,12 +32,12 @@ services:
       retries: 5
 
   # MinIO (S3-compatible object storage)
-  eywa-minio:
+  nota-minio:
     image: minio/minio:latest
-    container_name: eywa-minio
+    container_name: nota-minio
     environment:
-      MINIO_ROOT_USER: eywa_minio
-      MINIO_ROOT_PASSWORD: eywa_minio_password
+      MINIO_ROOT_USER: nota_minio
+      MINIO_ROOT_PASSWORD: nota_minio_password
     command: server /data --console-address ":9001"
     ports:
       - '9000:9000'
@@ -57,4 +57,4 @@ volumes:
 
 networks:
   default:
-    name: eywa-network
+    name: nota-network

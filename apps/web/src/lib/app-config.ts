@@ -6,8 +6,8 @@ export const APP_CONFIG = {
   APP_SIZE_MB: '~80MB',
   
   // URLs
-  GITHUB_REPO: 'https://github.com/expusercatherine/eywa-platform',
-  DOCS_URL: 'https://github.com/expusercatherine/eywa-platform/tree/main/docs',
+  GITHUB_REPO: 'https://github.com/PavelMenshov/nota-platform',
+  DOCS_URL: 'https://github.com/PavelMenshov/nota-platform/tree/main/docs',
   
   // Download paths (relative to web app public directory)
   DOWNLOADS: {
