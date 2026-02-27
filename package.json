@@ -16,11 +16,12 @@
     "test": "turbo run test",
     "start": "turbo run start",
     "db:generate": "pnpm --filter @nota/database generate",
+    "db:build": "pnpm --filter @nota/database build",
     "db:push": "pnpm --filter @nota/database push",
     "db:migrate": "pnpm --filter @nota/database migrate",
     "db:studio": "pnpm --filter @nota/database studio",
-    "setup": "pnpm install && pnpm db:generate && pnpm db:push",
-    "postinstall": "pnpm db:generate",
+    "setup": "pnpm install && pnpm db:build && pnpm db:push",
+    "postinstall": "pnpm db:build",
     "clean:next": "node scripts/clean-next.js"
   },
   "devDependencies": {
