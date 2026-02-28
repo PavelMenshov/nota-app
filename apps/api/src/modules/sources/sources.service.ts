@@ -16,6 +16,63 @@ export class SourcesService {
     });
   }
 
+  /** Returns external fileUrl for streaming (only http/https). Used by proxy endpoint. */
+  async getExternalSourceUrl(pageId: string, sourceId: string, userId: string): Promise<{ fileUrl: string; mimeType: string }> {
+    await this.getPageWithAccess(pageId, userId);
+
+    const source = await this.prisma.source.findFirst({
+      where: { id: sourceId, pageId },
+    });
+
+    if (!source) {
+      throw new NotFoundException('Source not found');
+    }
+
+    const url = source.fileUrl;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new BadRequestException('Source is not an external URL; use the regular file endpoint');
+    }
+
+    return { fileUrl: url, mimeType: source.mimeType || 'application/pdf' };
+  }
+
+  /**
+   * Returns stream info for a source: either external URL (proxy) or local file key.
+   * Use this so the frontend can always use one endpoint (stream) with page access check.
+   */
+  async getSourceStreamInfo(
+    pageId: string,
+    sourceId: string,
+    userId: string,
+  ): Promise<{ type: 'external'; fileUrl: string; mimeType: string } | { type: 'local'; fileKey: string; mimeType: string }> {
+    await this.getPageWithAccess(pageId, userId);
+
+    const source = await this.prisma.source.findFirst({
+      where: { id: sourceId, pageId },
+    });
+
+    if (!source) {
+      throw new NotFoundException('Source not found');
+    }
+
+    const url = source.fileUrl;
+    const mimeType = source.mimeType || 'application/pdf';
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return { type: 'external', fileUrl: url, mimeType };
+    }
+
+    // Local file: /api/sources/files/<key> -> key
+    const prefix = '/api/sources/files/';
+    if (url.startsWith(prefix)) {
+      const fileKey = url.slice(prefix.length).replace(/^\/+/, '').split('/')[0] || url;
+      return { type: 'local', fileKey, mimeType };
+    }
+    // Bare filename (legacy)
+    const fileKey = url.replace(/^\/+/, '').split('/')[0] || url;
+    return { type: 'local', fileKey, mimeType };
+  }
+
   async getSource(pageId: string, sourceId: string, userId: string) {
     await this.getPageWithAccess(pageId, userId);
 
@@ -120,7 +177,7 @@ export class SourcesService {
     });
   }
 
-  // Annotations
+  // Annotations — only EDITOR/OWNER can create or modify; VIEWER can only view
   async createAnnotation(sourceId: string, userId: string, dto: CreateAnnotationDto) {
     const source = await this.prisma.source.findUnique({
       where: { id: sourceId },
@@ -131,7 +188,7 @@ export class SourcesService {
       throw new NotFoundException('Source not found');
     }
 
-    await this.getPageWithAccess(source.pageId, userId);
+    await this.getPageWithAccess(source.pageId, userId, ['OWNER', 'EDITOR']);
 
     const annotation = await this.prisma.pDFAnnotation.create({
       data: {
@@ -162,15 +219,14 @@ export class SourcesService {
   async updateAnnotation(annotationId: string, userId: string, dto: UpdateAnnotationDto) {
     const annotation = await this.prisma.pDFAnnotation.findUnique({
       where: { id: annotationId },
+      include: { source: { include: { page: true } } },
     });
 
     if (!annotation) {
       throw new NotFoundException('Annotation not found');
     }
 
-    if (annotation.userId !== userId) {
-      throw new ForbiddenException('Cannot edit annotation created by another user');
-    }
+    await this.getPageWithAccess(annotation.source.pageId, userId, ['OWNER', 'EDITOR']);
 
     return this.prisma.pDFAnnotation.update({
       where: { id: annotationId },
@@ -191,10 +247,7 @@ export class SourcesService {
       throw new NotFoundException('Annotation not found');
     }
 
-    // Author or editor can delete
-    if (annotation.userId !== userId) {
-      await this.getPageWithAccess(annotation.source.pageId, userId, ['OWNER', 'EDITOR']);
-    }
+    await this.getPageWithAccess(annotation.source.pageId, userId, ['OWNER', 'EDITOR']);
 
     await this.prisma.pDFAnnotation.delete({
       where: { id: annotationId },

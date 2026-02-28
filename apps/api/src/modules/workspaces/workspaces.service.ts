@@ -236,30 +236,39 @@ export class WorkspacesService {
     const assignment1Page = await createPage('Assignment 1', 0, module2.id, assignment1Doc, canvasAssignment1);
     const assignment2Page = await createPage('Assignment 2', 1, module2.id, assignment2Doc, canvasAssignment2);
 
-    // Add demo Sources (PDFs) to selected pages — use a public sample PDF for demo
-    const demoPdfUrl = 'https://www.w3.org/WAI/demos/bad/after.pdf';
+    // Demo Sources: different PDF per block (public stable URLs)
     const demoPdfSize = 50000;
     const demoExtractedText = 'Sample document for Nota demo. Use the Sources tab to view and annotate PDFs, then extract highlights into your Doc.';
-    const addSource = (pageId: string, fileName: string) =>
+    const addSource = (pageId: string, fileName: string, fileUrl: string, pageCount = 2) =>
       this.prisma.source.create({
         data: {
           pageId,
           fileName,
-          fileUrl: demoPdfUrl,
+          fileUrl,
           fileSize: demoPdfSize,
           mimeType: 'application/pdf',
-          pageCount: 2,
+          pageCount,
           extractedText: demoExtractedText,
         },
       });
 
-    await addSource(syllabusPage.id, 'Course overview (sample).pdf');
-    await addSource(module1.id, 'Module 1 reading (sample).pdf');
-    await addSource(week1Page.id, 'Week 1 — Getting started (sample).pdf');
-    await addSource(week2Page.id, 'Week 2 — Core concepts (sample).pdf');
-    await addSource(module2.id, 'Assignment guidelines (sample).pdf');
-    await addSource(assignment1Page.id, 'Assignment 1 brief (sample).pdf');
-    await addSource(assignment2Page.id, 'Assignment 2 brief (sample).pdf');
+    const pdf = {
+      syllabus: 'https://www.irs.gov/pub/irs-pdf/p16.pdf',
+      module1: 'https://www.irs.gov/pub/irs-pdf/p15.pdf',
+      week1: 'https://www.irs.gov/pub/irs-pdf/p501.pdf',
+      week2: 'https://www.irs.gov/pub/irs-pdf/p504.pdf',
+      module2: 'https://www.irs.gov/pub/irs-pdf/p505.pdf',
+      assignment1: 'https://www.irs.gov/pub/irs-pdf/p523.pdf',
+      assignment2: 'https://www.irs.gov/pub/irs-pdf/p527.pdf',
+    };
+
+    await addSource(syllabusPage.id, 'Course overview (sample).pdf', pdf.syllabus);
+    await addSource(module1.id, 'Module 1 reading (sample).pdf', pdf.module1);
+    await addSource(week1Page.id, 'Week 1 — Getting started (sample).pdf', pdf.week1);
+    await addSource(week2Page.id, 'Week 2 — Core concepts (sample).pdf', pdf.week2);
+    await addSource(module2.id, 'Assignment guidelines (sample).pdf', pdf.module2);
+    await addSource(assignment1Page.id, 'Assignment 1 brief (sample).pdf', pdf.assignment1);
+    await addSource(assignment2Page.id, 'Assignment 2 brief (sample).pdf', pdf.assignment2);
 
     return this.prisma.workspace.findUnique({
       where: { id: workspace.id },

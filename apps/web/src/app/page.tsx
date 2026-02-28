@@ -21,7 +21,7 @@ function Reveal({
   className?: string;
   style?: React.CSSProperties;
 }>) {
-  const { ref, visible } = useInView();
+  const { ref, visible } = useInView<HTMLDivElement>();
   return (
     <div
       ref={ref}
@@ -37,7 +37,7 @@ function Reveal({
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { ref: featuresSectionRef, visible: featuresSectionVisible } =
-    useInView({ rootMargin: '0px 0px -5% 0px' });
+    useInView<HTMLDivElement>({ rootMargin: '0px 0px -5% 0px' });
 
   const scrollToFeatures = () => {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });

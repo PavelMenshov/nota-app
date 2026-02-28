@@ -25,12 +25,15 @@ import { diskStorage } from 'multer';
 import { extname, join, basename } from 'path';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import type { Response } from 'express';
+import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
-// Ensure uploads directory exists (fallback for multer temp storage)
-const uploadsDir = join(process.cwd(), 'uploads');
+// Must match FilesService.localUploadsDir so uploaded files are found when streaming
+const uploadsDir = process.env.FILE_UPLOADS_DIR
+  ? join(process.env.FILE_UPLOADS_DIR, '')
+  : join(process.cwd(), 'uploads');
 if (!existsSync(uploadsDir)) {
   mkdirSync(uploadsDir, { recursive: true });
 }
@@ -72,6 +75,46 @@ export class SourcesController {
     @Query('q') query: string,
   ) {
     return this.sourcesService.searchSources(pageId, req.user.userId, query);
+  }
+
+  @Get('pages/:pageId/sources/:sourceId/stream')
+  @ApiOperation({ summary: 'Stream PDF/file (external proxy or uploaded file). Use this for all PDFs so access is checked.' })
+  @ApiResponse({ status: 200, description: 'File content' })
+  async streamSource(
+    @Request() req: { user: { userId: string } },
+    @Param('pageId') pageId: string,
+    @Param('sourceId') sourceId: string,
+    @Res() res: Response,
+  ) {
+    const info = await this.sourcesService.getSourceStreamInfo(
+      pageId,
+      sourceId,
+      req.user.userId,
+    );
+
+    res.setHeader('Content-Type', info.mimeType);
+
+    if (info.type === 'external') {
+      const response = await fetch(info.fileUrl, { redirect: 'follow' });
+      if (!response.ok || !response.body) {
+        throw new HttpNotFoundException(
+          `External file unavailable: ${response.status} ${response.statusText}`,
+        );
+      }
+      const nodeStream = Readable.fromWeb(response.body as ReadableStream);
+      nodeStream.pipe(res);
+      return;
+    }
+
+    const safeKey = basename(info.fileKey);
+    const { stream, localPath } = await this.filesService.getFileStream(safeKey);
+    if (stream) {
+      (stream as NodeJS.ReadableStream).pipe(res);
+    } else if (localPath) {
+      res.sendFile(localPath);
+    } else {
+      throw new HttpNotFoundException('File not found');
+    }
   }
 
   @Get('pages/:pageId/sources/:sourceId')

@@ -286,7 +286,7 @@ export default function WorkspaceCalendarPage() {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Delete event?</h3>
-              <p className="text-sm text-muted-foreground">"{eventToDelete.title}" will be deleted.</p>
+              <p className="text-sm text-muted-foreground">&quot;{eventToDelete.title}&quot; will be deleted.</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setEventToDelete(null)}>
                   Cancel

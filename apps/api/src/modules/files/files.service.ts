@@ -41,7 +41,9 @@ export class FilesService {
     this.bucket = this.configService.get<string>('S3_BUCKET') || 'nota-files';
 
     this.useS3 = !!(endpoint && accessKey && secretKey);
-    this.localUploadsDir = path.join(process.cwd(), 'uploads');
+    this.localUploadsDir = path.resolve(
+      this.configService.get<string>('FILE_UPLOADS_DIR') || path.join(process.cwd(), 'uploads'),
+    );
 
     if (!fs.existsSync(this.localUploadsDir)) {
       fs.mkdirSync(this.localUploadsDir, { recursive: true });
@@ -146,17 +148,25 @@ export class FilesService {
   }
 
   async getFileStream(key: string): Promise<{ stream: NodeJS.ReadableStream | null; localPath: string | null }> {
+    const safeKey = path.basename(key).replace(/\.\./g, '');
+
     if (this.useS3 && this.s3) {
-      const response = await this.s3.send(
-        new GetObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
-      );
-      return { stream: response.Body as NodeJS.ReadableStream, localPath: null };
+      try {
+        const response = await this.s3.send(
+          new GetObjectCommand({
+            Bucket: this.bucket,
+            Key: safeKey,
+          }),
+        );
+        if (response.Body) {
+          return { stream: response.Body as NodeJS.ReadableStream, localPath: null };
+        }
+      } catch {
+        // S3 miss (e.g. file was uploaded to local when S3 was down) — fall back to local
+      }
     }
 
-    const localPath = path.join(this.localUploadsDir, path.basename(key));
+    const localPath = path.join(this.localUploadsDir, safeKey);
     if (fs.existsSync(localPath)) {
       return { stream: null, localPath };
     }

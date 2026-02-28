@@ -251,7 +251,7 @@ export default function WorkspaceTasksPage() {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Delete task?</h3>
-              <p className="text-sm text-muted-foreground">"{taskToDelete.title}" will be deleted.</p>
+              <p className="text-sm text-muted-foreground">&quot;{taskToDelete.title}&quot; will be deleted.</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setTaskToDelete(null)}>
                   Cancel

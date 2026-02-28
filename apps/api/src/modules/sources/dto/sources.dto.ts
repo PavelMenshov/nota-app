@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, MaxLength, IsInt, IsPositive, IsEnum } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsInt, IsPositive, IsEnum, IsObject } from 'class-validator';
 
 export class CreateAnnotationDto {
   @ApiProperty({ enum: ['HIGHLIGHT', 'NOTE', 'DRAWING', 'TEXT'] })
@@ -23,8 +23,9 @@ export class CreateAnnotationDto {
   @IsPositive()
   pageNumber!: number;
 
-  @ApiProperty({ description: 'Position data as JSON (coordinates, bounds)' })
-  position!: unknown;
+  @ApiProperty({ description: 'Position data as JSON (coordinates, bounds)', example: { x: 50, y: 30 } })
+  @IsObject()
+  position!: Record<string, unknown>;
 
   @ApiPropertyOptional({ example: 'Selected text from PDF' })
   @IsOptional()

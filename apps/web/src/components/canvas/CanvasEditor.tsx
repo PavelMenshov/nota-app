@@ -13,6 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
   MousePointer,
+  Frame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -24,9 +25,10 @@ export type CanvasElementType =
   | 'shape'
   | 'connector'
   | 'image-card'
-  | 'comment';
+  | 'comment'
+  | 'frame';
 
-export type ShapeKind = 'rectangle' | 'ellipse' | 'diamond';
+export type ShapeKind = 'rectangle' | 'ellipse' | 'diamond' | 'triangle' | 'star';
 
 export interface CanvasElement {
   id: string;
@@ -103,6 +105,19 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
     };
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingId) {
+        const target = e.target as HTMLElement;
+        if (target.closest('textarea') || target.closest('input') || target.closest('[contenteditable="true"]')) return;
+        e.preventDefault();
+        deleteElement(selectedId);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedId, editingId, deleteElement]);
+
   const updateElement = useCallback(
     (id: string, patch: Partial<CanvasElement>) => {
       setElements((prev) => {
@@ -146,6 +161,9 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
           break;
         case 'comment':
           Object.assign(base, { text: 'Comment', color: '#FEF9C3', width: 180, height: 60 });
+          break;
+        case 'frame':
+          Object.assign(base, { text: 'Section', color: '#E0E7FF', width: 320, height: 200 });
           break;
         default:
           break;
@@ -284,6 +302,7 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
         <ToolBtn icon={<ArrowRight className="h-4 w-4" />} label="Connector" active={tool === 'connector'} onClick={() => { setTool('connector'); setConnectingFrom(null); }} />
         <ToolBtn icon={<ImageIcon className="h-4 w-4" />} label="Image Card" active={tool === 'image-card'} onClick={() => setTool('image-card')} />
         <ToolBtn icon={<MessageCircle className="h-4 w-4" />} label="Comment" active={tool === 'comment'} onClick={() => setTool('comment')} />
+        <ToolBtn icon={<Frame className="h-4 w-4" />} label="Frame" active={tool === 'frame'} onClick={() => setTool('frame')} />
         <div className="w-px h-6 bg-border mx-1" />
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleZoom(0.1)} title="Zoom In">
           <ZoomIn className="h-4 w-4" />
@@ -310,7 +329,7 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
       {/* Properties bar */}
       {selectedEl && selectedEl.type !== 'connector' && (
         <div className="flex items-center gap-2 px-3 py-1.5 border-b bg-muted/30 text-sm">
-          {(selectedEl.type === 'sticky-note' || selectedEl.type === 'shape') && (
+          {(selectedEl.type === 'sticky-note' || selectedEl.type === 'shape' || selectedEl.type === 'frame') && (
             <>
               <span className="text-muted-foreground text-xs">Color:</span>
               {STICKY_COLORS.map((c) => (
@@ -327,7 +346,7 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
             <>
               <div className="w-px h-5 bg-border mx-1" />
               <span className="text-muted-foreground text-xs">Shape:</span>
-              {(['rectangle', 'ellipse', 'diamond'] as ShapeKind[]).map((s) => (
+              {(['rectangle', 'ellipse', 'diamond', 'triangle', 'star'] as ShapeKind[]).map((s) => (
                 <button
                   key={s}
                   className={`px-2 py-0.5 rounded text-xs ${selectedEl.shapeKind === s ? 'bg-primary text-primary-foreground' : 'bg-background border'}`}
@@ -492,11 +511,26 @@ function ElementView({
       const { shapeKind = 'rectangle' } = el;
       const border = selected ? '#3B82F6' : '#9CA3AF';
       const bw = selected ? 2 : 1;
+      const fill = el.color || '#93C5FD';
+      const cx = el.x + el.width / 2;
+      const cy = el.y + el.height / 2;
+      const r = Math.min(el.width, el.height) / 2;
+      const starPoints = (n: number, outer: number, inner: number) => {
+        const pts: string[] = [];
+        for (let i = 0; i < n * 2; i++) {
+          const rad = (Math.PI / n) * i - Math.PI / 2;
+          const rr = i % 2 === 0 ? outer : inner;
+          pts.push(`${cx + rr * Math.cos(rad)},${cy + rr * Math.sin(rad)}`);
+        }
+        return pts.join(' ');
+      };
       return (
         <g {...common}>
-          {shapeKind === 'rectangle' && <rect x={el.x} y={el.y} width={el.width} height={el.height} rx={4} fill={el.color || '#93C5FD'} stroke={border} strokeWidth={bw} />}
-          {shapeKind === 'ellipse' && <ellipse cx={el.x + el.width / 2} cy={el.y + el.height / 2} rx={el.width / 2} ry={el.height / 2} fill={el.color || '#93C5FD'} stroke={border} strokeWidth={bw} />}
-          {shapeKind === 'diamond' && <polygon points={`${el.x + el.width / 2},${el.y} ${el.x + el.width},${el.y + el.height / 2} ${el.x + el.width / 2},${el.y + el.height} ${el.x},${el.y + el.height / 2}`} fill={el.color || '#93C5FD'} stroke={border} strokeWidth={bw} />}
+          {shapeKind === 'rectangle' && <rect x={el.x} y={el.y} width={el.width} height={el.height} rx={4} fill={fill} stroke={border} strokeWidth={bw} />}
+          {shapeKind === 'ellipse' && <ellipse cx={cx} cy={cy} rx={el.width / 2} ry={el.height / 2} fill={fill} stroke={border} strokeWidth={bw} />}
+          {shapeKind === 'diamond' && <polygon points={`${cx},${el.y} ${el.x + el.width},${cy} ${cx},${el.y + el.height} ${el.x},${cy}`} fill={fill} stroke={border} strokeWidth={bw} />}
+          {shapeKind === 'triangle' && <polygon points={`${cx},${el.y} ${el.x + el.width},${el.y + el.height} ${el.x},${el.y + el.height}`} fill={fill} stroke={border} strokeWidth={bw} />}
+          {shapeKind === 'star' && <polygon points={starPoints(5, r, r * 0.4)} fill={fill} stroke={border} strokeWidth={bw} />}
           {editing ? (
             <foreignObject x={el.x + 8} y={el.y + 8} width={el.width - 16} height={el.height - 16}>
               <textarea autoFocus className="w-full h-full bg-transparent resize-none outline-none text-sm text-center p-0" defaultValue={el.text ?? ''} onBlur={(e) => { onTextChange(e.target.value); onBlur(); }} />
@@ -523,6 +557,22 @@ function ElementView({
             </foreignObject>
           ) : (
             <text x={el.x + el.width / 2} y={el.y + el.height - 8} textAnchor="middle" fontSize={10} fill="#6B7280" fontFamily="sans-serif">{trunc(el.text ?? '', 25)}</text>
+          )}
+        </g>
+      );
+
+    case 'frame':
+      return (
+        <g {...common}>
+          <rect x={el.x} y={el.y} width={el.width} height={el.height} rx={12} fill={el.color || '#E0E7FF'} stroke={selected ? '#3B82F6' : '#A5B4FC'} strokeWidth={selected ? 2 : 1} strokeDasharray={selected ? undefined : '8 4'} />
+          <rect x={el.x} y={el.y} width={el.width} height={28} rx={12} fill={el.color || '#C7D2FE'} />
+          <rect x={el.x} y={el.y + 20} width={el.width} height={8} fill={el.color || '#E0E7FF'} />
+          {editing ? (
+            <foreignObject x={el.x + 12} y={el.y + 6} width={el.width - 24} height={20}>
+              <input autoFocus className="w-full h-full bg-transparent outline-none text-sm font-medium" defaultValue={el.text ?? ''} onBlur={(e) => { onTextChange(e.target.value); onBlur(); }} />
+            </foreignObject>
+          ) : (
+            <text x={el.x + 14} y={el.y + 20} fontSize={12} fontWeight="600" fill="#3730A3" fontFamily="sans-serif">{trunc(el.text ?? 'Section', 35)}</text>
           )}
         </g>
       );

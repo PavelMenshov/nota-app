@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar } from 'lucide-react';
@@ -36,7 +36,7 @@ interface LmsCourse {
   syncedAt: string;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -69,10 +69,17 @@ export default function DashboardPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const searchParams = useSearchParams();
   const joinAttempted = useRef(false);
+  const deleteModalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAuthChecked(true);
   }, []);
+
+  useEffect(() => {
+    if (showDeleteConfirm && deleteModalRef.current) {
+      deleteModalRef.current.focus();
+    }
+  }, [showDeleteConfirm]);
 
   useEffect(() => {
     if (!authChecked) return;
@@ -767,16 +774,30 @@ export default function DashboardPage() {
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          ref={deleteModalRef}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 outline-none"
           onClick={() => setShowDeleteConfirm(null)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowDeleteConfirm(null); }}
-          aria-label="Close modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-workspace-title"
+          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (!isDeleting) handleDeleteWorkspace(showDeleteConfirm);
+            } else if (e.key === 'Escape' || e.key === ' ') {
+              e.preventDefault();
+              setShowDeleteConfirm(null);
+            }
+          }}
         >
-          <Card className="w-full max-w-sm rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+          <Card
+            className="w-full max-w-sm rounded-lg border border-border shadow-lg bg-card"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">Delete workspace</CardTitle>
+              <CardTitle id="delete-workspace-title" className="text-lg font-semibold">Delete workspace</CardTitle>
               <CardDescription>This will permanently delete this workspace and all its pages. This cannot be undone.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -789,5 +810,17 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

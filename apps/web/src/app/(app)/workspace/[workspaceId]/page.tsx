@@ -58,7 +58,7 @@ export default function WorkspacePage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
   const router = useRouter();
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, user } = useAuthStore();
   const { toast } = useToast();
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -80,6 +80,8 @@ export default function WorkspacePage() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [sourceAnnotations, setSourceAnnotations] = useState<Record<string, Array<{ id: string; type: string; content: string | null; color: string | null; pageNumber: number; selectedText: string | null; position: unknown; user?: { id: string; name: string | null; email: string } }>>>({});
+  const currentMember = workspace?.members?.find((m) => m.user?.id === user?.id);
+  const canEditSources = currentMember ? currentMember.role !== 'VIEWER' : false;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCreatePageModal, setShowCreatePageModal] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
@@ -114,7 +116,8 @@ export default function WorkspacePage() {
   // Load annotations when a PDF source is selected (Sources tab)
   useEffect(() => {
     if (!token || !activeTab?.pageId || activeTab.type !== 'page' || !selectedSourceId) return;
-    const src = pageContents[activeTab.pageId]?.sources.find((s) => s.id === selectedSourceId);
+    const sources = pageContents[activeTab.pageId]?.sources ?? [];
+    const src = sources.find((s) => s.id === selectedSourceId);
     if (!src || src.mimeType !== 'application/pdf') return;
     sourcesApi
       .getWithAnnotations(token, activeTab.pageId, selectedSourceId)
@@ -328,6 +331,18 @@ export default function WorkspacePage() {
     }
   };
 
+  const handleUpdateMemberRole = async (memberId: string, newRole: string) => {
+    if (!token) return;
+    try {
+      await workspacesApi.updateMemberRole(token, workspaceId, memberId, newRole);
+      await loadWorkspace();
+      toast({ title: 'Role updated' });
+    } catch (e: unknown) {
+      const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: string }).message) : 'Failed to update role';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
+    }
+  };
+
   const handleCopyShareLink = async () => {
     if (!token) return;
     try {
@@ -507,6 +522,7 @@ export default function WorkspacePage() {
                   </div>
                 );
               }
+              const sources = content.sources ?? [];
               const isPreview = docPreviewPageId === pageId;
               return (
                 <div className="flex flex-col h-full">
@@ -627,10 +643,10 @@ export default function WorkspacePage() {
                       </button>
                     </div>
                   </header>
-                  {pageMode === 'doc' && content.sources.length > 0 && (
+                  {pageMode === 'doc' && sources.length > 0 && (
                     <div className="border-b px-6 py-2 flex flex-wrap items-center gap-2 bg-muted/30">
                       <span className="text-xs font-medium text-muted-foreground mr-2">Attachments</span>
-                      {content.sources.map((src) => (
+                      {sources.map((src) => (
                         <span
                           key={src.id}
                           className="inline-flex items-center gap-1.5 rounded-md bg-background border px-2 py-1 text-sm"
@@ -731,11 +747,11 @@ export default function WorkspacePage() {
                     <div className="flex flex-1 min-h-0 overflow-hidden">
                       <div className="w-64 shrink-0 border-r overflow-auto p-2">
                         <p className="text-xs font-medium text-muted-foreground mb-2">PDF &amp; files</p>
-                        {content.sources.length === 0 ? (
+                        {sources.length === 0 ? (
                           <p className="text-sm text-muted-foreground">No files. Use Attach to add PDF, DOCX, PPTX.</p>
                         ) : (
                           <ul className="space-y-1">
-                            {content.sources.map((src) => (
+                            {sources.map((src) => (
                               <li key={src.id}>
                                 <button
                                   type="button"
@@ -752,25 +768,44 @@ export default function WorkspacePage() {
                       </div>
                       <div className="flex-1 min-h-0 overflow-auto p-4">
                         {selectedSourceId && (() => {
-                          const src = content.sources.find((s) => s.id === selectedSourceId);
+                          const src = sources.find((s) => s.id === selectedSourceId);
                           if (!src || !token) return null;
                           const isPdf = src.mimeType === 'application/pdf';
                           const anns = sourceAnnotations[src.id] ?? [];
                           return isPdf ? (
                             <PDFViewer
                               sourceId={src.id}
+                              pageId={pageId}
                               fileName={src.fileName}
                               fileUrl={src.fileUrl}
                               pageCount={src.pageCount}
+                              accessToken={token}
+                              canEdit={canEditSources}
                               annotations={anns.map((a) => ({ ...a, position: a.position as { x: number; y: number; width?: number; height?: number } | null }))}
                               onCreateAnnotation={async (data) => {
-                                await sourcesApi.createAnnotation(token, src.id, data);
-                                const res = await sourcesApi.getWithAnnotations(token, pageId, src.id);
-                                setSourceAnnotations((prev) => ({ ...prev, [src.id]: res.annotations }));
+                                try {
+                                  await sourcesApi.createAnnotation(token, src.id, data);
+                                  const res = await sourcesApi.getWithAnnotations(token, pageId, src.id);
+                                  setSourceAnnotations((prev) => ({ ...prev, [src.id]: res.annotations }));
+                                } catch (err) {
+                                  toast({
+                                    title: 'Could not add annotation',
+                                    description: err instanceof Error ? err.message : 'You may need editor access.',
+                                    variant: 'destructive',
+                                  });
+                                }
                               }}
                               onDeleteAnnotation={async (id) => {
-                                await sourcesApi.deleteAnnotation(token, id);
-                                setSourceAnnotations((prev) => ({ ...prev, [src.id]: (prev[src.id] ?? []).filter((a) => a.id !== id) }));
+                                try {
+                                  await sourcesApi.deleteAnnotation(token, id);
+                                  setSourceAnnotations((prev) => ({ ...prev, [src.id]: (prev[src.id] ?? []).filter((a) => a.id !== id) }));
+                                } catch (err) {
+                                  toast({
+                                    title: 'Could not delete annotation',
+                                    description: err instanceof Error ? err.message : 'Try again.',
+                                    variant: 'destructive',
+                                  });
+                                }
                               }}
                             />
                           ) : (
@@ -783,7 +818,7 @@ export default function WorkspacePage() {
                             </div>
                           );
                         })()}
-                        {!selectedSourceId && content.sources.length > 0 && (
+                        {!selectedSourceId && sources.length > 0 && (
                           <p className="text-muted-foreground text-sm">Select a file from the list to view.</p>
                         )}
                       </div>
@@ -870,10 +905,30 @@ export default function WorkspacePage() {
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Invite to workspace</h3>
               {workspace.members && workspace.members.length > 0 && (
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Members: </span>
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-muted-foreground">Members</span>
                   {workspace.members.map((m) => (
-                    <span key={m.id} className="mr-2">{m.user.email} ({m.role})</span>
+                    <div key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate" title={m.user.email}>
+                        {m.user.email}
+                        {m.user.id === user?.id && (
+                          <span className="ml-1 text-muted-foreground">(you)</span>
+                        )}
+                      </span>
+                      {currentMember?.role === 'OWNER' ? (
+                        <select
+                          className="rounded-md border border-input bg-background px-2 py-1 text-xs w-24"
+                          value={m.role}
+                          onChange={(e) => handleUpdateMemberRole(m.id, e.target.value)}
+                        >
+                          <option value="OWNER">Owner</option>
+                          <option value="EDITOR">Editor</option>
+                          <option value="VIEWER">Viewer</option>
+                        </select>
+                      ) : (
+                        <span className="text-muted-foreground capitalize">{m.role.toLowerCase()}</span>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}

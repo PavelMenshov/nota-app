@@ -37,13 +37,17 @@ async function bootstrap() {
     }),
   );
   
-  // CORS with secure configuration supporting multiple local origins
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3001';
+  // CORS: allow web app origin(s) so PDF stream and other requests work (e.g. web on 3000, API on 4000)
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+  const origins = corsOrigin.split(',').map((o) => o.trim()).filter(Boolean);
   const allowedOrigins = [...new Set([
-    corsOrigin,
-    // Support both localhost and 127.0.0.1 to handle IPv4/IPv6 resolution differences
-    corsOrigin.replace('localhost', '127.0.0.1'),
-    corsOrigin.replace('127.0.0.1', 'localhost'),
+    ...origins,
+    ...origins.map((o) => o.replace('localhost', '127.0.0.1')),
+    ...origins.map((o) => o.replace('127.0.0.1', 'localhost')),
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
   ])];
 
   app.enableCors({
