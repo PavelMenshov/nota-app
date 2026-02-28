@@ -10,9 +10,15 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nota.app';
+let metadataBase: URL;
+try {
+  metadataBase = new URL(siteUrl);
+} catch {
+  metadataBase = new URL('https://nota.app');
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase,
   title: {
     default: 'Nota — Notes, PDFs & Canvas in One Workspace',
     template: '%s | Nota',
