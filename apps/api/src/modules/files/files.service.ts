@@ -5,6 +5,8 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadBucketCommand,
+  CreateBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as fs from 'fs';
@@ -39,11 +41,28 @@ export class FilesService {
         forcePathStyle: true, // Required for MinIO
       });
       this.logger.log(`S3/MinIO storage configured (endpoint: ${endpoint})`);
+      this.ensureBucketExists().catch((err) => this.logger.warn(`Bucket check failed: ${err instanceof Error ? err.message : err}`));
     } else {
       if (!fs.existsSync(this.localUploadsDir)) {
         fs.mkdirSync(this.localUploadsDir, { recursive: true });
       }
       this.logger.log('Using local file storage (set S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY for S3/MinIO)');
+    }
+  }
+
+  private async ensureBucketExists(): Promise<void> {
+    if (!this.s3) return;
+    try {
+      await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
+    } catch (err: unknown) {
+      const code = err && typeof err === 'object' && 'name' in err ? (err as { name?: string }).name : '';
+      const status = err && typeof err === 'object' && '$metadata' in err ? (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode : 0;
+      if (code === 'NotFound' || code === 'NoSuchBucket' || status === 404) {
+        await this.s3.send(new CreateBucketCommand({ Bucket: this.bucket }));
+        this.logger.log(`Bucket "${this.bucket}" created.`);
+      } else {
+        throw err;
+      }
     }
   }
 
@@ -56,6 +75,7 @@ export class FilesService {
     const key = `${uuidv4()}${ext}`;
 
     if (this.useS3 && this.s3) {
+      await this.ensureBucketExists();
       await this.s3.send(
         new PutObjectCommand({
           Bucket: this.bucket,
@@ -82,6 +102,7 @@ export class FilesService {
     const key = `${uuidv4()}${ext}`;
 
     if (this.useS3 && this.s3) {
+      await this.ensureBucketExists();
       const fileBuffer = await fs.promises.readFile(sourcePath);
       await this.s3.send(
         new PutObjectCommand({

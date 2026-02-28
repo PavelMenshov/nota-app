@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, FolderOpen, LogOut, Settings, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,14 +38,37 @@ export default function DashboardPage() {
   const router = useRouter();
   const { token, user, clearAuth, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
+  const [authChecked, setAuthChecked] = useState(false);
+  const searchParams = useSearchParams();
+  const joinAttempted = useRef(false);
 
   useEffect(() => {
+    setAuthChecked(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked) return;
     if (!isAuthenticated()) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
     loadWorkspaces();
-  }, [isAuthenticated, router]);
+  }, [authChecked, isAuthenticated, router]);
+
+  useEffect(() => {
+    const joinToken = searchParams.get('join');
+    if (!joinToken || !token || joinAttempted.current) return;
+    joinAttempted.current = true;
+    workspacesApi.joinByShareLink(token, joinToken)
+      .then((w) => {
+        toast({ title: 'Joined workspace!', description: w.name });
+        router.replace(`/workspace/${w.id}`);
+      })
+      .catch(() => {
+        toast({ title: 'Invalid or expired invite link', variant: 'destructive' });
+        router.replace('/dashboard');
+      });
+  }, [searchParams, token, router, toast]);
 
   const loadWorkspaces = async () => {
     if (!token) return;

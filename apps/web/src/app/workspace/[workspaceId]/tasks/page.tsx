@@ -60,11 +60,14 @@ export default function TasksPage() {
     loadTasks();
   }, [workspaceId, isAuthenticated, router]);
 
+  const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+
   const loadTasks = async () => {
     if (!token) return;
     try {
       const data = await tasksApi.list(token, workspaceId);
-      setTasks(data);
+      const sorted = [...data].sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2));
+      setTasks(sorted);
     } catch (error) {
       toast({
         title: 'Error',

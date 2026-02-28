@@ -44,13 +44,12 @@ export class CalendarService {
   async findAll(workspaceId: string, userId: string, startDate?: string, endDate?: string) {
     await this.checkWorkspaceAccess(workspaceId, userId);
 
-    const where: { workspaceId: string; startTime?: { gte?: Date }; endTime?: { lte?: Date } } = { workspaceId };
+    const where: { workspaceId: string; startTime?: { lte: Date }; endTime?: { gte: Date } } = { workspaceId };
 
-    if (startDate) {
-      where.startTime = { gte: new Date(startDate) };
-    }
-    if (endDate) {
-      where.endTime = { lte: new Date(endDate) };
+    // Events that overlap [startDate, endDate]: event.startTime <= endOfRange AND event.endTime >= startOfRange
+    if (startDate && endDate) {
+      where.startTime = { lte: new Date(endDate + 'T23:59:59.999Z') };
+      where.endTime = { gte: new Date(startDate + 'T00:00:00.000Z') };
     }
 
     return this.prisma.calendarEvent.findMany({

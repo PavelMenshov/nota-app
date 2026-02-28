@@ -281,6 +281,10 @@ export default function WorkspacePage() {
       });
       if (showCreateModal === 'folder') {
         await pagesApi.update(token, page.id, { icon: FOLDER_ICON });
+      } else if (showCreateModal === 'page') {
+        const typeIcons: Record<string, string> = { document: '📝', presentation: '📊', spreadsheet: '📋' };
+        const icon = typeIcons[newItemType] || '📝';
+        await pagesApi.update(token, page.id, { icon });
       }
       toast({ title: showCreateModal === 'folder' ? 'Folder created!' : 'Page created!' });
       setShowCreateModal(null);
@@ -463,7 +467,11 @@ export default function WorkspacePage() {
     setIsGeneratingLink(true);
     try {
       const result = await workspacesApi.generateShareLink(token, workspaceId);
-      setShareLink(result.shareUrl || result.shareLink);
+      const tokenOrLink = result.shareUrl || result.shareLink;
+      const fullUrl = typeof window !== 'undefined' && tokenOrLink
+        ? `${window.location.origin}/dashboard?join=${encodeURIComponent(tokenOrLink)}`
+        : tokenOrLink;
+      setShareLink(fullUrl);
       toast({ title: 'Share link generated!' });
     } catch {
       toast({
@@ -948,8 +956,9 @@ export default function WorkspacePage() {
                     </div>
                   </header>
                   {/* Document Toolbar */}
-                  <div className="border-b bg-muted/10 px-6 py-1.5 flex items-center gap-1 overflow-x-auto">
-                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                  <div className="border-b bg-card px-4 py-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground mr-1">Format:</span>
+                    <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-2">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="Bold" onClick={() => {
                         const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '**' + selected + '**' + text.substring(e) }})); }
@@ -1145,12 +1154,18 @@ export default function WorkspacePage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {shareLink ? (
-                      <div className="flex gap-2">
-                        <Input value={shareLink} readOnly className="flex-1 text-sm" />
-                        <Button variant="outline" onClick={handleCopyShareLink}>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy
-                        </Button>
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Share this link. When opened while logged in, the user will join this workspace.</p>
+                        <div className="flex gap-2">
+                          <Input value={shareLink} readOnly className="flex-1 text-sm font-mono" />
+                          <Button variant="outline" onClick={handleCopyShareLink}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy
+                          </Button>
+                        </div>
+                        <a href={shareLink} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all">
+                          {shareLink}
+                        </a>
                       </div>
                     ) : (
                       <Button variant="outline" onClick={handleGenerateShareLink} disabled={isGeneratingLink}>

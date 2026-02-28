@@ -100,7 +100,8 @@ export default function CalendarPage() {
       setNewEventTitle('');
       setNewEventDate('');
       setNewEventTime('09:00');
-      loadEvents();
+      setCurrentMonth(new Date(newEventDate));
+      await loadEvents();
     } catch (error) {
       toast({
         title: 'Error',

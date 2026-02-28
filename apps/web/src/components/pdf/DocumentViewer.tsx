@@ -39,20 +39,49 @@ function getFileLabel(ext: string): string {
 
 export default function DocumentViewer({ fileName, fileUrl }: DocumentViewerProps) {
   const ext = getFileExtension(fileName);
-  const downloadUrl = `/api/sources/files/${fileUrl.split('/').pop()}`;
+  const key = fileUrl.split('/').pop() || '';
+  const downloadUrl = `/api/sources/files/${key}`;
+  const isPptx = ext === 'pptx' || ext === 'ppt';
 
-  // Use Office Online viewer for DOCX/PPTX via iframe
-  // The file is served from our API, so we use a direct embed approach
+  // PPTX/PPT: Office viewer requires a public URL (ours is auth-protected), so show download-only message
+  if (isPptx) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-2 px-3 py-2 border-b bg-background">
+          <span className="text-sm font-medium truncate max-w-48">{fileName}</span>
+          <span className="text-xs text-muted-foreground">Presentation</span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" asChild>
+            <a href={downloadUrl} download={fileName}>
+              <Download className="h-3 w-3" />
+              Download
+            </a>
+          </Button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-muted/30">
+          <Presentation className="h-16 w-16 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Presentations cannot be previewed in the browser. Download the file to open it in PowerPoint or another app.
+          </p>
+          <Button asChild>
+            <a href={downloadUrl} download={fileName}>
+              <Download className="h-4 w-4 mr-2" />
+              Download {fileName}
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // DOCX: try Office viewer (may fail if URL is not public)
   const encodedUrl = encodeURIComponent(
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${downloadUrl}`
-      : downloadUrl,
+    typeof window !== 'undefined' ? `${window.location.origin}${downloadUrl}` : downloadUrl,
   );
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-background">
         <span className="text-sm font-medium truncate max-w-48">{fileName}</span>
         <div className="w-px h-5 bg-border mx-1" />
@@ -65,8 +94,6 @@ export default function DocumentViewer({ fileName, fileUrl }: DocumentViewerProp
           </a>
         </Button>
       </div>
-
-      {/* Document display */}
       <div className="flex-1 overflow-auto bg-gray-100">
         <iframe
           src={officeViewerUrl}
@@ -75,25 +102,17 @@ export default function DocumentViewer({ fileName, fileUrl }: DocumentViewerProp
           title={fileName}
           sandbox="allow-scripts allow-popups"
         />
-
-        {/* Fallback download option */}
-        <noscript>
+        <div className="hidden">
           <div className="text-center py-12 px-4">
-            <div className="flex justify-center mb-4">
-              {getFileIcon(ext)}
-            </div>
-            <h4 className="font-medium text-lg">{fileName}</h4>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              The document viewer could not load. You can download the file to view it locally.
-            </p>
+            <div className="flex justify-center mb-4">{getFileIcon(ext)}</div>
+            <p className="text-sm text-muted-foreground mt-2">Preview not available. Download to view locally.</p>
             <Button className="mt-4" asChild>
               <a href={downloadUrl} download={fileName}>
-                <Download className="h-4 w-4 mr-2" />
-                Download {getFileLabel(ext)}
+                <Download className="h-4 w-4 mr-2" /> Download
               </a>
             </Button>
           </div>
-        </noscript>
+        </div>
       </div>
     </div>
   );
