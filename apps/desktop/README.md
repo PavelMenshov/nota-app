@@ -41,7 +41,7 @@ pnpm package:linux # Linux
 
 ## Environment Variables
 
-- `WEB_APP_URL`: URL of the web application (default: http://localhost:3001)
+- `WEB_APP_URL`: URL of the web application (default: http://localhost:3000)
 - `NODE_ENV`: Set to 'development' for dev mode
 
 ## Architecture

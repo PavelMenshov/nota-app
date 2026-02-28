@@ -4,8 +4,9 @@ import { useEditor, EditorContent, type JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Bold,
   Italic,
@@ -91,16 +92,31 @@ export function RichTextEditor({
     editor?.setEditable(editable);
   }, [editor, editable]);
 
-  const setLink = useCallback(() => {
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkInputValue, setLinkInputValue] = useState('');
+
+  const openLinkDialog = useCallback(() => {
     if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href;
-    const url = globalThis.prompt('URL', previousUrl);
-    if (url === null) return;
+    const previousUrl = editor.getAttributes('link').href ?? '';
+    setLinkInputValue(previousUrl);
+    setShowLinkInput(true);
+  }, [editor]);
+
+  const applyLink = useCallback(() => {
+    if (!editor) return;
+    const url = linkInputValue.trim();
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    setShowLinkInput(false);
+  }, [editor, linkInputValue]);
+
+  const removeLink = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    setShowLinkInput(false);
   }, [editor]);
 
   if (!editor) {
@@ -191,11 +207,38 @@ export function RichTextEditor({
             size="icon"
             variant="ghost"
             className="h-8 w-8"
-            onClick={setLink}
+            onClick={openLinkDialog}
             data-active={editor.isActive('link')}
           >
             <LinkIcon className="h-4 w-4" />
           </Button>
+          {showLinkInput && (
+            <span className="flex items-center gap-1 ml-1 pl-1 border-l border-border">
+              <Input
+                type="url"
+                placeholder="https://..."
+                value={linkInputValue}
+                onChange={(e) => setLinkInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') applyLink();
+                  if (e.key === 'Escape') setShowLinkInput(false);
+                }}
+                className="h-8 w-40 text-sm"
+                autoFocus
+              />
+              <Button type="button" size="sm" variant="ghost" className="h-8 px-2" onClick={applyLink}>
+                OK
+              </Button>
+              {editor.isActive('link') && (
+                <Button type="button" size="sm" variant="ghost" className="h-8 px-2" onClick={removeLink}>
+                  Remove
+                </Button>
+              )}
+              <Button type="button" size="sm" variant="ghost" className="h-8 px-2" onClick={() => setShowLinkInput(false)}>
+                Cancel
+              </Button>
+            </span>
+          )}
         </div>
       )}
       <EditorContent editor={editor} />

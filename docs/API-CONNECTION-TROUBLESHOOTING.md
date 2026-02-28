@@ -67,11 +67,11 @@ If you started both with `pnpm dev`, skip this step. Otherwise:
 pnpm dev:web
 ```
 
-The web app will start on `http://localhost:3001` after the API is ready.
+The web app will start on `http://localhost:3000` after the API is ready.
 
 ### Step 6: Verify Connection
 
-1. Open `http://localhost:3001/auth/login` in your browser
+1. Open `http://localhost:3000/auth/login` in your browser
 2. Look for the API status indicator:
    - ✅ **Green** = "✓ Connected to API server" - Ready to use!
    - ⏳ **Blue** = "Checking API server status..." - Wait a moment
@@ -104,7 +104,7 @@ The web app will start on `http://localhost:3001` after the API is ready.
 **Cause**: Web app is running on a different origin than expected.
 
 **Solution**:
-1. Verify web app is on port 3001: `http://localhost:3001`
+1. Verify web app is on port 3000: `http://localhost:3000`
 2. Check `CORS_ORIGIN` in `.env` matches your web app URL
 3. Restart the API server after changing `.env`
 
@@ -159,7 +159,7 @@ Follow the instructions shown to start the server.
    - Logs errors in development mode for debugging
 
 3. **CORS Configuration**:
-   - API allows requests from `http://localhost:3001` by default
+   - API allows requests from `http://localhost:3000` by default
    - Can be customized via `CORS_ORIGIN` environment variable
    - Includes proper headers for preflight requests
 
@@ -170,7 +170,7 @@ Authentication endpoints (`/api/auth/login` and `/api/auth/register`) use POST r
 - **POST**: Data in request body (secure, encrypted in transit)
 - **GET**: Data in URL (visible in history, logs, not secure)
 
-When you type a URL in the browser's address bar, it sends a GET request, which won't work for authentication. **Always use the web application interface** at `http://localhost:3001`.
+When you type a URL in the browser's address bar, it sends a GET request, which won't work for authentication. **Always use the web application interface** at `http://localhost:3000`.
 
 ## Need More Help?
 

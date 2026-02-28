@@ -12,5 +12,5 @@ export const APP_CONFIG = {
   MIN_HEIGHT: 600,
   
   // Default web app URL (can be overridden by environment variable)
-  DEFAULT_WEB_APP_URL: 'http://localhost:3001',
+  DEFAULT_WEB_APP_URL: 'http://localhost:3000',
 };

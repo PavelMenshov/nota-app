@@ -75,7 +75,7 @@ pnpm db:push
 # Терминал 1 — API (порт 4000)
 pnpm dev:api
 
-# Терминал 2 — фронт (порт 3001)
+# Терминал 2 — фронт (порт 3000)
 pnpm dev:web
 ```
 
@@ -85,7 +85,7 @@ pnpm dev:web
 pnpm dev
 ```
 
-- Сайт: http://localhost:3001  
+- Сайт: http://localhost:3000  
 - API: http://localhost:4000  
 - Swagger: http://localhost:4000/api/docs  
 

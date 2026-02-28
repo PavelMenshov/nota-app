@@ -7,7 +7,7 @@
 
 const http = require('http');
 
-const WEB_APP_URL = process.env.WEB_APP_URL || 'http://localhost:3001';
+const WEB_APP_URL = process.env.WEB_APP_URL || 'http://localhost:3000';
 const RETRY_INTERVAL = 1000; // 1 second between retries
 const MAX_WAIT_TIME = 120000; // Maximum wait time in milliseconds (120 seconds)
 const MAX_ATTEMPTS = Math.floor(MAX_WAIT_TIME / RETRY_INTERVAL);

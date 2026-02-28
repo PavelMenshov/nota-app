@@ -132,7 +132,7 @@ pnpm dev
 
 | Service      | URL                        |
 |-------------|----------------------------|
-| Web App     | http://localhost:3001      |
+| Web App     | http://localhost:3000      |
 | API         | http://localhost:4000      |
 | API Docs    | http://localhost:4000/api/docs |
 | Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
@@ -141,7 +141,7 @@ pnpm dev
 
 - **Database errors:** ensure Docker is running (`docker compose up -d`), and `DATABASE_URL` in `.env` and `packages/database/.env` points to `localhost:5432` (no `db.prisma.io`).
 - **Build:** from repo root run `pnpm install`, `pnpm db:generate`, `pnpm db:push` with Docker up.
-- **Ports:** Web default 3001, API 4000. Override in `.env` or run web on another port, e.g. `pnpm --filter @nota/web dev -- -p 4040`.
+- **Ports:** Web default 3000, API 4000. Override in `.env` or run web on another port, e.g. `pnpm --filter @nota/web dev -- -p 4040`.
 
 ---
 
