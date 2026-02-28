@@ -13,6 +13,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+function getStorageErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    const code = 'code' in err ? String((err as NodeJS.ErrnoException).code) : '';
+    let cause = '';
+    if (err.cause instanceof Error) cause = err.cause.message;
+    else if (err.cause != null) cause = String(err.cause);
+    if (code) return `${err.message} (${code})`;
+    if (cause) return `${err.message}: ${cause}`;
+    return err.message;
+  }
+  return String(err);
+}
+
 @Injectable()
 export class FilesService {
   private readonly logger = new Logger(FilesService.name);
@@ -30,6 +43,10 @@ export class FilesService {
     this.useS3 = !!(endpoint && accessKey && secretKey);
     this.localUploadsDir = path.join(process.cwd(), 'uploads');
 
+    if (!fs.existsSync(this.localUploadsDir)) {
+      fs.mkdirSync(this.localUploadsDir, { recursive: true });
+    }
+
     if (this.useS3) {
       this.s3 = new S3Client({
         endpoint,
@@ -42,16 +59,15 @@ export class FilesService {
       });
       this.logger.log(`S3/MinIO storage configured (endpoint: ${endpoint})`);
       this.ensureBucketExists().catch((err) => {
-        const msg = err instanceof Error ? err.message : String(err);
+        const msg = getStorageErrorMessage(err);
         this.logger.warn(
-          `Bucket check failed: ${msg}. ` +
-          'Ensure MinIO/S3 is running (e.g. docker compose up -d) or remove S3_* from .env to use local uploads/ storage.',
+          `S3/MinIO unavailable: ${msg}. Using local uploads/ storage. ` +
+          'Start MinIO (e.g. docker compose up -d) or remove S3_* from .env to silence this.',
         );
+        this.useS3 = false;
+        this.s3 = null;
       });
     } else {
-      if (!fs.existsSync(this.localUploadsDir)) {
-        fs.mkdirSync(this.localUploadsDir, { recursive: true });
-      }
       this.logger.log('Using local file storage (set S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY for S3/MinIO)');
     }
   }
