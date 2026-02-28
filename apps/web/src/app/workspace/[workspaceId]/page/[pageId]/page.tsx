@@ -133,6 +133,11 @@ export default function PageEditorPage() {
   // Canvas snapshots state
   const [showCanvasVersions, setShowCanvasVersions] = useState(false);
   const [canvasSnapshots, setCanvasSnapshots] = useState<Array<{ id: string; version: number; label: string | null; createdAt: string }>>([]);
+  // Canvas comments state
+  const [showCanvasComments, setShowCanvasComments] = useState(false);
+  const [canvasComments, setCanvasComments] = useState<Array<{ id: string; content: string; resolved: boolean; createdAt: string; user: { id: string; name: string | null; email: string } }>>([]);
+  const [newCanvasComment, setNewCanvasComment] = useState('');
+  const [isSubmittingCanvasComment, setIsSubmittingCanvasComment] = useState(false);
 
   // Page activity state
   const [showActivity, setShowActivity] = useState(false);
@@ -483,6 +488,31 @@ export default function PageEditorPage() {
     }
   };
 
+  const loadCanvasComments = async () => {
+    if (!token) return;
+    try {
+      const data = await canvasApi.get(token, pageId) as { id: string; content: unknown; comments?: typeof canvasComments };
+      setCanvasComments(Array.isArray(data.comments) ? data.comments : []);
+    } catch {
+      setCanvasComments([]);
+    }
+  };
+
+  const handleAddCanvasComment = async () => {
+    if (!token || !newCanvasComment.trim()) return;
+    setIsSubmittingCanvasComment(true);
+    try {
+      await canvasApi.createComment(token, pageId, { content: newCanvasComment.trim() });
+      setNewCanvasComment('');
+      await loadCanvasComments();
+      toast({ title: 'Comment added' });
+    } catch {
+      toast({ title: 'Failed to add comment', variant: 'destructive' });
+    } finally {
+      setIsSubmittingCanvasComment(false);
+    }
+  };
+
   const handleConvertToOutline = async () => {
     if (!token) return;
     try {
@@ -511,7 +541,7 @@ export default function PageEditorPage() {
     try {
       const result = await pagesApi.generateShareLink(token, pageId);
       const url = typeof window !== 'undefined'
-        ? `${window.location.origin}/workspace/${workspaceId}/page/${pageId}?share=${result.shareLink}`
+        ? `${window.location.origin}/share/${result.shareLink}`
         : result.shareLink;
       setShareLink(url);
       setShowShareModal(true);
@@ -930,7 +960,47 @@ export default function PageEditorPage() {
                   <ArrowRightFromLine className="h-4 w-4 mr-2" />
                   Convert to Outline
                 </Button>
+                <Button
+                  variant={showCanvasComments ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setShowCanvasComments(!showCanvasComments); if (!showCanvasComments) loadCanvasComments(); }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Comments
+                </Button>
               </div>
+
+              {/* Canvas comments panel */}
+              {showCanvasComments && (
+                <div className="mx-4 mt-2 border rounded-lg bg-muted/30 p-3">
+                  <h4 className="text-sm font-medium mb-2">Comments</h4>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="Add a comment..."
+                      className="flex-1"
+                      value={newCanvasComment}
+                      onChange={(e) => setNewCanvasComment(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddCanvasComment()}
+                    />
+                    <Button size="sm" onClick={handleAddCanvasComment} disabled={!newCanvasComment.trim() || isSubmittingCanvasComment}>
+                      Add
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-auto">
+                    {canvasComments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No comments yet</p>
+                    ) : (
+                      canvasComments.map((c) => (
+                        <div key={c.id} className="text-sm p-2 rounded bg-background border">
+                          <p className="font-medium">{c.user.name || c.user.email}</p>
+                          <p className="text-muted-foreground">{c.content}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{new Date(c.createdAt).toLocaleString()}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Canvas version history panel */}
               {showCanvasVersions && (

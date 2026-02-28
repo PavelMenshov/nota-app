@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -11,7 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CanvasService } from './canvas.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UpdateCanvasDto, ConvertToOutlineDto } from './dto/canvas.dto';
+import { UpdateCanvasDto, ConvertToOutlineDto, CreateCanvasCommentDto, ResolveCanvasCommentDto } from './dto/canvas.dto';
 
 @ApiTags('canvas')
 @Controller('pages/:pageId/canvas')
@@ -81,5 +82,39 @@ export class CanvasController {
     @Body() dto: ConvertToOutlineDto,
   ) {
     return this.canvasService.convertToOutline(pageId, req.user.userId, dto);
+  }
+
+  @Post('comments')
+  @ApiOperation({ summary: 'Add a comment to canvas' })
+  @ApiResponse({ status: 201, description: 'Comment created' })
+  async createComment(
+    @Request() req: { user: { userId: string } },
+    @Param('pageId') pageId: string,
+    @Body() dto: CreateCanvasCommentDto,
+  ) {
+    return this.canvasService.createComment(pageId, req.user.userId, dto);
+  }
+
+  @Put('comments/:commentId/resolve')
+  @ApiOperation({ summary: 'Resolve/unresolve a canvas comment' })
+  @ApiResponse({ status: 200, description: 'Comment resolved' })
+  async resolveComment(
+    @Request() req: { user: { userId: string } },
+    @Param('pageId') _pageId: string,
+    @Param('commentId') commentId: string,
+    @Body() dto: ResolveCanvasCommentDto,
+  ) {
+    return this.canvasService.resolveComment(commentId, req.user.userId, dto.resolved);
+  }
+
+  @Delete('comments/:commentId')
+  @ApiOperation({ summary: 'Delete a canvas comment' })
+  @ApiResponse({ status: 200, description: 'Comment deleted' })
+  async deleteComment(
+    @Request() req: { user: { userId: string } },
+    @Param('pageId') _pageId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    return this.canvasService.deleteComment(commentId, req.user.userId);
   }
 }

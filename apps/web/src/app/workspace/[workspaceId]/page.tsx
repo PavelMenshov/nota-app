@@ -109,6 +109,8 @@ export default function WorkspacePage() {
   const [newItemTitle, setNewItemTitle] = useState('');
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string }> | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [createParentId, setCreateParentId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadTargetPageId, setUploadTargetPageId] = useState<string | null>(null);
@@ -131,6 +133,10 @@ export default function WorkspacePage() {
   const [isInviting, setIsInviting] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState('');
+  const [sourceSearchResults, setSourceSearchResults] = useState<Array<{ id: string; fileName: string; fileUrl: string; pageCount: number | null }> | null>(null);
+  const [sourceSearchPageId, setSourceSearchPageId] = useState<string | null>(null);
+  const [isSearchingSources, setIsSearchingSources] = useState(false);
 
   // Settings panel state
   const [profileName, setProfileName] = useState('');
@@ -170,6 +176,28 @@ export default function WorkspacePage() {
       setWsDescription(workspace.description || '');
     }
   }, [workspace]);
+
+  // Server-side search (title + doc content)
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      if (!token || !workspaceId) return;
+      setIsSearching(true);
+      try {
+        const list = await pagesApi.search(token, workspaceId, q);
+        setSearchResults(list.map((p) => ({ id: p.id, title: p.title })));
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, token, workspaceId]);
 
   const loadWorkspace = async () => {
     if (!token) return;
@@ -350,6 +378,20 @@ export default function WorkspacePage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSearchSources = async (pid: string) => {
+    if (!token || !sourceSearchQuery.trim()) return;
+    setIsSearchingSources(true);
+    setSourceSearchPageId(pid);
+    try {
+      const list = await sourcesApi.search(token, pid, sourceSearchQuery.trim());
+      setSourceSearchResults(list);
+    } catch {
+      setSourceSearchResults([]);
+    } finally {
+      setIsSearchingSources(false);
     }
   };
 
@@ -614,7 +656,7 @@ export default function WorkspacePage() {
 
   const { roots, childMap } = buildPageTree(filteredPages);
 
-  const isFolder = (page: PageData) => page.icon === FOLDER_ICON;
+  const isFolder = (page: PageData) => (childMap[page.id]?.length ?? 0) > 0;
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -783,7 +825,7 @@ export default function WorkspacePage() {
               />
             </div>
 
-            {/* Page Tree */}
+            {/* Page Tree or Search Results */}
             <div className="space-y-0.5">
               {isUploading && (
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground">
@@ -791,7 +833,31 @@ export default function WorkspacePage() {
                   Uploading...
                 </div>
               )}
-              {roots.length > 0 ? (
+              {searchResults !== null ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1.5 mb-1">Search results</p>
+                  {isSearching ? (
+                    <div className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary" />
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => loadPageContent(p.id)}
+                        className="w-full flex items-center gap-1.5 px-1.5 py-1.5 rounded-md hover:bg-muted text-sm truncate text-left"
+                      >
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{p.title}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground px-2 py-2">No pages found</p>
+                  )}
+                </>
+              ) : roots.length > 0 ? (
                 roots.map((page) => renderTreeItem(page))
               ) : (
                 <p className="text-xs text-muted-foreground text-center py-4">
@@ -1035,20 +1101,53 @@ export default function WorkspacePage() {
                       </Button>
                     </div>
                   </div>
-                  {/* Attached files */}
+                  {/* Attached files + Search in PDFs */}
                   {content.sources.length > 0 && (
-                    <div className="px-6 py-2 border-b bg-muted/20 flex items-center gap-2 overflow-x-auto">
-                      <span className="text-xs text-muted-foreground shrink-0">Attached:</span>
-                      {content.sources.map((source) => (
-                        <button
-                          key={source.id}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border text-xs hover:bg-muted shrink-0"
-                          onClick={() => openSourceTab(source, pageId)}
-                        >
-                          {getFileIcon(source.fileName)}
-                          <span className="truncate max-w-[120px]">{source.fileName}</span>
-                        </button>
-                      ))}
+                    <div className="px-6 py-2 border-b bg-muted/20 space-y-2">
+                      <div className="flex items-center gap-2 overflow-x-auto flex-wrap">
+                        <span className="text-xs text-muted-foreground shrink-0">Attached:</span>
+                        {content.sources.map((source) => (
+                          <button
+                            key={source.id}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border text-xs hover:bg-muted shrink-0"
+                            onClick={() => openSourceTab(source, pageId)}
+                          >
+                            {getFileIcon(source.fileName)}
+                            <span className="truncate max-w-[120px]">{source.fileName}</span>
+                          </button>
+                        ))}
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          <Input
+                            placeholder="Search in PDFs..."
+                            className="h-7 w-36 text-xs"
+                            value={sourceSearchPageId === pageId ? sourceSearchQuery : ''}
+                            onChange={(e) => { setSourceSearchQuery(e.target.value); if (sourceSearchPageId !== pageId) setSourceSearchResults(null); }}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchSources(pageId)}
+                          />
+                          <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => handleSearchSources(pageId)} disabled={isSearchingSources || !sourceSearchQuery.trim()}>
+                            {isSearchingSources ? '...' : 'Search'}
+                          </Button>
+                        </div>
+                      </div>
+                      {sourceSearchPageId === pageId && sourceSearchResults !== null && (
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <span className="text-muted-foreground shrink-0">Found in:</span>
+                          {sourceSearchResults.length === 0 ? (
+                            <span className="text-muted-foreground">No matches</span>
+                          ) : (
+                            sourceSearchResults.map((r) => (
+                              <button
+                                key={r.id}
+                                type="button"
+                                className="px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20"
+                                onClick={() => openSourceTab({ ...r, fileSize: 0, mimeType: '' } as SourceData, pageId)}
+                              >
+                                {r.fileName}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="flex-1 overflow-auto">

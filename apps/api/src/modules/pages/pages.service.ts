@@ -234,6 +234,34 @@ export class PagesService {
     });
   }
 
+  /** Public: get page by share link token (no auth). Read-only access. */
+  async getByShareLink(shareLink: string) {
+    const page = await this.prisma.page.findFirst({
+      where: {
+        shareLink,
+        shareLinkEnabled: true,
+      },
+      include: {
+        doc: { select: { id: true, content: true, plainText: true } },
+        canvas: { select: { id: true, content: true } },
+        sources: {
+          select: {
+            id: true,
+            fileName: true,
+            fileUrl: true,
+            pageCount: true,
+            mimeType: true,
+          },
+        },
+        workspace: { select: { id: true, name: true } },
+      },
+    });
+    if (!page) {
+      throw new NotFoundException('Invalid or expired share link');
+    }
+    return page;
+  }
+
   private async checkWorkspaceAccess(workspaceId: string, userId: string, allowedRoles?: string[]) {
     const member = await this.prisma.workspaceMember.findUnique({
       where: {

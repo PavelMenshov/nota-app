@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { UpdateCanvasDto, ConvertToOutlineDto } from './dto/canvas.dto';
+import { UpdateCanvasDto, ConvertToOutlineDto, CreateCanvasCommentDto } from './dto/canvas.dto';
 import { Prisma } from '@nota/database';
 
 @Injectable()
@@ -12,14 +12,29 @@ export class CanvasService {
 
     let canvas = await this.prisma.canvas.findUnique({
       where: { pageId },
+      include: {
+        comments: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
 
     if (!canvas) {
-      // Create empty canvas if doesn't exist
       canvas = await this.prisma.canvas.create({
         data: {
           pageId,
           content: { elements: [], viewport: { x: 0, y: 0, zoom: 1 } },
+        },
+        include: {
+          comments: {
+            include: {
+              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
         },
       });
     }
@@ -188,6 +203,70 @@ export class CanvasService {
     }
 
     return { success: true, elementsConverted: textElements.length };
+  }
+
+  async createComment(pageId: string, userId: string, dto: CreateCanvasCommentDto) {
+    await this.getPageWithAccess(pageId, userId);
+
+    const canvas = await this.prisma.canvas.findUnique({
+      where: { pageId },
+    });
+
+    if (!canvas) {
+      throw new NotFoundException('Canvas not found');
+    }
+
+    const comment = await this.prisma.comment.create({
+      data: {
+        canvasId: canvas.id,
+        userId,
+        content: dto.content,
+        position: (dto.position as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        parentId: dto.parentId,
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+    });
+    return comment;
+  }
+
+  async resolveComment(commentId: string, userId: string, resolved: boolean) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: { canvas: true },
+    });
+
+    if (!comment || !comment.canvas) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.getPageWithAccess(comment.canvas.pageId, userId, ['OWNER', 'EDITOR']);
+
+    return this.prisma.comment.update({
+      where: { id: commentId },
+      data: { resolved },
+    });
+  }
+
+  async deleteComment(commentId: string, userId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: { canvas: true },
+    });
+
+    if (!comment || !comment.canvas) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    if (comment.userId !== userId) {
+      await this.getPageWithAccess(comment.canvas.pageId, userId, ['OWNER', 'EDITOR']);
+    }
+
+    await this.prisma.comment.delete({
+      where: { id: commentId },
+    });
+    return { success: true };
   }
 
   private async getPageWithAccess(pageId: string, userId: string, allowedRoles?: string[]) {

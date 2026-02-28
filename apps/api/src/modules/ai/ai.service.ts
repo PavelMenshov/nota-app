@@ -27,14 +27,33 @@ export class AIService {
     this.dailyLimit = parseInt(this.configService.get('AI_DAILY_LIMIT') || '50', 10);
   }
 
+  /**
+   * Placeholder for library/university knowledge-base context.
+   * Set LIBRARY_AGENT_URL in .env to enable; when set, this would call an agent
+   * that has access to university library resources and return extra context for the prompt.
+   */
+  private async getLibraryContext(_pageId: string, _userId: string): Promise<string> {
+    const libraryUrl = this.configService.get('LIBRARY_AGENT_URL');
+    if (!libraryUrl) return '';
+    // TODO: integrate with library agent API (e.g. fetch context by page/course)
+    this.logger.log('Library agent URL configured; integration pending');
+    return '';
+  }
+
   async generateSummary(userId: string, dto: SummaryDto) {
     await this.checkUsageLimit(userId);
 
     // Get page content
     const page = await this.getPageWithContent(dto.pageId, userId);
 
+    // Optional: context from university library agents (when configured)
+    const libraryContext = await this.getLibraryContext(dto.pageId, userId);
+
     // Collect content from doc and sources
     let contentToSummarize = '';
+    if (libraryContext) {
+      contentToSummarize += `Additional context (library/knowledge base):\n${libraryContext}\n\n`;
+    }
 
     if (dto.includeDoc !== false && page.doc?.plainText) {
       contentToSummarize += `Document Content:\n${page.doc.plainText}\n\n`;
@@ -91,7 +110,12 @@ export class AIService {
     // Get page content
     const page = await this.getPageWithContent(dto.pageId, userId);
 
+    const libraryContext = await this.getLibraryContext(dto.pageId, userId);
+
     let contentForFlashcards = '';
+    if (libraryContext) {
+      contentForFlashcards += libraryContext + '\n\n';
+    }
 
     if (page.doc?.plainText) {
       contentForFlashcards += page.doc.plainText + '\n\n';

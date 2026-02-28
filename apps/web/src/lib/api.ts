@@ -317,6 +317,20 @@ export const workspacesApi = {
     }),
 };
 
+// Share (public, no auth)
+export const shareApi = {
+  getPageByShareLink: (shareLink: string) =>
+    fetchApi<{
+      id: string;
+      workspaceId: string;
+      title: string;
+      doc: { id: string; content: unknown; plainText: string | null } | null;
+      canvas: { id: string; content: unknown } | null;
+      sources: Array<{ id: string; fileName: string; fileUrl: string; pageCount: number | null; mimeType: string }>;
+      workspace: { id: string; name: string };
+    }>('/api/share/page/' + encodeURIComponent(shareLink), {}),
+};
+
 // Pages API
 export const pagesApi = {
   create: (token: string, data: { workspaceId: string; title: string; parentId?: string }) =>
@@ -463,6 +477,26 @@ export const canvasApi = {
         token,
       },
     ),
+
+  createComment: (token: string, pageId: string, data: { content: string; position?: unknown; parentId?: string }) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/canvas/comments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  resolveComment: (token: string, pageId: string, commentId: string, resolved = true) =>
+    fetchApi<{ id: string }>(`/api/pages/${pageId}/canvas/comments/${commentId}/resolve`, {
+      method: 'PUT',
+      body: JSON.stringify({ resolved }),
+      token,
+    }),
+
+  deleteComment: (token: string, pageId: string, commentId: string) =>
+    fetchApi<{ success: boolean }>(`/api/pages/${pageId}/canvas/comments/${commentId}`, {
+      method: 'DELETE',
+      token,
+    }),
 };
 
 // Tasks API
@@ -641,6 +675,16 @@ export const sourcesApi = {
       mimeType: string;
       pageCount: number | null;
     }>>(`/api/pages/${pageId}/sources`, { token }),
+
+  search: (token: string, pageId: string, query: string) =>
+    fetchApi<Array<{
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      fileSize: number;
+      mimeType: string;
+      pageCount: number | null;
+    }>>(`/api/pages/${pageId}/sources/search?q=${encodeURIComponent(query)}`, { token }),
 
   delete: (token: string, pageId: string, sourceId: string) =>
     fetchApi<{ success: boolean }>(`/api/pages/${pageId}/sources/${sourceId}`, {

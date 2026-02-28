@@ -236,7 +236,7 @@ export class DocService {
       include: { doc: true },
     });
 
-    if (!comment) {
+    if (!comment || !comment.doc) {
       throw new NotFoundException('Comment not found');
     }
 
@@ -254,7 +254,7 @@ export class DocService {
       include: { doc: true },
     });
 
-    if (!comment) {
+    if (!comment || !comment.doc) {
       throw new NotFoundException('Comment not found');
     }
 

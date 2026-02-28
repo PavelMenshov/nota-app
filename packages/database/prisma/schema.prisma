@@ -231,6 +231,7 @@ model Canvas {
   // Relations
   page      Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
   snapshots CanvasSnapshot[]
+  comments  Comment[]
 
   @@map("canvases")
 }
@@ -317,11 +318,12 @@ enum AnnotationType {
 
 model Comment {
   id        String   @id @default(cuid())
-  docId     String
+  docId     String?  // Set for doc comments
+  canvasId  String?  // Set for canvas comments
   userId    String
   content   String   @db.Text
   
-  // For inline comments (position in doc)
+  // For inline comments (position in doc or canvas)
   position  Json?
   
   // Thread support
@@ -331,9 +333,10 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  doc     Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent  Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+  doc     Doc?     @relation(fields: [docId], references: [id], onDelete: Cascade)
+  canvas  Canvas?  @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment? @relation("CommentThread", fields: [parentId], references: [id])
   replies Comment[] @relation("CommentThread")
 
   @@map("comments")
