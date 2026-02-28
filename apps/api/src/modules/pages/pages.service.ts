@@ -1,16 +1,20 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreatePageDto, UpdatePageDto } from './dto/pages.dto';
+import { WorkspaceAccessService } from '../../common/workspace-access/workspace-access.service';
+import type { CreatePageInput } from '@nota/shared';
+import { UpdatePageDto } from './dto/pages.dto';
 import { Prisma } from '@nota/database';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {}
 
-  async create(userId: string, dto: CreatePageDto) {
-    // Check workspace access
-    await this.checkWorkspaceAccess(dto.workspaceId, userId, ['OWNER', 'EDITOR']);
+  async create(userId: string, dto: CreatePageInput) {
+    await this.workspaceAccess.checkAccess(dto.workspaceId, userId, ['OWNER', 'EDITOR']);
 
     // Get max order
     const maxOrder = await this.prisma.page.aggregate({
@@ -21,6 +25,7 @@ export class PagesService {
       _max: { order: true },
     });
 
+    const isFolder = dto.isFolder === true;
     const page = await this.prisma.page.create({
       data: {
         workspaceId: dto.workspaceId,
@@ -28,18 +33,19 @@ export class PagesService {
         parentId: dto.parentId,
         tags: dto.tags ?? [],
         order: (maxOrder._max.order || 0) + 1,
-        // Create empty doc and canvas
-        doc: {
-          create: {
-            content: { type: 'doc', content: [] },
-            plainText: '',
+        ...(!isFolder && {
+          doc: {
+            create: {
+              content: { type: 'doc', content: [] },
+              plainText: '',
+            },
           },
-        },
-        canvas: {
-          create: {
-            content: { elements: [], viewport: { x: 0, y: 0, zoom: 1 } },
+          canvas: {
+            create: {
+              content: { elements: [], viewport: { x: 0, y: 0, zoom: 1 } },
+            },
           },
-        },
+        }),
       },
       include: {
         doc: true,
@@ -61,7 +67,7 @@ export class PagesService {
   }
 
   async findAllByWorkspace(workspaceId: string, userId: string) {
-    await this.checkWorkspaceAccess(workspaceId, userId);
+    await this.workspaceAccess.checkAccess(workspaceId, userId);
 
     return this.prisma.page.findMany({
       where: { workspaceId },
@@ -118,7 +124,7 @@ export class PagesService {
       throw new NotFoundException('Page not found');
     }
 
-    await this.checkWorkspaceAccess(page.workspaceId, userId, ['OWNER', 'EDITOR']);
+    await this.workspaceAccess.checkAccess(page.workspaceId, userId, ['OWNER', 'EDITOR']);
 
     const updated = await this.prisma.page.update({
       where: { id },
@@ -148,7 +154,7 @@ export class PagesService {
       throw new NotFoundException('Page not found');
     }
 
-    await this.checkWorkspaceAccess(page.workspaceId, userId, ['OWNER', 'EDITOR']);
+    await this.workspaceAccess.checkAccess(page.workspaceId, userId, ['OWNER', 'EDITOR']);
 
     await this.prisma.page.delete({
       where: { id },
@@ -158,7 +164,7 @@ export class PagesService {
   }
 
   async search(workspaceId: string, userId: string, query: string) {
-    await this.checkWorkspaceAccess(workspaceId, userId);
+    await this.workspaceAccess.checkAccess(workspaceId, userId);
 
     return this.prisma.page.findMany({
       where: {
@@ -189,7 +195,7 @@ export class PagesService {
       throw new NotFoundException('Page not found');
     }
 
-    await this.checkWorkspaceAccess(page.workspaceId, userId, ['OWNER']);
+    await this.workspaceAccess.checkAccess(page.workspaceId, userId, ['OWNER']);
 
     const shareLink = uuidv4();
 
@@ -217,7 +223,7 @@ export class PagesService {
       throw new NotFoundException('Page not found');
     }
 
-    await this.checkWorkspaceAccess(page.workspaceId, userId);
+    await this.workspaceAccess.checkAccess(page.workspaceId, userId);
 
     return this.prisma.activity.findMany({
       where: { pageId },
@@ -264,24 +270,4 @@ export class PagesService {
     return page;
   }
 
-  private async checkWorkspaceAccess(workspaceId: string, userId: string, allowedRoles?: string[]) {
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: {
-          workspaceId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (allowedRoles && !allowedRoles.includes(member.role)) {
-      throw new ForbiddenException('Insufficient permissions');
-    }
-
-    return member;
-  }
 }

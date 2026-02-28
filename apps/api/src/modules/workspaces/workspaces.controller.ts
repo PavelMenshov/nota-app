@@ -10,9 +10,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { createWorkspaceSchema, type CreateWorkspaceInput } from '@nota/shared';
 import { WorkspacesService } from './workspaces.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateWorkspaceDto, UpdateWorkspaceDto, AddMemberDto, UpdateMemberRoleDto, GenerateShareLinkDto, LinkWorkspaceLmsDto } from './dto/workspaces.dto';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { UpdateWorkspaceDto, AddMemberDto, UpdateMemberRoleDto, GenerateShareLinkDto, LinkWorkspaceLmsDto } from './dto/workspaces.dto';
 
 @ApiTags('workspaces')
 @Controller('workspaces')
@@ -26,7 +28,7 @@ export class WorkspacesController {
   @ApiResponse({ status: 201, description: 'Workspace created' })
   async create(
     @Request() req: { user: { userId: string } },
-    @Body() dto: CreateWorkspaceDto,
+    @Body(ZodValidationPipe.with(createWorkspaceSchema)) dto: CreateWorkspaceInput,
   ) {
     return this.workspacesService.create(req.user.userId, dto);
   }

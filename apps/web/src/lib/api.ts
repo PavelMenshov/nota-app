@@ -270,7 +270,14 @@ export const workspacesApi = {
       id: string;
       name: string;
       description: string | null;
-      pages: Array<{ id: string; title: string; icon: string | null; parentId?: string | null }>;
+      pages: Array<{
+        id: string;
+        title: string;
+        icon: string | null;
+        parentId?: string | null;
+        doc?: { id: string } | null;
+        canvas?: { id: string } | null;
+      }>;
       members: Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>;
     }>(`/api/workspaces/${id}`, { token }),
 
@@ -339,7 +346,7 @@ export const shareApi = {
 
 // Pages API
 export const pagesApi = {
-  create: (token: string, data: { workspaceId: string; title: string; parentId?: string }) =>
+  create: (token: string, data: { workspaceId: string; title: string; parentId?: string; isFolder?: boolean }) =>
     fetchApi<{ id: string; title: string }>('/api/pages', {
       method: 'POST',
       body: JSON.stringify(data),

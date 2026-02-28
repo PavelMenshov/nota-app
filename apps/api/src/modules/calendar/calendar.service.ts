@@ -1,13 +1,18 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateEventDto, UpdateEventDto } from './dto/calendar.dto';
+import { WorkspaceAccessService } from '../../common/workspace-access/workspace-access.service';
+import type { CreateEventInput } from '@nota/shared';
+import { UpdateEventDto } from './dto/calendar.dto';
 
 @Injectable()
 export class CalendarService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {}
 
-  async create(userId: string, dto: CreateEventDto) {
-    await this.checkWorkspaceAccess(dto.workspaceId, userId);
+  async create(userId: string, dto: CreateEventInput) {
+    await this.workspaceAccess.checkAccess(dto.workspaceId, userId);
 
     return this.prisma.calendarEvent.create({
       data: {
@@ -42,7 +47,7 @@ export class CalendarService {
   }
 
   async findAll(workspaceId: string, userId: string, startDate?: string, endDate?: string) {
-    await this.checkWorkspaceAccess(workspaceId, userId);
+    await this.workspaceAccess.checkAccess(workspaceId, userId);
 
     const where: { workspaceId: string; startTime?: { lte: Date }; endTime?: { gte: Date } } = { workspaceId };
 
@@ -178,20 +183,4 @@ export class CalendarService {
     return { success: true };
   }
 
-  private async checkWorkspaceAccess(workspaceId: string, userId: string) {
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: {
-          workspaceId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
 }

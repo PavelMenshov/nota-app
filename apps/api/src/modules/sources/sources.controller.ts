@@ -27,7 +27,7 @@ import { existsSync, mkdirSync, readFileSync } from 'fs';
 import type { Response } from 'express';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pdfParse = require('pdf-parse');
 
 // Must match FilesService.localUploadsDir so uploaded files are found when streaming

@@ -18,6 +18,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { FilesModule } from './modules/files/files.module';
 import { LmsModule } from './modules/lms/lms.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { WorkspaceAccessModule } from './common/workspace-access/workspace-access.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
       limit: 100, // 100 requests
     }]),
     PrismaModule,
+    WorkspaceAccessModule,
     FilesModule,
     HealthModule,
     AuthModule,

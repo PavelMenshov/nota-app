@@ -3,9 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SummaryDto, FlashcardsDto, ExplainDto } from './dto/ai.dto';
 
-// AI Configuration - Add your API keys here
-// TODO: Register at https://openai.com/api/ or https://console.anthropic.com/
-// Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env.local
+// AI: Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env (see .env.example).
+// Register keys at https://openai.com/api/ or https://console.anthropic.com/
 
 @Injectable()
 export class AIService {
@@ -28,15 +27,14 @@ export class AIService {
   }
 
   /**
-   * Placeholder for library/university knowledge-base context.
-   * Set LIBRARY_AGENT_URL in .env to enable; when set, this would call an agent
-   * that has access to university library resources and return extra context for the prompt.
+   * Optional context from a library/university knowledge-base agent.
+   * Set LIBRARY_AGENT_URL in .env to enable. When implemented, this should
+   * call the agent (e.g. GET with pageId/courseId) and return extra context for the prompt.
    */
   private async getLibraryContext(_pageId: string, _userId: string): Promise<string> {
     const libraryUrl = this.configService.get('LIBRARY_AGENT_URL');
     if (!libraryUrl) return '';
-    // TODO: integrate with library agent API (e.g. fetch context by page/course)
-    this.logger.log('Library agent URL configured; integration pending');
+    this.logger.debug('LIBRARY_AGENT_URL set; integrate when library agent API is ready');
     return '';
   }
 

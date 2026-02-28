@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { WorkspaceAccessService } from '../../common/workspace-access/workspace-access.service';
 import { CreateExportJobDto, SendToNotionDto } from './dto/export.dto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -18,7 +19,10 @@ const EXPORTS_DIR = path.join(process.cwd(), 'exports');
 
 @Injectable()
 export class ExportService {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {
     if (!fs.existsSync(EXPORTS_DIR)) {
       fs.mkdirSync(EXPORTS_DIR, { recursive: true });
     }
@@ -31,7 +35,7 @@ export class ExportService {
         await this.checkPageAccess(pageId, userId);
       }
     } else if (dto.config.workspaceId) {
-      await this.checkWorkspaceAccess(dto.config.workspaceId, userId);
+      await this.workspaceAccess.checkAccess(dto.config.workspaceId, userId);
     }
 
     // Create export job
@@ -324,18 +328,4 @@ export class ExportService {
     }
   }
 
-  private async checkWorkspaceAccess(workspaceId: string, userId: string) {
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: {
-          workspaceId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-  }
 }

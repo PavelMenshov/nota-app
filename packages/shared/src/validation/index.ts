@@ -29,6 +29,8 @@ export const createPageSchema = z.object({
   workspaceId: z.string().cuid(),
   title: z.string().min(1, 'Title is required').max(200),
   parentId: z.string().cuid().optional().nullable(),
+  isFolder: z.boolean().optional(),
+  tags: z.array(z.string().max(50)).optional(),
 });
 
 export const updatePageSchema = z.object({

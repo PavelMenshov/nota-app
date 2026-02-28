@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack } from 'lucide-react';
+import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +23,8 @@ interface PageData {
   title: string;
   icon: string | null;
   parentId?: string | null;
+  doc?: { id: string } | null;
+  canvas?: { id: string } | null;
 }
 
 interface SourceData {
@@ -96,6 +98,9 @@ export default function WorkspacePage() {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [pageActivity, setPageActivity] = useState<Array<{ id: string; action: string; details: unknown; createdAt: string; user: { id: string; name: string | null; email: string } }>>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
   const [aiFlashcards, setAiFlashcards] = useState<Array<{ id: string; front: string; back: string }> | null>(null);
   const [aiLoading, setAiLoading] = useState<'summary' | 'flashcards' | null>(null);
 
@@ -122,8 +127,10 @@ export default function WorkspacePage() {
     sourcesApi
       .getWithAnnotations(token, activeTab.pageId, selectedSourceId)
       .then((res) => setSourceAnnotations((prev) => ({ ...prev, [selectedSourceId]: res.annotations })))
-      .catch(() => {});
-  }, [token, activeTab?.pageId, activeTab?.type, selectedSourceId, pageContents]);
+      .catch(() => {
+        toast({ title: 'Could not load annotations', variant: 'destructive' });
+      });
+  }, [token, activeTab?.pageId, activeTab?.type, selectedSourceId, pageContents, toast]);
 
   const loadWorkspace = useCallback(async () => {
     if (!token) return;
@@ -133,7 +140,14 @@ export default function WorkspacePage() {
         id: data.id,
         name: data.name,
         description: data.description ?? null,
-        pages: (data.pages ?? []).map((p: PageData) => ({ id: p.id, title: p.title, icon: p.icon ?? null, parentId: p.parentId ?? null })),
+        pages: (data.pages ?? []).map((p: PageData) => ({
+          id: p.id,
+          title: p.title,
+          icon: p.icon ?? null,
+          parentId: p.parentId ?? null,
+          doc: p.doc ?? null,
+          canvas: p.canvas ?? null,
+        })),
         members: data.members ?? [],
       });
     } catch {
@@ -165,6 +179,10 @@ export default function WorkspacePage() {
       if (!token) return;
       try {
         const pageData = await pagesApi.get(token, pageId);
+        if (!pageData.doc) {
+          toast({ title: 'This is a folder', description: 'Open a page inside it.', variant: 'default' });
+          return;
+        }
         const doc = pageData.doc;
         const plainText = doc?.plainText ?? '';
         const rawContent = doc?.content;
@@ -303,6 +321,7 @@ export default function WorkspacePage() {
         workspaceId,
         title: newFolderTitle.trim() || 'New folder',
         parentId: undefined,
+        isFolder: true,
       });
       setShowCreateFolderModal(false);
       setNewFolderTitle('');
@@ -354,6 +373,52 @@ export default function WorkspacePage() {
     } catch {
       toast({ title: 'Error', description: 'Failed to generate link', variant: 'destructive' });
     }
+  };
+
+  useEffect(() => {
+    if (!showActivityModal || !token || !activeTab?.pageId) return;
+    setLoadingActivity(true);
+    pagesApi
+      .getActivity(token, activeTab.pageId)
+      .then(setPageActivity)
+      .catch(() => toast({ title: 'Error', description: 'Failed to load history', variant: 'destructive' }))
+      .finally(() => setLoadingActivity(false));
+  }, [showActivityModal, token, activeTab?.pageId, toast]);
+
+  const formatActivityAction = (action: string, details: unknown): string => {
+    const d = details as { title?: string; fileName?: string } | null;
+    switch (action) {
+      case 'created':
+        return d?.title ? `Created page "${d.title}"` : 'Created page';
+      case 'updated':
+        return d?.title ? `Renamed to "${d.title}"` : 'Updated page';
+      case 'edited_doc':
+        return 'Edited document';
+      case 'edited_canvas':
+        return 'Edited canvas';
+      case 'restored_snapshot':
+        return 'Restored doc version';
+      case 'restored_canvas_snapshot':
+        return 'Restored canvas version';
+      case 'uploaded_source':
+        return d?.fileName ? `Uploaded "${d.fileName}"` : 'Uploaded file';
+      default:
+        return action.replace(/_/g, ' ');
+    }
+  };
+
+  const formatRelativeTime = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffM = Math.floor(diffMs / 60000);
+    const diffH = Math.floor(diffMs / 3600000);
+    const diffD = Math.floor(diffMs / 86400000);
+    if (diffM < 1) return 'Just now';
+    if (diffM < 60) return `${diffM}m ago`;
+    if (diffH < 24) return `${diffH}h ago`;
+    if (diffD < 7) return `${diffD}d ago`;
+    return d.toLocaleDateString();
   };
 
   const handleCopyPageShareLink = async () => {
@@ -476,31 +541,39 @@ export default function WorkspacePage() {
               const getChildren = (id: string) => workspace.pages.filter((p) => p.parentId === id);
               return roots.map((page) => {
                 const children = getChildren(page.id);
-                const isFolder = children.length > 0;
+                const isFolder = children.length > 0 || !page.doc;
+                const openPage = () => {
+                  if (!isFolder) loadPageContent(page.id);
+                };
                 return (
                   <li key={page.id}>
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-                      onClick={() => loadPageContent(page.id)}
+                      onClick={openPage}
                     >
                       {isFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
                       <span className="truncate">{page.title || 'Untitled'}</span>
                     </button>
                     {children.length > 0 && (
                       <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-muted pl-2">
-                        {children.map((child) => (
-                          <li key={child.id}>
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-muted"
-                              onClick={() => loadPageContent(child.id)}
-                            >
-                              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                              <span className="truncate">{child.title || 'Untitled'}</span>
-                            </button>
-                          </li>
-                        ))}
+                        {children.map((child) => {
+                          const childIsFolder = getChildren(child.id).length > 0 || !child.doc;
+                          return (
+                            <li key={child.id}>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-muted"
+                                onClick={() => {
+                                  if (!childIsFolder) loadPageContent(child.id);
+                                }}
+                              >
+                                {childIsFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                                <span className="truncate">{child.title || 'Untitled'}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
@@ -563,6 +636,15 @@ export default function WorkspacePage() {
                           className="hidden"
                           onChange={onFileSelected}
                         />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8"
+                          onClick={() => setShowActivityModal(true)}
+                          title="Page history"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -892,6 +974,49 @@ export default function WorkspacePage() {
                 </Button>
                 <Button className="flex-1" onClick={handleCreateFolder} disabled={isCreatingFolder}>
                   {isCreatingFolder ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showActivityModal && activeTab?.pageId && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Page history"
+          onClick={() => setShowActivityModal(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowActivityModal(false)}
+          tabIndex={-1}
+        >
+          <Card className="w-full max-w-md max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <CardContent className="pt-6 flex flex-col min-h-0">
+              <h3 className="font-semibold text-lg mb-4">Page history</h3>
+              <p className="text-sm text-muted-foreground mb-3">Who changed what and when (last 50 events).</p>
+              {loadingActivity && (
+                <div className="flex justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              )}
+              {!loadingActivity && pageActivity.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4">No activity yet.</p>
+              )}
+              {!loadingActivity && pageActivity.length > 0 && (
+                <ul className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
+                  {pageActivity.map((a) => (
+                    <li key={a.id} className="text-sm border-b border-border/50 pb-2 last:border-0">
+                      <span className="font-medium text-foreground">{a.user.name || a.user.email}</span>
+                      <span className="text-muted-foreground"> — {formatActivityAction(a.action, a.details)}</span>
+                      <div className="text-xs text-muted-foreground mt-0.5">{formatRelativeTime(a.createdAt)}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-4 pt-4 border-t">
+                <Button variant="outline" className="w-full" onClick={() => setShowActivityModal(false)}>
+                  Close
                 </Button>
               </div>
             </CardContent>

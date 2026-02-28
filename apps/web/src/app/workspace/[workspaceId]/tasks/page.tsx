@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -53,15 +53,7 @@ export default function WorkspaceTasksPage() {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
-      return;
-    }
-    loadTasks();
-  }, [workspaceId, isAuthenticated, router]);
-
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     if (!token) return;
     try {
       const data = await tasksApi.list(token, workspaceId);
@@ -76,7 +68,15 @@ export default function WorkspaceTasksPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, workspaceId, toast]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/auth/login');
+      return;
+    }
+    loadTasks();
+  }, [workspaceId, isAuthenticated, router, loadTasks]);
 
   const handleCreateTask = async () => {
     if (!token || !newTaskTitle.trim()) return;

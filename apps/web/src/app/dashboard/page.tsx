@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { createWorkspaceSchema, updateWorkspaceSchema } from '@nota/shared';
 import { useAuthStore } from '@/lib/store';
 import { workspacesApi, lmsApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -81,6 +82,32 @@ function DashboardContent() {
     }
   }, [showDeleteConfirm]);
 
+  const loadLmsIntegrations = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await lmsApi.listIntegrations(token);
+      setLmsIntegrations(data);
+    } catch {
+      // Non-blocking; LMS is optional
+    }
+  }, [token]);
+
+  const loadWorkspaces = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await workspacesApi.list(token);
+      setWorkspaces(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load workspaces',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, toast]);
+
   useEffect(() => {
     if (!authChecked) return;
     if (!isAuthenticated()) {
@@ -89,17 +116,7 @@ function DashboardContent() {
     }
     loadWorkspaces();
     loadLmsIntegrations();
-  }, [authChecked, isAuthenticated, router]);
-
-  const loadLmsIntegrations = async () => {
-    if (!token) return;
-    try {
-      const data = await lmsApi.listIntegrations(token);
-      setLmsIntegrations(data);
-    } catch {
-      // Non-blocking; LMS is optional
-    }
-  };
+  }, [authChecked, isAuthenticated, router, loadWorkspaces, loadLmsIntegrations]);
 
   useEffect(() => {
     const joinToken = searchParams.get('join');
@@ -116,30 +133,20 @@ function DashboardContent() {
       });
   }, [searchParams, token, router, toast]);
 
-  const loadWorkspaces = async () => {
-    if (!token) return;
-    try {
-      const data = await workspacesApi.list(token);
-      setWorkspaces(data);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load workspaces',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleCreateWorkspace = async () => {
-    if (!token || !newWorkspaceName.trim()) return;
+    const parsed = createWorkspaceSchema.safeParse({
+      name: newWorkspaceName.trim(),
+      description: newWorkspaceDesc.trim() || undefined,
+    });
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message ?? 'Invalid input';
+      toast({ title: 'Validation error', description: msg, variant: 'destructive' });
+      return;
+    }
+    if (!token) return;
     setIsCreating(true);
     try {
-      await workspacesApi.create(token, {
-        name: newWorkspaceName,
-        description: newWorkspaceDesc || undefined,
-      });
+      await workspacesApi.create(token, parsed.data);
       toast({ title: 'Workspace created!' });
       setShowCreateModal(false);
       setNewWorkspaceName('');
@@ -176,12 +183,21 @@ function DashboardContent() {
   };
 
   const handleEditWorkspace = async () => {
-    if (!token || !editingWorkspace || !editName.trim()) return;
+    const parsed = updateWorkspaceSchema.safeParse({
+      name: editName.trim(),
+      description: editDesc.trim() || undefined,
+    });
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message ?? 'Invalid input';
+      toast({ title: 'Validation error', description: msg, variant: 'destructive' });
+      return;
+    }
+    if (!token || !editingWorkspace) return;
     setIsEditing(true);
     try {
       await workspacesApi.update(token, editingWorkspace.id, {
-        name: editName,
-        description: editDesc || undefined,
+        name: parsed.data.name ?? editName,
+        description: parsed.data.description ?? (editDesc || undefined),
       });
       toast({ title: 'Workspace updated!' });
       setShowEditModal(false);
@@ -678,7 +694,7 @@ function DashboardContent() {
           onClick={() => setShowCreateModal(false)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === ' ') setShowCreateModal(false); }}
+          onKeyDown={(e) => { if (e.key === ' ' && e.target === e.currentTarget) setShowCreateModal(false); }}
           aria-label="Close modal"
         >
           <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
@@ -730,7 +746,7 @@ function DashboardContent() {
           onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === ' ') { setShowEditModal(false); setEditingWorkspace(null); } }}
+          onKeyDown={(e) => { if (e.key === ' ' && e.target === e.currentTarget) { setShowEditModal(false); setEditingWorkspace(null); } }}
           aria-label="Close modal"
         >
           <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>

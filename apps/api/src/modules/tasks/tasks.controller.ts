@@ -11,9 +11,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { createTaskSchema, type CreateTaskInput } from '@nota/shared';
 import { TasksService } from './tasks.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateTaskDto, UpdateTaskDto, AssigneeDto } from './dto/tasks.dto';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { UpdateTaskDto, AssigneeDto } from './dto/tasks.dto';
 
 @ApiTags('tasks')
 @Controller('tasks')
@@ -27,7 +29,7 @@ export class TasksController {
   @ApiResponse({ status: 201, description: 'Task created' })
   async create(
     @Request() req: { user: { userId: string } },
-    @Body() dto: CreateTaskDto,
+    @Body(ZodValidationPipe.with(createTaskSchema)) dto: CreateTaskInput,
   ) {
     return this.tasksService.create(req.user.userId, dto);
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Trash2, Pencil } from 'lucide-react';
@@ -53,15 +53,7 @@ export default function WorkspaceCalendarPage() {
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
-      return;
-    }
-    loadEvents();
-  }, [workspaceId, currentMonth, isAuthenticated, router]);
-
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     if (!token) return;
     const { startDate, endDate } = startEndOfMonth(currentMonth);
     try {
@@ -72,7 +64,15 @@ export default function WorkspaceCalendarPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, workspaceId, currentMonth, toast]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/auth/login');
+      return;
+    }
+    loadEvents();
+  }, [workspaceId, currentMonth, isAuthenticated, router, loadEvents]);
 
   const openCreate = () => {
     setEditingId(null);

@@ -11,9 +11,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { createPageSchema, type CreatePageInput } from '@nota/shared';
 import { PagesService } from './pages.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreatePageDto, UpdatePageDto, GeneratePageShareLinkDto } from './dto/pages.dto';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { UpdatePageDto, GeneratePageShareLinkDto } from './dto/pages.dto';
 
 @ApiTags('pages')
 @Controller('pages')
@@ -27,7 +29,7 @@ export class PagesController {
   @ApiResponse({ status: 201, description: 'Page created' })
   async create(
     @Request() req: { user: { userId: string } },
-    @Body() dto: CreatePageDto,
+    @Body(ZodValidationPipe.with(createPageSchema)) dto: CreatePageInput,
   ) {
     return this.pagesService.create(req.user.userId, dto);
   }

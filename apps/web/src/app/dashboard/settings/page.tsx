@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, Settings, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,12 +87,15 @@ export default function DashboardSettingsPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center gap-4 pb-4 border-b border-border">
-              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                 {user?.avatarUrl ? (
-                  <img
+                  <Image
                     src={user.avatarUrl}
                     alt=""
+                    width={56}
+                    height={56}
                     className="h-14 w-14 rounded-full object-cover"
+                    unoptimized
                   />
                 ) : (
                   <User className="h-7 w-7 text-primary" />

@@ -1,7 +1,9 @@
 import { Controller, Post, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from '@nota/shared';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 
 @ApiTags('auth')
@@ -24,7 +26,7 @@ export class AuthController {
           requiredFields: ['email', 'password', 'name'],
           example: {
             email: 'user@example.com',
-            password: 'securePassword123',
+            password: '••••••••',
             name: 'John Doe',
           },
         },
@@ -35,7 +37,7 @@ export class AuthController {
           requiredFields: ['email', 'password'],
           example: {
             email: 'user@example.com',
-            password: 'securePassword123',
+            password: '••••••••',
           },
         },
         me: {
@@ -55,8 +57,8 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Successfully logged in' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto.email, loginDto.password);
+  async login(@Body(ZodValidationPipe.with(loginSchema)) body: LoginInput) {
+    return this.authService.login(body.email, body.password);
   }
 
   @Post('register')
@@ -64,12 +66,8 @@ export class AuthController {
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Successfully registered' })
   @ApiResponse({ status: 409, description: 'User already exists' })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(
-      registerDto.email,
-      registerDto.password,
-      registerDto.name,
-    );
+  async register(@Body(ZodValidationPipe.with(registerSchema)) body: RegisterInput) {
+    return this.authService.register(body.email, body.password, body.name);
   }
 
   @Get('me')

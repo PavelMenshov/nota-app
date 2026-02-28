@@ -1,13 +1,18 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateTaskDto, UpdateTaskDto } from './dto/tasks.dto';
+import { WorkspaceAccessService } from '../../common/workspace-access/workspace-access.service';
+import type { CreateTaskInput } from '@nota/shared';
+import { UpdateTaskDto } from './dto/tasks.dto';
 
 @Injectable()
 export class TasksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {}
 
-  async create(userId: string, dto: CreateTaskDto) {
-    await this.checkWorkspaceAccess(dto.workspaceId, userId);
+  async create(userId: string, dto: CreateTaskInput) {
+    await this.workspaceAccess.checkAccess(dto.workspaceId, userId);
 
     const task = await this.prisma.task.create({
       data: {
@@ -54,7 +59,7 @@ export class TasksService {
   }
 
   async findAll(workspaceId: string, userId: string) {
-    await this.checkWorkspaceAccess(workspaceId, userId);
+    await this.workspaceAccess.checkAccess(workspaceId, userId);
 
     return this.prisma.task.findMany({
       where: { workspaceId },
@@ -274,20 +279,4 @@ export class TasksService {
     return { success: true };
   }
 
-  private async checkWorkspaceAccess(workspaceId: string, userId: string) {
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: {
-          workspaceId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsArray } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsArray, IsBoolean } from 'class-validator';
 
 export class CreatePageDto {
   @ApiProperty({ example: 'cuid123' })
@@ -16,6 +16,12 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  /** When true, creates a folder (container only) without doc/canvas. */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isFolder?: boolean;
 
   @ApiPropertyOptional({ example: ['lecture', 'exam'] })
   @IsOptional()

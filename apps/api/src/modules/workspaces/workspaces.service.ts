@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateWorkspaceDto, UpdateWorkspaceDto, AddMemberDto } from './dto/workspaces.dto';
+import type { CreateWorkspaceInput } from '@nota/shared';
+import { UpdateWorkspaceDto, AddMemberDto } from './dto/workspaces.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -285,7 +286,7 @@ export class WorkspacesService {
     });
   }
 
-  async create(userId: string, dto: CreateWorkspaceDto) {
+  async create(userId: string, dto: CreateWorkspaceInput) {
     const name = (dto.name ?? '').trim();
     if (!name) {
       throw new BadRequestException('Workspace name is required');
@@ -392,8 +393,10 @@ export class WorkspacesService {
           },
         },
         pages: {
-          orderBy: {
-            order: 'asc',
+          orderBy: { order: 'asc' },
+          include: {
+            doc: { select: { id: true } },
+            canvas: { select: { id: true } },
           },
         },
       },

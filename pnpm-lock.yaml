@@ -116,6 +116,9 @@ importers:
       yjs:
         specifier: ^13.6.11
         version: 13.6.29
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.3.0
@@ -370,6 +373,15 @@ importers:
         specifier: ^3.22.0
         version: 3.25.76
     devDependencies:
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.17.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.17.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
       typescript:
         specifier: ^5.3.0
         version: 5.9.3

@@ -11,9 +11,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { createEventSchema, type CreateEventInput } from '@nota/shared';
 import { CalendarService } from './calendar.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateEventDto, UpdateEventDto } from './dto/calendar.dto';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { UpdateEventDto } from './dto/calendar.dto';
 
 @ApiTags('calendar')
 @Controller('calendar')
@@ -27,7 +29,7 @@ export class CalendarController {
   @ApiResponse({ status: 201, description: 'Event created' })
   async create(
     @Request() req: { user: { userId: string } },
-    @Body() dto: CreateEventDto,
+    @Body(ZodValidationPipe.with(createEventSchema)) dto: CreateEventInput,
   ) {
     return this.calendarService.create(req.user.userId, dto);
   }
