@@ -154,7 +154,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                   </Button>
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/settings"
                   className="block"
                   onClick={() => setUserMenuOpen(false)}
                 >
