@@ -78,6 +78,31 @@ pnpm dev
 
 > The web app uses port 3001 by default to avoid conflicts. When running `pnpm dev`, the web app automatically waits for the API to be ready.
 
+### Troubleshooting
+
+| Problem | Solution |
+|--------|----------|
+| `db.prisma.io:5432` or "database server is not running" | Start Docker first: `docker compose up -d`. Ensure `.env` and `packages/database/.env` have `DATABASE_URL="postgresql://nota:nota_dev_password@localhost:5432/nota?schema=public"` (no `db.prisma.io`). |
+| Dependencies / build fails | From repo root: `pnpm install`, then `pnpm db:generate` and `pnpm db:push` (with Docker running). |
+| Port already in use | Change `PORT` in `.env` (API) or run `pnpm --filter @nota/web dev -- -p 4040` for web on port 4040. |
+
+### Sharing the app (e.g. tunnel on port 4040)
+
+If you share the site via a tunnel (Cursor, ngrok, cloudflared) and the **public URL uses port 4040**:
+
+1. **Run the web app on 4040** (in one terminal):
+   ```bash
+   cd apps/web && pnpm exec next dev -p 4040
+   ```
+   (Start the API in another terminal: `pnpm dev:api`.)
+
+2. **In `.env`** set CORS and public API URL to your tunnel host so the browser can call the API:
+   ```env
+   CORS_ORIGIN="https://your-tunnel-host.example.com"
+   NEXT_PUBLIC_API_URL="https://your-api-tunnel.example.com"
+   ```
+   If the tunnel exposes both web and API, use the same base URL and the API path (e.g. `https://xxx.ngrok.io` for web and `https://xxx.ngrok.io/api` if the tunnel forwards to both 4040 and 4000).
+
 ## 📁 Project Structure
 
 ```
