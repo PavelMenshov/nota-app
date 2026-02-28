@@ -354,7 +354,7 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
       )}
 
       {/* SVG Canvas — min height so workspace is usable on all screens */}
-      <div className="flex-1 min-h-[520px] overflow-hidden bg-[#f8f9fa] relative">
+      <div className="flex-1 min-h-[680px] overflow-hidden bg-[#f8f9fa] relative">
         <svg
           ref={svgRef}
           className="w-full h-full select-none"

@@ -714,7 +714,7 @@ export default function WorkspacePage() {
                     </div>
                   )}
                   {pageMode === 'canvas' && (
-                    <div className="flex-1 min-h-0 overflow-hidden min-h-[60vh]">
+                    <div className="flex-1 min-h-0 overflow-hidden min-h-[72vh]">
                       <CanvasEditor
                         key={`canvas-${pageId}`}
                         initialContent={content.canvasContent}

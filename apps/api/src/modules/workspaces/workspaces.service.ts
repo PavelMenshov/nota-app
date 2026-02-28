@@ -26,22 +26,27 @@ export class WorkspacesService {
 
     const emptyDoc = { type: 'doc' as const, content: [] };
     const emptyPlain = '';
+    const workspacePath = `/workspace/${workspace.id}`;
 
-    const docContent = (
-      blocks: Array<{ type: 'paragraph' | 'heading'; level?: number; text: string }>,
-    ) => {
-      const content = blocks.map((b) =>
-        b.type === 'heading'
-          ? {
-              type: 'heading' as const,
-              attrs: { level: b.level ?? 2 },
-              content: [{ type: 'text' as const, text: b.text }],
-            }
-          : {
-              type: 'paragraph' as const,
-              content: [{ type: 'text' as const, text: b.text }],
-            },
-      );
+    type DocBlock =
+      | { type: 'paragraph' | 'heading'; level?: number; text: string; href?: string }
+      | { type: 'paragraph'; text: string; href: string };
+
+    const docContent = (blocks: DocBlock[]) => {
+      const content = blocks.map((b) => {
+        if (b.type === 'heading') {
+          return {
+            type: 'heading' as const,
+            attrs: { level: (b as { level?: number }).level ?? 2 },
+            content: [{ type: 'text' as const, text: b.text }],
+          };
+        }
+        const textNode =
+          'href' in b && b.href
+            ? { type: 'text' as const, text: b.text, marks: [{ type: 'link' as const, attrs: { href: b.href } }] }
+            : { type: 'text' as const, text: b.text };
+        return { type: 'paragraph' as const, content: [textNode] };
+      });
       return {
         json: { type: 'doc' as const, content },
         plainText: blocks.map((b) => b.text).join('\n\n'),
@@ -83,23 +88,55 @@ export class WorkspacesService {
       { type: 'heading', level: 2, text: 'Learning objectives' },
       { type: 'paragraph', text: '• Understand the structure of a Nota workspace (Doc, Canvas, Sources).\n• Use the Canvas to brainstorm and map ideas.\n• Attach PDFs in Sources and extract highlights into your notes.' },
       { type: 'heading', level: 2, text: 'Schedule' },
-      { type: 'paragraph', text: 'Module 1 — Introduction (Weeks 1–2). Module 2 — Assignments (see Assignment 1 and 2). Use the Tasks and Calendar tabs in the sidebar to track deadlines and events.' },
+      { type: 'paragraph', text: 'Module 1 — Introduction (Weeks 1–2). Module 2 — Assignments. Use the Tasks and Calendar tabs in the sidebar to track deadlines and events.' },
+      { type: 'paragraph', text: '→ Module 1 — Introduction', href: workspacePath },
+      { type: 'paragraph', text: '→ Module 2 — Assignments', href: workspacePath },
     ]);
 
     const module1Doc = docContent([
       { type: 'heading', level: 1, text: 'Module 1 — Introduction' },
       { type: 'paragraph', text: 'This module covers the basics. Open the Doc tab to edit this text, the Canvas tab to add sticky notes and shapes, and the Sources tab to upload PDFs.' },
       { type: 'paragraph', text: 'Tip: Use AI (Summary / Flashcards) from the toolbar to generate a summary or flashcard set from this page.' },
+      { type: 'paragraph', text: '→ Syllabus', href: workspacePath },
+      { type: 'paragraph', text: '→ Week 1: Getting started', href: workspacePath },
+      { type: 'paragraph', text: '→ Week 2: Core concepts', href: workspacePath },
     ]);
 
     const week1Doc = docContent([
       { type: 'heading', level: 1, text: 'Week 1: Getting started' },
       { type: 'paragraph', text: 'First steps: create pages, add content in Doc, and try the Canvas board. Invite collaborators via the workspace share link.' },
+      { type: 'paragraph', text: '→ Module 1 — Introduction', href: workspacePath },
+      { type: 'paragraph', text: '→ Week 2: Core concepts', href: workspacePath },
+    ]);
+
+    const week2Doc = docContent([
+      { type: 'heading', level: 1, text: 'Week 2: Core concepts' },
+      { type: 'paragraph', text: 'This week we go deeper: connect ideas on the Canvas with connectors, add shapes and text blocks, and use Canvas → Outline to turn board content into a Doc structure.' },
+      { type: 'paragraph', text: 'Export your page to PDF or DOCX from the dashboard or export menu. Link tasks and calendar events to this page for deadlines.' },
+      { type: 'paragraph', text: '→ Module 1 — Introduction', href: workspacePath },
+      { type: 'paragraph', text: '→ Week 1: Getting started', href: workspacePath },
+    ]);
+
+    const module2Doc = docContent([
+      { type: 'heading', level: 1, text: 'Module 2 — Assignments' },
+      { type: 'paragraph', text: 'Assignments and submissions. Create tasks linked to pages and track due dates in the Calendar.' },
+      { type: 'paragraph', text: '→ Syllabus', href: workspacePath },
+      { type: 'paragraph', text: '→ Assignment 1', href: workspacePath },
+      { type: 'paragraph', text: '→ Assignment 2', href: workspacePath },
     ]);
 
     const assignment1Doc = docContent([
       { type: 'heading', level: 1, text: 'Assignment 1' },
       { type: 'paragraph', text: 'Due: see Tasks. Submit your work as described in the course policy. Attach supporting PDFs in the Sources tab and reference them in your Doc.' },
+      { type: 'paragraph', text: '→ Module 2 — Assignments', href: workspacePath },
+      { type: 'paragraph', text: '→ Assignment 2', href: workspacePath },
+    ]);
+
+    const assignment2Doc = docContent([
+      { type: 'heading', level: 1, text: 'Assignment 2' },
+      { type: 'paragraph', text: 'Second assignment: use Doc for your write-up, Canvas for diagrams or mind maps, and Sources for readings. Extract PDF highlights into the Doc with the "Extract highlights" action.' },
+      { type: 'paragraph', text: '→ Module 2 — Assignments', href: workspacePath },
+      { type: 'paragraph', text: '→ Assignment 1', href: workspacePath },
     ]);
 
     const demoCanvasElements = [
@@ -114,10 +151,10 @@ export class WorkspacesService {
       elements: demoCanvasElements,
       viewport: { x: 0, y: 0, zoom: 1 },
     });
-    await createPage('Week 2: Core concepts', 1, module1.id);
-    const module2 = await createPage('Module 2 — Assignments', 2);
+    await createPage('Week 2: Core concepts', 1, module1.id, week2Doc);
+    const module2 = await createPage('Module 2 — Assignments', 2, undefined, module2Doc);
     await createPage('Assignment 1', 0, module2.id, assignment1Doc);
-    await createPage('Assignment 2', 1, module2.id);
+    await createPage('Assignment 2', 1, module2.id, assignment2Doc);
 
     return this.prisma.workspace.findUnique({
       where: { id: workspace.id },
