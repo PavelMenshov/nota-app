@@ -4,39 +4,105 @@
 
 # Nota — Academic Workspace
 
-> **One workspace for notes, canvas, and PDFs — connected by design.**
+> One workspace for notes, canvas, and PDFs — connected by design.
 
-Nota is an academic "page-first" workspace: a workspace contains pages, and each page can host surfaces (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable — without visual noise.
+Nota is an academic platform for **students and faculty**. Workspaces contain pages; each page has Doc, Canvas, and Sources (PDF). Everything is versioned, shareable, and collaborative. Target deployment: 2–3 universities (e.g. Skolkovo, HSE, CU in Russia; Minerva internationally).
 
-## ✨ Key Features
+---
 
-- **Workspace → Pages → Surfaces** — Hierarchical organization for courses, projects, and research
-- **Doc Editor** — Collaborative document editing with version history
-- **Canvas Whiteboard** — Interactive whiteboard with shapes, notes, and connectors
-- **PDF/DOCX/PPTX Support** — Upload, view, and annotate documents directly in the workspace
-- **Folders & Tabs** — Organize documents in folders, open multiple files simultaneously as browser-like tabs
-- **Real-time Collaboration** — Live co-editing with presence indicators via WebSocket
-- **Tasks & Calendar** — Built-in task management and calendar for deadlines
-- **AI Assistant** — Summarization, flashcard generation, and content explanation (OpenAI/Claude)
-- **Integrations** — Quick access to Zoom, Microsoft Teams, and Outlook
-- **Export** — Export to PDF, DOCX, Markdown, or send to Notion
-- **Share Links** — URL-based sharing with role-based access (Owner/Editor/Viewer)
-- **Desktop App** — Native Electron app for Windows, macOS, and Linux
+## Product scope (requirements mapping)
 
-## 🏗️ Tech Stack
+### 1. Accounts and access
 
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | NestJS, TypeScript, Prisma ORM |
-| **Frontend** | Next.js 15, React 18, Tailwind CSS |
-| **Desktop** | Electron 28 |
-| **Database** | PostgreSQL 16, Redis |
-| **Realtime** | Socket.io, Yjs/CRDT |
-| **Storage** | S3-compatible (AWS/MinIO), local fallback |
-| **AI** | OpenAI / Anthropic Claude |
-| **Build** | pnpm workspaces, Turborepo |
+- Registration and login
+- User profile
+- **Roles:** Owner / Editor / Viewer
+- **Share links** to workspace or page
+- **History:** who changed what and when
 
-## 🚀 Quick Start
+### 2. Workspaces and pages (core)
+
+- Create and manage Workspaces
+- Create and manage Pages inside a Workspace
+- Each Page has three modes: **Doc** | **Canvas** | **Sources (PDF)**
+- Search across pages (title, tags, content)
+
+### 3. Doc (notes/documents)
+
+- Save and load Doc content per page
+- **Real-time collaborative editing**
+- Comments on Doc
+- **Versions / rollback** (snapshot history)
+
+### 4. Canvas (Miro-like board)
+
+- Save and load Canvas per page
+- **Real-time collaborative editing**
+- Comments and presence (who’s online)
+- **Canvas → Outline:** selected board elements become a structure/outline in Doc
+
+### 5. Sources (PDF)
+
+- Upload multiple PDFs per page
+- Store PDFs and control access
+- View PDF (serve file to client)
+- **Annotations:** highlights and notes/comments
+- **Full-text search** in PDFs for that page
+- **Extract highlights → Doc** as blocks with source and page number
+
+### 6. Tasks and calendar
+
+- **Tasks:** create, update, close; deadline, status, link to Page
+- **Calendar:** manual events; link to Workspace/Page
+
+### 7. Export
+
+- Export Page/Doc to **PDF** and **DOCX**
+- Export runs as a **job:** user starts it → gets a file when ready
+
+### 8. AI (study helper)
+
+- AI **does not** generate ready answers; it helps study.
+- **Summary:** compress notes/material (Doc + PDF highlights) per page.
+- **Flashcards:** generate cards from page content.
+- **Context:** AI uses agents with access to **university library systems and knowledge bases**, not only current page materials, for deeper academic context.
+- **Usage:** limits / request counting for AI.
+
+---
+
+## For students and faculty
+
+- **Students:** notes, PDFs, canvas, tasks, calendar, AI study tools, collaboration.
+- **Faculty:** create and manage workspaces, share materials, control student access (roles), view content, and collaborate with teams. Same roles (Owner/Editor/Viewer) apply.
+
+---
+
+## API and integrations
+
+- **Open API** for extending the platform and building integrations.
+- **Canvas API** for programmatic board management and automation.
+- **Other APIs:** Workspaces, Pages, Doc, Sources, Tasks, Calendar, Export, AI — documented in Swagger (`/api/docs`).
+- **Chat and calls:** integration with **Zoom** and **Google Meet** for online sync and meetings.
+- **LMS:** API and architecture support integration with or replacement of LMS (e.g. Blackboard, grading systems); connectivity and custom LMS scenarios are in scope.
+
+---
+
+## Tech stack
+
+| Layer     | Technology                          |
+|----------|--------------------------------------|
+| Backend  | NestJS, TypeScript, Prisma ORM       |
+| Frontend | Next.js 15, React 18, Tailwind CSS   |
+| Desktop  | Electron 28                          |
+| Database | PostgreSQL 16, Redis                 |
+| Realtime | Socket.io, Yjs/CRDT                  |
+| Storage  | S3-compatible (AWS/MinIO), local     |
+| AI       | OpenAI / Anthropic Claude            |
+| Build    | pnpm workspaces, Turborepo           |
+
+---
+
+## Quick start
 
 ### Prerequisites
 
@@ -47,165 +113,99 @@ Nota is an academic "page-first" workspace: a workspace contains pages, and each
 ### Setup
 
 ```bash
-# 1. Clone and install
 git clone https://github.com/PavelMenshov/nota-platform.git
 cd nota-platform
 pnpm install
 
-# 2. Configure environment
 cp .env.example .env
 cp .env packages/database/.env
 
-# 3. Start infrastructure (PostgreSQL, Redis, MinIO)
 docker compose up -d
 
-# 4. Initialize database
 pnpm db:generate
 pnpm db:push
 
-# 5. Start development servers
 pnpm dev
 ```
 
 ### Access
 
-| Service | URL |
-|---------|-----|
-| **Web App** | http://localhost:3001 |
-| **API Server** | http://localhost:4000 |
-| **API Docs (Swagger)** | http://localhost:4000/api/docs |
-| **Prisma Studio** | `pnpm db:studio` → http://localhost:5555 |
-
-> The web app uses port 3001 by default to avoid conflicts. When running `pnpm dev`, the web app automatically waits for the API to be ready.
+| Service      | URL                        |
+|-------------|----------------------------|
+| Web App     | http://localhost:3001      |
+| API         | http://localhost:4000      |
+| API Docs    | http://localhost:4000/api/docs |
+| Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
 
 ### Troubleshooting
 
-| Problem | Solution |
-|--------|----------|
-| `db.prisma.io:5432` or "database server is not running" | Start Docker first: `docker compose up -d`. Ensure `.env` and `packages/database/.env` have `DATABASE_URL="postgresql://nota:nota_dev_password@localhost:5432/nota?schema=public"` (no `db.prisma.io`). |
-| Dependencies / build fails | From repo root: `pnpm install`, then `pnpm db:generate` and `pnpm db:push` (with Docker running). |
-| Port already in use | Change `PORT` in `.env` (API) or run `pnpm --filter @nota/web dev -- -p 4040` for web on port 4040. |
+- **Database errors:** ensure Docker is running (`docker compose up -d`), and `DATABASE_URL` in `.env` and `packages/database/.env` points to `localhost:5432` (no `db.prisma.io`).
+- **Build:** from repo root run `pnpm install`, `pnpm db:generate`, `pnpm db:push` with Docker up.
+- **Ports:** Web default 3001, API 4000. Override in `.env` or run web on another port, e.g. `pnpm --filter @nota/web dev -- -p 4040`.
 
-### Sharing the app (e.g. tunnel on port 4040)
+---
 
-If you share the site via a tunnel (Cursor, ngrok, cloudflared) and the **public URL uses port 4040**:
-
-1. **Run the web app on 4040** (in one terminal):
-   ```bash
-   cd apps/web && pnpm exec next dev -p 4040
-   ```
-   (Start the API in another terminal: `pnpm dev:api`.)
-
-2. **In `.env`** set CORS and public API URL to your tunnel host so the browser can call the API:
-   ```env
-   CORS_ORIGIN="https://your-tunnel-host.example.com"
-   NEXT_PUBLIC_API_URL="https://your-api-tunnel.example.com"
-   ```
-   If the tunnel exposes both web and API, use the same base URL and the API path (e.g. `https://xxx.ngrok.io` for web and `https://xxx.ngrok.io/api` if the tunnel forwards to both 4040 and 4000).
-
-## 📁 Project Structure
+## Project structure
 
 ```
 nota-platform/
 ├── apps/
-│   ├── api/              # NestJS Backend API
-│   │   └── src/modules/  # auth, workspaces, pages, doc, canvas,
-│   │                     # sources, tasks, calendar, ai, export, realtime
-│   ├── web/              # Next.js Frontend
-│   │   └── src/
-│   │       ├── app/      # App Router (auth, dashboard, workspace)
-│   │       ├── components/
-│   │       └── lib/      # API client, stores, utilities
-│   └── desktop/          # Electron Desktop App
+│   ├── api/              # NestJS: auth, workspaces, pages, doc, canvas,
+│   │   └── src/modules/  # sources, tasks, calendar, ai, export, realtime
+│   ├── web/              # Next.js: auth, dashboard, workspace UI
+│   └── desktop/          # Electron desktop app
 ├── packages/
-│   ├── database/         # Prisma schema & client
-│   └── shared/           # Shared types & validation (Zod)
-├── docs/                 # Extended documentation
+│   ├── database/         # Prisma schema and client
+│   └── shared/           # Shared types and validation (Zod)
+├── docs/
 ├── docker-compose.yml
 └── .env.example
 ```
 
-## ⚙️ Configuration
+---
 
-### AI Features (Optional)
+## Configuration
+
+**AI (optional):**
 
 ```env
-# OpenAI (recommended)
 OPENAI_API_KEY="sk-..."
 AI_PROVIDER="openai"
 
-# Or Anthropic Claude
+# Or Anthropic
 ANTHROPIC_API_KEY="sk-ant-..."
 AI_PROVIDER="anthropic"
 ```
 
-Without an API key, AI features return placeholder responses.
+Without keys, AI features return placeholders.
 
-### File Storage (Production)
-
-```env
-S3_ENDPOINT="https://s3.amazonaws.com"
-S3_ACCESS_KEY="your-access-key"
-S3_SECRET_KEY="your-secret-key"
-S3_BUCKET="your-bucket-name"
-S3_REGION="us-east-1"
-```
-
-For development, files are stored locally in the `uploads/` directory.
-
-## 🛠️ Common Commands
-
-```bash
-pnpm dev              # Start all services (API + Web)
-pnpm build            # Build all packages
-pnpm lint             # Lint all packages
-pnpm db:generate      # Generate Prisma client
-pnpm db:push          # Push schema to database
-pnpm db:studio        # Open Prisma Studio GUI
-pnpm db:migrate       # Run database migrations
-```
-
-## 🐛 Troubleshooting
-
-**Database connection issues:**
-```bash
-docker compose ps          # Check if containers are running
-docker compose up -d       # Start containers
-cp .env packages/database/.env  # Ensure Prisma has env vars
-```
-
-**Build errors:**
-```bash
-rm -rf node_modules .next dist
-pnpm install
-pnpm db:generate
-```
-
-**Port conflicts:**
-```bash
-# Default ports: Web=3001, API=4000, PostgreSQL=5432, Redis=6379
-# Change web port in apps/web/package.json
-```
-
-For detailed troubleshooting, see the [docs/](./docs/) directory.
-
-## 📖 Documentation
-
-- [Getting Started](./docs/GETTING-STARTED.md) — Installation and setup guide
-- [API Reference](./docs/API.md) — Full API documentation
-- [Architecture](./docs/ARCHITECTURE.md) — System design and tech stack
-- [Security](./docs/SECURITY.md) — Security practices and GDPR compliance
-- [Desktop App](./docs/DESKTOP-APP.md) — Desktop app setup and distribution
-- [Prisma Setup](./docs/PRISMA-SETUP.md) — Database configuration details
-
-## 🎨 Design Philosophy
-
-Nota follows a **"calm UI, strong model"** philosophy:
-- **Minimal interface** — Content takes center stage
-- **Versioned** — Every change is tracked and reversible
-- **Collaborative** — Real-time without the noise
-- **Academic-first** — Designed for studying, research, and teaching
+**File storage (production):** set `S3_*` in `.env`. Development uses local `uploads/`.
 
 ---
 
-*Developed by PolyU students for the academic community*
+## Commands
+
+```bash
+pnpm dev           # API + Web
+pnpm build         # Build all
+pnpm lint          # Lint
+pnpm db:generate   # Prisma client
+pnpm db:push       # Apply schema
+pnpm db:studio     # Prisma Studio
+pnpm db:migrate    # Run migrations
+```
+
+---
+
+## Documentation
+
+- [Getting Started](./docs/GETTING-STARTED.md)
+- [API Reference](./docs/API.md)
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Security](./docs/SECURITY.md)
+- [Desktop App](./docs/DESKTOP-APP.md)
+- [Prisma Setup](./docs/PRISMA-SETUP.md)
+
+---
+
+*Nota — for the academic community (students and faculty).*

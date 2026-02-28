@@ -9,9 +9,32 @@ const plusJakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nota.app';
+
 export const metadata: Metadata = {
-  title: 'Nota Platform - All-in-One Academic Ecosystem',
-  description: 'A unified academic ecosystem for university students and faculty, combining notes, PDF annotations, interactive whiteboards, tasks, and calendar.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Nota — Notes, PDFs & Canvas in One Workspace',
+    template: '%s | Nota',
+  },
+  description: 'One workspace for notes, canvas, and PDFs — connected by design. Academic page-first OS: versioned, shareable, collaborative.',
+  keywords: ['notes', 'PDF', 'canvas', 'workspace', 'academic', 'study', 'collaboration'],
+  authors: [{ name: 'Nota', url: siteUrl }],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'Nota',
+    title: 'Nota — Notes, PDFs & Canvas in One Workspace',
+    description: 'One workspace for notes, canvas, and PDFs — connected by design. Versioned, shareable, collaborative.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Nota' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Nota — Notes, PDFs & Canvas in One Workspace',
+    description: 'One workspace for notes, canvas, and PDFs — connected by design.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

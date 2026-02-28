@@ -12,6 +12,7 @@ import {
   Clock,
   Calendar,
   Trash2,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -292,7 +293,7 @@ function TaskCard({
           <div className="flex-1">
             <p className="font-medium text-sm">{task.title}</p>
             {task.page && (
-              <p className="text-xs text-muted-foreground mt-1">📄 {task.page.title}</p>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><FileText className="h-3 w-3 shrink-0" />{task.page.title}</p>
             )}
             {task.dueDate && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">

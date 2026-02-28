@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, AddMemberDto } from './dto/workspaces.dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,34 +8,52 @@ export class WorkspacesService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateWorkspaceDto) {
-    const workspace = await this.prisma.workspace.create({
-      data: {
-        name: dto.name,
-        description: dto.description,
-        members: {
-          create: {
-            userId,
-            role: 'OWNER',
+    const name = (dto.name ?? '').trim();
+    if (!name) {
+      throw new BadRequestException('Workspace name is required');
+    }
+    try {
+      const workspace = await this.prisma.workspace.create({
+        data: {
+          name: name.slice(0, 100),
+          description: dto.description?.trim() || undefined,
+          members: {
+            create: {
+              userId,
+              role: 'OWNER',
+            },
           },
         },
-      },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-                avatarUrl: true,
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  avatarUrl: true,
+                },
               },
             },
           },
         },
-      },
-    });
-
-    return workspace;
+      });
+      return workspace;
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err) {
+        const code = (err as { code?: string }).code;
+        if (code === 'P2002') {
+          throw new BadRequestException('A workspace with this name may already exist or a constraint was violated.');
+        }
+        if (code === 'P2003') {
+          throw new BadRequestException('Invalid user reference. Please sign in again.');
+        }
+      }
+      throw new BadRequestException(
+        'Failed to create workspace. Check that the database is running and migrations are applied.',
+      );
+    }
   }
 
   async findAll(userId: string) {

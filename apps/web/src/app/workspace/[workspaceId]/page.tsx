@@ -48,7 +48,6 @@ import DocumentViewer from '@/components/pdf/DocumentViewer';
 
 type PanelView = 'members' | 'settings' | 'integrations';
 
-const FOLDER_ICON = '📁';
 
 interface PageData {
   id: string;
@@ -280,12 +279,9 @@ export default function WorkspacePage() {
         parentId: createParentId || undefined,
       });
       if (showCreateModal === 'folder') {
-        await pagesApi.update(token, page.id, { icon: FOLDER_ICON });
-      } else if (showCreateModal === 'page') {
-        const typeIcons: Record<string, string> = { document: '📝', presentation: '📊', spreadsheet: '📋' };
-        const icon = typeIcons[newItemType] || '📝';
-        await pagesApi.update(token, page.id, { icon });
+        await pagesApi.update(token, page.id, { icon: null });
       }
+      // New pages keep default icon (null) so UI shows FileText
       toast({ title: showCreateModal === 'folder' ? 'Folder created!' : 'Page created!' });
       setShowCreateModal(null);
       setNewItemTitle('');
@@ -676,7 +672,7 @@ export default function WorkspacePage() {
               isActive ? 'bg-[#1f7a4a]/10 text-[#1f7a4a] font-medium' : ''
             }`}
           >
-            <span>{folder ? (expanded ? <FolderOpen className="h-3.5 w-3.5 text-yellow-600" /> : <Folder className="h-3.5 w-3.5 text-yellow-600" />) : (page.icon || '📄')}</span>
+            <span>{folder ? (expanded ? <FolderOpen className="h-3.5 w-3.5 text-yellow-600" /> : <Folder className="h-3.5 w-3.5 text-yellow-600" />) : (page.icon ? <span className="text-base leading-none">{page.icon}</span> : <FileText className="h-3.5 w-3.5 text-muted-foreground" />)}</span>
             <span className="truncate">{page.title}</span>
           </button>
           {folder && (
@@ -1035,7 +1031,7 @@ export default function WorkspacePage() {
                         const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
                         if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
                       }}>
-                        <span className="text-xs">🔗</span>
+                        <LinkIcon className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -1487,9 +1483,9 @@ export default function WorkspacePage() {
                   <label className="text-sm font-medium">Document Type</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { value: 'document', label: 'Document', icon: '📝' },
-                      { value: 'presentation', label: 'Presentation', icon: '📊' },
-                      { value: 'spreadsheet', label: 'Spreadsheet', icon: '📋' },
+                      { value: 'document', label: 'Document', Icon: FileText },
+                      { value: 'presentation', label: 'Presentation', Icon: FileImage },
+                      { value: 'spreadsheet', label: 'Spreadsheet', Icon: File },
                     ].map((type) => (
                       <button
                         key={type.value}
@@ -1500,7 +1496,7 @@ export default function WorkspacePage() {
                         }`}
                         onClick={() => setNewItemType(type.value as typeof newItemType)}
                       >
-                        <span className="text-xl">{type.icon}</span>
+                        <type.Icon className="h-5 w-5" />
                         <span>{type.label}</span>
                       </button>
                     ))}
