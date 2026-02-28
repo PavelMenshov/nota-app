@@ -558,29 +558,21 @@ export default function PageEditorPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
+    const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+    if (!allowed.includes(file.type)) {
+      toast({ title: 'Error', description: 'Only PDF, DOCX, and PPTX are supported', variant: 'destructive' });
+      return;
+    }
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch(`/api/pages/${pageId}/sources/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
+      await sourcesApi.upload(token, pageId, file);
       toast({ title: 'File uploaded!' });
       loadPage();
     } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Upload failed';
       toast({
-        title: 'Error',
-        description: 'Failed to upload file',
+        title: 'Upload failed',
+        description: msg,
         variant: 'destructive',
       });
     } finally {

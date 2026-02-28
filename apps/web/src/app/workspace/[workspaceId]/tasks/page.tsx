@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
 import { tasksApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,8 @@ export default function TasksPage() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<string>('MEDIUM');
   const [isCreating, setIsCreating] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -119,12 +121,17 @@ export default function TasksPage() {
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!token) return;
-    if (!confirm('Delete this task?')) return;
+  const handleDeleteTask = (task: Task) => {
+    setTaskToDelete(task);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!token || !taskToDelete) return;
+    setIsDeleting(true);
     try {
-      await tasksApi.delete(token, taskId);
+      await tasksApi.delete(token, taskToDelete.id);
       toast({ title: 'Task deleted' });
+      setTaskToDelete(null);
       loadTasks();
     } catch (error) {
       toast({
@@ -132,6 +139,8 @@ export default function TasksPage() {
         description: 'Failed to delete task',
         variant: 'destructive',
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -185,7 +194,7 @@ export default function TasksPage() {
                   key={task.id}
                   task={task}
                   onStatusChange={handleStatusChange}
-                  onDelete={handleDeleteTask}
+                  onDelete={(t) => handleDeleteTask(t)}
                 />
               ))}
             </div>
@@ -203,7 +212,7 @@ export default function TasksPage() {
                   key={task.id}
                   task={task}
                   onStatusChange={handleStatusChange}
-                  onDelete={handleDeleteTask}
+                  onDelete={(t) => handleDeleteTask(t)}
                 />
               ))}
             </div>
@@ -221,13 +230,35 @@ export default function TasksPage() {
                   key={task.id}
                   task={task}
                   onStatusChange={handleStatusChange}
-                  onDelete={handleDeleteTask}
+                  onDelete={(t) => handleDeleteTask(t)}
                 />
               ))}
             </div>
           </div>
         </div>
       </main>
+
+      {/* Delete Task Confirmation */}
+      {taskToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setTaskToDelete(null)}>
+          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Delete task</CardTitle>
+              <CardDescription>
+                Delete &ldquo;{taskToDelete.title}&rdquo;? This cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setTaskToDelete(null)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={confirmDeleteTask} disabled={isDeleting}>
+                {isDeleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Create Task Modal */}
       {showCreateModal && (
@@ -284,7 +315,7 @@ function TaskCard({
 }: {
   task: Task;
   onStatusChange: (id: string, status: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (task: Task) => void;
 }) {
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow">
@@ -316,7 +347,7 @@ function TaskCard({
                 <option value="IN_PROGRESS">In Progress</option>
                 <option value="DONE">Done</option>
               </select>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(task.id)}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(task)}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>

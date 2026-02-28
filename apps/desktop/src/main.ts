@@ -164,21 +164,30 @@ function createWindow() {
     show: false, // Don't show until ready
   });
 
-  // Handle load failures
+  // Only retry on failures for the actual app URL; ignore failures for external URLs (e.g. integrations opened in-app by mistake)
+  const appOrigin = (() => {
+    try {
+      return new URL(WEB_APP_URL).origin;
+    } catch {
+      return WEB_APP_URL;
+    }
+  })();
+
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    const isAppUrl = validatedURL === WEB_APP_URL || validatedURL.startsWith(appOrigin + '/');
+    if (!isAppUrl) {
+      // External URL failed (e.g. Outlook/OneDrive block embedding) — don't retry or show error page
+      return;
+    }
     console.error(`Failed to load ${validatedURL}: ${errorDescription} (code: ${errorCode})`);
-    
-    // Ignore aborted loads (user navigation)
-    if (errorCode === -3) return;
-    
+    if (errorCode === -3) return; // Ignore aborted loads (user navigation)
     loadAttempts++;
-    
     if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
       console.error(`Maximum load attempts (${MAX_LOAD_ATTEMPTS}) reached. Showing error page.`);
       loadErrorPage();
     } else {
       console.log(`Retrying load... (attempt ${loadAttempts + 1}/${MAX_LOAD_ATTEMPTS})`);
-      const delay = Math.min(Math.pow(2, loadAttempts) * 1000, 10000); // Exponential backoff capped at 10s
+      const delay = Math.min(Math.pow(2, loadAttempts) * 1000, 10000);
       setTimeout(() => {
         mainWindow?.loadURL(WEB_APP_URL);
       }, delay);
@@ -230,12 +239,25 @@ function createWindow() {
     mainWindow?.show();
   });
 
-  // Handle external links - open in default browser
+  // Handle external links (window.open) — open in default browser, never in-app
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       shell.openExternal(url);
     }
     return { action: 'deny' };
+  });
+
+  // Prevent main window from navigating to external URLs (e.g. integration links); open in system browser instead
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    try {
+      const targetOrigin = new URL(url).origin;
+      if (targetOrigin !== appOrigin) {
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+    } catch {
+      // Invalid URL, allow default behavior
+    }
   });
 
   // Create application menu

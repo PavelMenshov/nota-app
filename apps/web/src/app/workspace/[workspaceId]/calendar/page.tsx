@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
 import { calendarApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +55,8 @@ export default function CalendarPage() {
   const [newEventDate, setNewEventDate] = useState('');
   const [newEventTime, setNewEventTime] = useState('09:00');
   const [isCreating, setIsCreating] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -113,12 +115,17 @@ export default function CalendarPage() {
     }
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!token) return;
-    if (!confirm('Delete this event?')) return;
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    setEventToDelete(event);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!token || !eventToDelete) return;
+    setIsDeleting(true);
     try {
-      await calendarApi.delete(token, eventId);
+      await calendarApi.delete(token, eventToDelete.id);
       toast({ title: 'Event deleted' });
+      setEventToDelete(null);
       loadEvents();
     } catch (error) {
       toast({
@@ -126,6 +133,8 @@ export default function CalendarPage() {
         description: 'Failed to delete event',
         variant: 'destructive',
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -270,7 +279,7 @@ export default function CalendarPage() {
                           <p className="text-sm text-muted-foreground">📍 {event.location}</p>
                         )}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event)}>
                         Delete
                       </Button>
                     </div>
@@ -281,6 +290,28 @@ export default function CalendarPage() {
           </Card>
         )}
       </main>
+
+      {/* Delete Event Confirmation */}
+      {eventToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEventToDelete(null)}>
+          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Delete event</CardTitle>
+              <CardDescription>
+                Delete &ldquo;{eventToDelete.title}&rdquo;? This cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEventToDelete(null)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={confirmDeleteEvent} disabled={isDeleting}>
+                {isDeleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Create Event Modal */}
       {showCreateModal && (

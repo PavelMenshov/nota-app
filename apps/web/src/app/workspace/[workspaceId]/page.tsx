@@ -36,6 +36,17 @@ import {
   MessageSquare,
   Download,
   ExternalLink,
+  Bold,
+  Italic,
+  Underline,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Code,
+  Minus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,7 +168,6 @@ export default function WorkspacePage() {
   } | null>(null);
 
   // Document type for create modal
-  const [newItemType, setNewItemType] = useState<'document' | 'presentation' | 'spreadsheet'>('document');
 
   // Export menu state
   const [showExportMenu, setShowExportMenu] = useState<string | null>(null);
@@ -295,6 +305,7 @@ export default function WorkspacePage() {
       pageId: '',
       integrationUrl: url,
     });
+    if (typeof globalThis.window !== 'undefined') globalThis.window.open(url, '_blank', 'noopener,noreferrer');
   }, [openTab]);
 
   const handleCreateItem = async () => {
@@ -431,9 +442,10 @@ export default function WorkspacePage() {
       await loadPageContent(targetPageId);
       openSourceTab(source as SourceData, targetPageId);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to upload file. Check file type (PDF, DOCX, PPTX) and size.';
       toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to upload file',
+        title: 'Upload failed',
+        description: msg,
         variant: 'destructive',
       });
     } finally {
@@ -1018,87 +1030,88 @@ export default function WorkspacePage() {
                     </div>
                   </header>
                   {/* Document Toolbar */}
-                  <div className="border-b bg-card px-4 py-2 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground mr-1">Format:</span>
-                    <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-2">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Bold" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '**' + selected + '**' + text.substring(e) }})); }
-                      }}>
-                        <span className="font-bold text-xs">B</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Italic" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '*' + selected + '*' + text.substring(e) }})); }
-                      }}>
-                        <span className="italic text-xs">I</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Underline" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '__' + selected + '__' + text.substring(e) }})); }
-                      }}>
-                        <span className="underline text-xs">U</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 1" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '# ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs font-bold">H1</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 2" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '## ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs font-bold">H2</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Heading 3" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '### ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs font-bold">H3</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Bullet List" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '- ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs">•</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Numbered List" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '1. ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs">1.</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Quote" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '> ' + text.substring(lineStart) }})); }
-                      }}>
-                        <span className="text-xs">&ldquo;</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Code Block" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '`' + selected + '`' + text.substring(e) }})); }
-                      }}>
-                        <span className="text-xs font-mono">&lt;/&gt;</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Horizontal Rule" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const text = content.content; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '\n---\n' + text.substring(s) }})); }
-                      }}>
-                        <span className="text-xs">—</span>
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Link" onClick={() => {
-                        const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                        if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
-                      }}>
-                        <LinkIcon className="h-3.5 w-3.5" />
-                      </Button>
+                  <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-background/80 px-2 py-1.5 shadow-sm max-w-3xl">
+                      <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Bold" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '**' + selected + '**' + text.substring(e) }})); }
+                        }}>
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Italic" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '*' + selected + '*' + text.substring(e) }})); }
+                        }}>
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Underline" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '__' + selected + '__' + text.substring(e) }})); }
+                        }}>
+                          <Underline className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Heading 1" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '# ' + text.substring(lineStart) }})); }
+                        }}>
+                          <Heading1 className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Heading 2" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '## ' + text.substring(lineStart) }})); }
+                        }}>
+                          <Heading2 className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Heading 3" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '### ' + text.substring(lineStart) }})); }
+                        }}>
+                          <Heading3 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Bullet List" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '- ' + text.substring(lineStart) }})); }
+                        }}>
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Numbered List" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '1. ' + text.substring(lineStart) }})); }
+                        }}>
+                          <ListOrdered className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Quote" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; const lineStart = text.lastIndexOf('\n', s - 1) + 1; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, lineStart) + '> ' + text.substring(lineStart) }})); }
+                        }}>
+                          <Quote className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Code" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '`' + selected + '`' + text.substring(e) }})); }
+                        }}>
+                          <Code className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Horizontal Rule" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const text = content.content; setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '\n---\n' + text.substring(s) }})); }
+                        }}>
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Link" onClick={() => {
+                          const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
+                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
+                        }}>
+                          <LinkIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   {/* Attached files + Search in PDFs */}
@@ -1522,28 +1535,28 @@ export default function WorkspacePage() {
               </div>
             )}
 
-            {/* Integration Tab */}
+            {/* Integration Tab — external sites block iframes; show link to open in new tab */}
             {activeTab?.type === 'integration' && activeTab.integrationUrl && (
-              <div className="flex flex-col h-full">
-                <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{activeTab.title}</span>
-                  <div className="flex-1" />
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
-                    <a href={activeTab.integrationUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3 w-3" />
-                      Open in new tab
-                    </a>
-                  </Button>
-                </div>
-                <div className="flex-1">
-                  <iframe
-                    src={activeTab.integrationUrl}
-                    className="w-full h-full border-0"
-                    title={activeTab.title}
-                    sandbox="allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
-                  />
-                </div>
+              <div className="flex flex-col h-full items-center justify-center p-6 bg-muted/20">
+                <Card className="max-w-md w-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ExternalLink className="h-5 w-5 text-muted-foreground" />
+                      {activeTab.title}
+                    </CardTitle>
+                    <CardDescription>
+                      This integration opens in a new browser tab. Use the button below to open or return to it.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full gap-2" asChild>
+                      <a href={activeTab.integrationUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Open in new tab
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </main>
@@ -1577,42 +1590,17 @@ export default function WorkspacePage() {
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateItem()}
                 />
               </div>
-              {showCreateModal === 'page' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Document Type</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { value: 'document', label: 'Document', Icon: FileText },
-                      { value: 'presentation', label: 'Presentation', Icon: FileImage },
-                      { value: 'spreadsheet', label: 'Spreadsheet', Icon: File },
-                    ].map((type) => (
-                      <button
-                        key={type.value}
-                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border text-sm transition-colors ${
-                          newItemType === type.value
-                            ? 'border-[#1f7a4a] bg-[#1f7a4a]/5 text-[#1f7a4a]'
-                            : 'border-border hover:bg-muted'
-                        }`}
-                        onClick={() => setNewItemType(type.value as typeof newItemType)}
-                      >
-                        <type.Icon className="h-5 w-5" />
-                        <span>{type.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setShowCreateModal(null); setNewItemTitle(''); setCreateParentId(null); setNewItemType('document'); }}
+                  onClick={() => { setShowCreateModal(null); setNewItemTitle(''); setCreateParentId(null); }}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={() => { handleCreateItem(); setNewItemType('document'); }}
+                  onClick={handleCreateItem}
                   disabled={!newItemTitle.trim() || isCreatingItem}
                 >
                   {isCreatingItem ? 'Creating...' : 'Create'}

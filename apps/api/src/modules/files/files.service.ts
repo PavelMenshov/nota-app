@@ -41,7 +41,13 @@ export class FilesService {
         forcePathStyle: true, // Required for MinIO
       });
       this.logger.log(`S3/MinIO storage configured (endpoint: ${endpoint})`);
-      this.ensureBucketExists().catch((err) => this.logger.warn(`Bucket check failed: ${err instanceof Error ? err.message : err}`));
+      this.ensureBucketExists().catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Bucket check failed: ${msg}. ` +
+          'Ensure MinIO/S3 is running (e.g. docker compose up -d) or remove S3_* from .env to use local uploads/ storage.',
+        );
+      });
     } else {
       if (!fs.existsSync(this.localUploadsDir)) {
         fs.mkdirSync(this.localUploadsDir, { recursive: true });

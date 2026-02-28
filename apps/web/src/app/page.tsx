@@ -56,7 +56,7 @@ export default function HomePage() {
             {/* Kicker */}
             <div className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12.5px] font-bold">
               <div className="w-[9px] h-[9px] rounded-full bg-[#21a061] shadow-[0_0_0_4px_rgba(31,122,74,0.10)]" />
-              Calm like Notion - built for PDFs, deadlines, and study loops
+              For students and faculty — notes, PDFs, and canvas in one place
             </div>
 
             {/* H1 */}
@@ -80,7 +80,7 @@ export default function HomePage() {
               </Link>
               <Link href="#core">
                 <Button variant="ghost" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] hover:bg-[rgba(255,255,255,0.90)] hover:border-[rgba(20,20,20,0.14)] text-[#141414]">
-                  See the architecture
+                  See features
                 </Button>
               </Link>
             </div>
@@ -209,9 +209,9 @@ export default function HomePage() {
             {/* CTA box */}
             <div className="mt-[18px] rounded-[26px] border border-[rgba(20,20,20,0.07)] bg-gradient-to-b from-[rgba(255,255,255,0.86)] to-[rgba(255,255,255,0.70)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] p-5 flex items-center justify-between gap-3.5 flex-wrap" id="get-started">
               <div>
-                <h3 className="text-lg font-bold tracking-tight">Ship a clean v1 fast.</h3>
+                <h3 className="text-lg font-bold tracking-tight">Ready to try Nota?</h3>
                 <p className="mt-1.5 text-[#5b6167] text-[13.5px] leading-[1.6] max-w-[70ch]">
-                  Start with the core page model, PDF annotations, and tasks/calendar. Add export + &ldquo;Send to Notion&rdquo; as a lightweight bridge.
+                  Create a free account, add a workspace, and start with docs, canvas, and PDFs in one place.
                 </p>
               </div>
               <div className="flex gap-2.5 flex-wrap">
@@ -222,7 +222,7 @@ export default function HomePage() {
                 </Link>
                 <Link href="#core">
                   <Button variant="ghost" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] hover:bg-[rgba(255,255,255,0.90)] hover:border-[rgba(20,20,20,0.14)]">
-                    View spec
+                    See features
                   </Button>
                 </Link>
               </div>
@@ -294,26 +294,20 @@ export default function HomePage() {
 
                   {/* Right side - Visual/Stats */}
                   <div className="space-y-4">
-                    {/* Platform badges */}
+                    {/* Platform badges — simple text icons for reliable display */}
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted mb-2">
-                          <svg className="h-5 w-5 text-[#141414]" fill="currentColor" viewBox="0 0 24 24"><path d="M3 5.5A2.5 2.5 0 015.5 3h13A2.5 2.5 0 0121 5.5v13a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 18.5v-13zM5.5 5a.5.5 0 00-.5.5v13a.5.5 0 00.5.5h13a.5.5 0 00.5-.5v-13a.5.5 0 00-.5-.5h-13z" /></svg>
-                        </div>
+                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#0078d4]/10 text-[#0078d4] font-bold text-sm mb-2">W</div>
                         <div className="text-xs font-bold text-[#141414]">Windows</div>
                         <div className="text-[10px] text-[#7a828a] mt-1">10, 11</div>
                       </div>
                       <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted mb-2">
-                          <svg className="h-5 w-5 text-[#141414]" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
-                        </div>
+                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#555]/10 text-[#141414] font-bold text-sm mb-2">M</div>
                         <div className="text-xs font-bold text-[#141414]">macOS</div>
                         <div className="text-[10px] text-[#7a828a] mt-1">11+</div>
                       </div>
                       <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted mb-2">
-                          <svg className="h-5 w-5 text-[#141414]" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 2.001.16 3.94 2.52 3.94 1.314 0 1.969-.784 3.22-.784 1.218 0 1.54.784 3.167.784 2.472 0 2.88-2.984 2.722-4.67-.307-3.733-2.436-5.695-5.259-5.695zM9.354 8.221c.718-.893 1.216-2.166 1.054-3.423-.977.04-2.165.665-2.863 1.545-.657.81-1.225 2.07-1.054 3.376.1.028.202.042.307.042 1.033 0 2.129-.673 2.556-1.54zM18.898 20.26v-3.635h1.565v-.872h-1.565v-.648h-1.641v.648h-1.566v.872h1.566v3.635h1.64zm.024-4.514v.894h-1.641v-.894h1.641zm-4.514 4.074v-3.42h1.235l1.462 2.42 1.458-2.42h1.244v3.42h-1.578v-2.346l-1.355 2.346h-.782l-1.358-2.346v2.346h-1.578z" /></svg>
-                        </div>
+                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#fcc624]/20 text-[#141414] font-bold text-sm mb-2">L</div>
                         <div className="text-xs font-bold text-[#141414]">Linux</div>
                         <div className="text-[10px] text-[#7a828a] mt-1">Ubuntu, Fedora</div>
                       </div>
@@ -354,113 +348,82 @@ export default function HomePage() {
         {/* Sections */}
         <Section
           id="core"
-          title="1.1 Workspace / Page (Core)"
-          description="Workspace -> Pages. A page contains 'surfaces': doc, canvas, and PDF (PDF as attached file + annotations). Version history + audit trail, link sharing, and role-based access."
+          title="Workspaces & pages"
+          description="Organize everything in workspaces. Each page has Doc, Canvas, and PDF sources — with version history, sharing links, and roles (owner / editor / viewer)."
         >
           <FeatureRow
-            title="Page = container for surfaces"
-            description="Keep UX simple: users open a page and switch surfaces (Doc / Canvas / PDFs) without navigating away. This is the 'Notion feeling' but purpose-built for academic assets."
-            note="Suggested primitives: workspace_id, page_id, surface_type, object_ref"
+            title="One page, three surfaces"
+            description="Switch between document, whiteboard, and PDFs without leaving the page. Built for academic workflows: notes, sketches, and readings in one place."
             capabilities={[
-              'Workspace -> Pages hierarchy',
-              'Surfaces: Doc / Canvas / PDF attachments',
-              'History: version snapshots + diffs',
-              'Audit: who changed what, when',
-              'Share link + roles (viewer/editor)',
+              'Workspaces and nested pages',
+              'Doc, Canvas, and PDF sources per page',
+              'Version history and activity log',
+              'Share links and role-based access',
             ]}
           />
         </Section>
 
         <Section
           id="collab"
-          title="1.2 Real-time collaboration (Doc + Canvas)"
-          description="Collaborative editing for docs and canvas with presence (who's online) and minimal cursors/selection. Conflict resolution via CRDT/OT."
+          title="Real-time collaboration"
+          description="Edit docs and canvas together. See who's online, optional cursors, and conflict-free sync."
         >
           <FeatureRow
-            title="Presence + cursors, but quiet"
-            description="Don't gamify it. Show small avatars, a subtle 'live' indicator, and optional cursors. Most users want calm, not fireworks."
-            note="Implementation note: doc blocks + canvas objects can share the same collaboration layer."
+            title="Collaborate without the noise"
+            description="Presence indicators and optional cursors. Calm, focused collaboration for study groups and faculty."
             capabilities={[
-              'Presence: active users list',
-              'Optional cursors/selection',
-              'CRDT/OT conflict resolution',
-              'Offline merge-friendly writes',
+              'Live presence (who\'s online)',
+              'Real-time doc and canvas editing',
+              'Comments on doc and canvas',
             ]}
           />
         </Section>
 
         <Section
           id="pdf"
-          title="1.3 Files and PDF"
-          description="S3-compatible object storage, upload/download, PDF annotations (highlights + ink + comments), and extraction: highlights -> doc blocks."
+          title="PDFs and annotations"
+          description="Upload PDFs to any page. Highlight, annotate, and pull highlights into your doc with one click."
         >
           <FeatureRow
-            title="PDF as a first-class source"
-            description="Make PDF annotation reliable: highlight ranges, freehand ink, and anchored comments. Then allow 'extract highlights' to instantly build a study doc page section."
-            note="UX tip: one button Extract -> Doc creates structured blocks with citations."
+            title="PDFs as first-class materials"
+            description="Highlight text, add notes, and extract highlights into your document — with source and page references."
             capabilities={[
-              'Highlight (text ranges)',
-              'Ink (stylus strokes)',
-              'Comments (anchored)',
-              'Export highlights -> doc blocks',
+              'Upload and view PDFs per page',
+              'Highlights, notes, and comments',
+              'Extract highlights to doc blocks',
+              'Full-text search in PDFs',
             ]}
           />
         </Section>
 
         <Section
           id="export"
-          title="1.4 Export / send results"
-          description="Export Page -> PDF and DOCX (server-side job). For B2C: 'Send to Notion' - create a page with content/attachment."
+          title="Export"
+          description="Export any page or doc to PDF or DOCX. Runs as a background job — you get a download link when it's ready."
         >
           <FeatureRow
-            title="Exports as background jobs"
-            description="Generate PDF/DOCX server-side to keep the client clean. Provide a single 'Export' entry point on the page with format choices."
-            note="B2C bridge: Send to Notion creates a page + attaches exported file."
+            title="Export and share"
+            description="One-click export to PDF or DOCX. Optional bridge to Notion."
             capabilities={[
-              'Export PDF (print-ready)',
-              'Export DOCX (editable)',
-              'Job status + download link',
-              'Send to Notion (page + file)',
+              'Export to PDF and DOCX',
+              'Job queue + download when ready',
             ]}
           />
         </Section>
 
         <Section
           id="tasks"
-          title="1.5 Tasks + Calendar (minimum)"
-          description="Tasks: title, due, status, links to pages. Calendar: events. In B2B: sync schedules/exams/deadlines from LMS."
+          title="Tasks & calendar"
+          description="Tasks with deadlines and status, linked to pages. Calendar events for deadlines and office hours."
         >
           <FeatureRow
-            title="Tasks and time: the 'anti-procrastination' layer"
-            description="The simplest implementation wins: tasks live next to pages and can create calendar events. B2B integration can come later via LMS sync."
-            note="Keep schema tight: task -> page_id, event -> task_id?"
+            title="Stay on track"
+            description="Tasks and calendar live next to your pages. Link tasks to specific pages and events to workspaces."
             capabilities={[
-              'Task: title, due, status, page links',
-              'Calendar: events + reminders',
-              'B2B: LMS sync (deadlines/exams)',
+              'Tasks: title, due date, status, link to page',
+              'Calendar events for workspace or page',
             ]}
           />
-
-          <div className="mt-[18px] rounded-[26px] border border-[rgba(20,20,20,0.07)] bg-gradient-to-b from-[rgba(255,255,255,0.86)] to-[rgba(255,255,255,0.70)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] p-5 flex items-center justify-between gap-3.5 flex-wrap">
-            <div>
-              <h3 className="text-lg font-bold tracking-tight">Want it even closer to Notion&apos;s polish?</h3>
-              <p className="mt-1.5 text-[#5b6167] text-[13.5px] leading-[1.6] max-w-[70ch]">
-                I can add a super subtle &ldquo;page cover + icon&rdquo; header style, a database-table preview, and micro-interactions (hover/scroll reveal) without turning it into a neon dashboard.
-              </p>
-            </div>
-            <div className="flex gap-2.5 flex-wrap">
-              <Link href="/auth/register">
-                <Button size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)]">
-                  Start building
-                </Button>
-              </Link>
-              <Link href="#top">
-                <Button variant="ghost" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] hover:bg-[rgba(255,255,255,0.90)] hover:border-[rgba(20,20,20,0.14)]">
-                  Back to top
-                </Button>
-              </Link>
-            </div>
-          </div>
         </Section>
 
         {/* Documentation & Resources Section */}
