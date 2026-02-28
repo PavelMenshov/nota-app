@@ -105,19 +105,6 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
     };
   }, []);
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingId) {
-        const target = e.target as HTMLElement;
-        if (target.closest('textarea') || target.closest('input') || target.closest('[contenteditable="true"]')) return;
-        e.preventDefault();
-        deleteElement(selectedId);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, editingId, deleteElement]);
-
   const updateElement = useCallback(
     (id: string, patch: Partial<CanvasElement>) => {
       setElements((prev) => {
@@ -141,6 +128,19 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
     },
     [selectedId, editingId, viewport, triggerSave],
   );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingId) {
+        const target = e.target as HTMLElement;
+        if (target.closest('textarea') || target.closest('input') || target.closest('[contenteditable="true"]')) return;
+        e.preventDefault();
+        deleteElement(selectedId);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedId, editingId, deleteElement]);
 
   const addElement = useCallback(
     (type: CanvasElementType, cx: number, cy: number) => {
