@@ -139,22 +139,127 @@ export class WorkspacesService {
       { type: 'paragraph', text: '→ Assignment 1', href: workspacePath },
     ]);
 
-    const demoCanvasElements = [
-      { id: 'demo-1', type: 'sticky-note', x: 80, y: 60, width: 160, height: 100, text: 'Ideas for the pitch', color: '#FEF08A', tag: 'demo' },
-      { id: 'demo-2', type: 'sticky-note', x: 280, y: 80, width: 140, height: 80, text: 'Doc + Canvas + PDF', color: '#BBF7D0' },
-      { id: 'demo-3', type: 'sticky-note', x: 460, y: 70, width: 150, height: 90, text: 'Collaboration & sharing', color: '#BFDBFE' },
-    ];
+    const viewport = { x: 0, y: 0, zoom: 1 };
 
-    await createPage('Syllabus', 0, undefined, syllabusDoc);
-    const module1 = await createPage('Module 1 — Introduction', 1, undefined, module1Doc);
-    await createPage('Week 1: Getting started', 0, module1.id, week1Doc, {
-      elements: demoCanvasElements,
-      viewport: { x: 0, y: 0, zoom: 1 },
-    });
-    await createPage('Week 2: Core concepts', 1, module1.id, week2Doc);
-    const module2 = await createPage('Module 2 — Assignments', 2, undefined, module2Doc);
-    await createPage('Assignment 1', 0, module2.id, assignment1Doc);
-    await createPage('Assignment 2', 1, module2.id, assignment2Doc);
+    // Syllabus: course map — central idea + branches
+    const canvasSyllabus = {
+      elements: [
+        { id: 'syl-1', type: 'text-block', x: 320, y: 40, width: 200, height: 56, text: 'Demo Course' },
+        { id: 'syl-2', type: 'sticky-note', x: 120, y: 160, width: 140, height: 80, text: 'Doc — notes', color: '#FEF08A' },
+        { id: 'syl-3', type: 'sticky-note', x: 340, y: 160, width: 140, height: 80, text: 'Canvas — boards', color: '#BBF7D0' },
+        { id: 'syl-4', type: 'sticky-note', x: 560, y: 160, width: 140, height: 80, text: 'Sources — PDFs', color: '#BFDBFE' },
+        { id: 'syl-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'syl-1', toId: 'syl-2' },
+        { id: 'syl-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'syl-1', toId: 'syl-3' },
+        { id: 'syl-c3', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'syl-1', toId: 'syl-4' },
+      ],
+      viewport,
+    };
+
+    // Module 1: intro overview
+    const canvasModule1 = {
+      elements: [
+        { id: 'm1-1', type: 'sticky-note', x: 60, y: 80, width: 160, height: 100, text: 'Getting started', color: '#FEF08A', tag: 'week1' },
+        { id: 'm1-2', type: 'sticky-note', x: 260, y: 80, width: 160, height: 100, text: 'Core concepts', color: '#BBF7D0', tag: 'week2' },
+        { id: 'm1-3', type: 'shape', x: 460, y: 90, width: 120, height: 80, shapeKind: 'diamond', color: '#E9D5FF', text: 'Module 1' },
+        { id: 'm1-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'm1-3', toId: 'm1-1' },
+        { id: 'm1-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'm1-3', toId: 'm1-2' },
+      ],
+      viewport,
+    };
+
+    // Week 1: pitch ideas (existing, slightly adjusted)
+    const canvasWeek1 = {
+      elements: [
+        { id: 'w1-1', type: 'sticky-note', x: 80, y: 60, width: 160, height: 100, text: 'Ideas for the pitch', color: '#FEF08A', tag: 'demo' },
+        { id: 'w1-2', type: 'sticky-note', x: 280, y: 80, width: 140, height: 80, text: 'Doc + Canvas + PDF', color: '#BBF7D0' },
+        { id: 'w1-3', type: 'sticky-note', x: 460, y: 70, width: 150, height: 90, text: 'Collaboration & sharing', color: '#BFDBFE' },
+      ],
+      viewport,
+    };
+
+    // Week 2: concept map with connectors
+    const canvasWeek2 = {
+      elements: [
+        { id: 'w2-1', type: 'text-block', x: 40, y: 50, width: 180, height: 72, text: 'Canvas → Outline\nTurns board items\ninto Doc structure' },
+        { id: 'w2-2', type: 'sticky-note', x: 280, y: 40, width: 140, height: 70, text: 'Connectors', color: '#FED7AA' },
+        { id: 'w2-3', type: 'sticky-note', x: 460, y: 50, width: 130, height: 65, text: 'Shapes & text', color: '#C4B5FD' },
+        { id: 'w2-4', type: 'shape', x: 320, y: 180, width: 100, height: 70, shapeKind: 'ellipse', color: '#BFDBFE', text: 'Export' },
+        { id: 'w2-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'w2-2', toId: 'w2-4' },
+        { id: 'w2-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'w2-3', toId: 'w2-4' },
+      ],
+      viewport,
+    };
+
+    // Module 2: assignment flow
+    const canvasModule2 = {
+      elements: [
+        { id: 'm2-1', type: 'shape', x: 80, y: 100, width: 100, height: 60, shapeKind: 'rectangle', color: '#BBF7D0', text: 'Assignments' },
+        { id: 'm2-2', type: 'sticky-note', x: 260, y: 90, width: 150, height: 85, text: 'Assignment 1\nFirst deliverable', color: '#FEF08A' },
+        { id: 'm2-3', type: 'sticky-note', x: 460, y: 90, width: 150, height: 85, text: 'Assignment 2\nSecond deliverable', color: '#BFDBFE' },
+        { id: 'm2-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'm2-1', toId: 'm2-2' },
+        { id: 'm2-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'm2-1', toId: 'm2-3' },
+      ],
+      viewport,
+    };
+
+    // Assignment 1: task breakdown
+    const canvasAssignment1 = {
+      elements: [
+        { id: 'a1-1', type: 'text-block', x: 60, y: 60, width: 200, height: 64, text: '1. Read materials\n2. Draft in Doc\n3. Attach PDFs in Sources' },
+        { id: 'a1-2', type: 'sticky-note', x: 320, y: 70, width: 120, height: 75, text: 'Submit', color: '#86EFAC' },
+        { id: 'a1-3', type: 'shape', x: 500, y: 80, width: 90, height: 55, shapeKind: 'diamond', color: '#FDE047', text: 'Done?' },
+        { id: 'a1-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'a1-1', toId: 'a1-2' },
+        { id: 'a1-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'a1-2', toId: 'a1-3' },
+      ],
+      viewport,
+    };
+
+    // Assignment 2: diagram with mixed elements
+    const canvasAssignment2 = {
+      elements: [
+        { id: 'a2-1', type: 'sticky-note', x: 50, y: 50, width: 140, height: 80, text: 'Write-up in Doc', color: '#FEF08A' },
+        { id: 'a2-2', type: 'sticky-note', x: 230, y: 45, width: 140, height: 80, text: 'Diagrams on Canvas', color: '#BBF7D0' },
+        { id: 'a2-3', type: 'sticky-note', x: 410, y: 50, width: 140, height: 80, text: 'Readings in Sources', color: '#BFDBFE' },
+        { id: 'a2-4', type: 'shape', x: 300, y: 200, width: 120, height: 70, shapeKind: 'ellipse', color: '#E9D5FF', text: 'Final submission' },
+        { id: 'a2-c1', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'a2-1', toId: 'a2-4' },
+        { id: 'a2-c2', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'a2-2', toId: 'a2-4' },
+        { id: 'a2-c3', type: 'connector', x: 0, y: 0, width: 0, height: 0, fromId: 'a2-3', toId: 'a2-4' },
+      ],
+      viewport,
+    };
+
+    const syllabusPage = await createPage('Syllabus', 0, undefined, syllabusDoc, canvasSyllabus);
+    const module1 = await createPage('Module 1 — Introduction', 1, undefined, module1Doc, canvasModule1);
+    const week1Page = await createPage('Week 1: Getting started', 0, module1.id, week1Doc, canvasWeek1);
+    const week2Page = await createPage('Week 2: Core concepts', 1, module1.id, week2Doc, canvasWeek2);
+    const module2 = await createPage('Module 2 — Assignments', 2, undefined, module2Doc, canvasModule2);
+    const assignment1Page = await createPage('Assignment 1', 0, module2.id, assignment1Doc, canvasAssignment1);
+    const assignment2Page = await createPage('Assignment 2', 1, module2.id, assignment2Doc, canvasAssignment2);
+
+    // Add demo Sources (PDFs) to selected pages — use a public sample PDF for demo
+    const demoPdfUrl = 'https://www.w3.org/WAI/demos/bad/after.pdf';
+    const demoPdfSize = 50000;
+    const demoExtractedText = 'Sample document for Nota demo. Use the Sources tab to view and annotate PDFs, then extract highlights into your Doc.';
+    const addSource = (pageId: string, fileName: string) =>
+      this.prisma.source.create({
+        data: {
+          pageId,
+          fileName,
+          fileUrl: demoPdfUrl,
+          fileSize: demoPdfSize,
+          mimeType: 'application/pdf',
+          pageCount: 2,
+          extractedText: demoExtractedText,
+        },
+      });
+
+    await addSource(syllabusPage.id, 'Course overview (sample).pdf');
+    await addSource(module1.id, 'Module 1 reading (sample).pdf');
+    await addSource(week1Page.id, 'Week 1 — Getting started (sample).pdf');
+    await addSource(week2Page.id, 'Week 2 — Core concepts (sample).pdf');
+    await addSource(module2.id, 'Assignment guidelines (sample).pdf');
+    await addSource(assignment1Page.id, 'Assignment 1 brief (sample).pdf');
+    await addSource(assignment2Page.id, 'Assignment 2 brief (sample).pdf');
 
     return this.prisma.workspace.findUnique({
       where: { id: workspace.id },
