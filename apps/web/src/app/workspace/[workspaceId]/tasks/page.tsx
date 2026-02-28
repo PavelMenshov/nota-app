@@ -144,6 +144,36 @@ export default function TasksPage() {
     }
   };
 
+  // Enter = submit, Escape = cancel for create task modal
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+      }
+      if (e.key === 'Enter' && newTaskTitle.trim() && !isCreating) {
+        e.preventDefault();
+        handleCreateTask();
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [showCreateModal, newTaskTitle, isCreating]);
+
+  // Enter = confirm delete, Escape = cancel for delete confirmation modal
+  useEffect(() => {
+    if (!taskToDelete) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setTaskToDelete(null);
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmDeleteTask();
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [taskToDelete]);
+
   const groupedTasks = {
     TODO: tasks.filter((t) => t.status === 'TODO'),
     IN_PROGRESS: tasks.filter((t) => t.status === 'IN_PROGRESS'),
@@ -275,6 +305,7 @@ export default function TasksPage() {
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
                 />
               </div>
               <div className="space-y-2">

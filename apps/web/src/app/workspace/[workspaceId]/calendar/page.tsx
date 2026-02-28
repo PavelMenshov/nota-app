@@ -138,6 +138,34 @@ export default function CalendarPage() {
     }
   };
 
+  // Enter = submit, Escape = cancel for create event modal
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowCreateModal(false);
+      if (e.key === 'Enter' && newEventTitle.trim() && newEventDate && !isCreating) {
+        e.preventDefault();
+        handleCreateEvent();
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [showCreateModal, newEventTitle, newEventDate, isCreating]);
+
+  // Enter = confirm delete, Escape = cancel for delete confirmation modal
+  useEffect(() => {
+    if (!eventToDelete) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEventToDelete(null);
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmDeleteEvent();
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [eventToDelete]);
+
   // Calendar grid
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -328,6 +356,7 @@ export default function CalendarPage() {
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
                   autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateEvent()}
                 />
               </div>
               <div className="space-y-2">

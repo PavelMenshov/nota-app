@@ -56,6 +56,7 @@ import { workspacesApi, pagesApi, docApi, sourcesApi, authApi, exportApi } from 
 import { useToast } from '@/hooks/use-toast';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import DocumentViewer from '@/components/pdf/DocumentViewer';
+import ReactMarkdown from 'react-markdown';
 
 type PanelView = 'members' | 'settings' | 'integrations';
 
@@ -171,6 +172,17 @@ export default function WorkspacePage() {
 
   // Export menu state
   const [showExportMenu, setShowExportMenu] = useState<string | null>(null);
+
+  // Document: preview mode (rendered markdown) per page
+  const [docPreviewPageId, setDocPreviewPageId] = useState<string | null>(null);
+  // Link insert dialog
+  const [linkDialog, setLinkDialog] = useState<{
+    pageId: string;
+    start: number;
+    end: number;
+    linkText: string;
+    linkUrl: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -343,6 +355,41 @@ export default function WorkspacePage() {
   const showConfirmDialog = (title: string, description: string, onConfirm: () => void) => {
     setConfirmDialog({ open: true, title, description, onConfirm });
   };
+
+  // Enter = submit, Escape = cancel for create modal
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(null);
+        setNewItemTitle('');
+        setCreateParentId(null);
+      }
+      if (e.key === 'Enter' && newItemTitle.trim() && !isCreatingItem) {
+        e.preventDefault();
+        handleCreateItem();
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [showCreateModal, newItemTitle, isCreatingItem]);
+
+  // Enter = confirm, Escape = cancel for confirm dialog
+  useEffect(() => {
+    if (!confirmDialog?.open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setConfirmDialog(null);
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmDialog.onConfirm();
+        setConfirmDialog(null);
+      }
+    };
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
+  }, [confirmDialog?.open]);
 
   const handleDeletePage = async (pageId: string) => {
     if (!token) return;
@@ -1031,6 +1078,19 @@ export default function WorkspacePage() {
                   </header>
                   {/* Document Toolbar */}
                   <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant={docPreviewPageId === pageId ? 'outline' : 'default'}
+                        className="h-8"
+                        onClick={() => setDocPreviewPageId((id) => (id === pageId ? null : pageId))}
+                      >
+                        {docPreviewPageId === pageId ? (
+                          <> <Pencil className="h-3.5 w-3.5 mr-1" /> Edit </>
+                        ) : (
+                          <> <Eye className="h-3.5 w-3.5 mr-1" /> Preview </>
+                        )}
+                      </Button>
                     <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-background/80 px-2 py-1.5 shadow-sm max-w-3xl">
                       <div className="flex items-center gap-0.5 border-r pr-2 mr-2">
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Bold" onClick={() => {
@@ -1107,7 +1167,10 @@ export default function WorkspacePage() {
                         </Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded hover:bg-muted" title="Link" onClick={() => {
                           const ta = document.querySelector(`textarea[data-page-id="${pageId}"]`) as HTMLTextAreaElement;
-                          if (ta) { const s = ta.selectionStart; const e = ta.selectionEnd; const text = content.content; const selected = text.substring(s, e); setPageContents(prev => ({ ...prev, [pageId]: { ...prev[pageId], content: text.substring(0, s) + '[' + (selected || 'text') + '](url)' + text.substring(e) }})); }
+                          const s = ta?.selectionStart ?? content.content.length;
+                          const e = ta?.selectionEnd ?? content.content.length;
+                          const selected = content.content.substring(s, e);
+                          setLinkDialog({ pageId, start: s, end: e, linkText: selected || '', linkUrl: '' });
                         }}>
                           <LinkIcon className="h-4 w-4" />
                         </Button>
@@ -1165,16 +1228,37 @@ export default function WorkspacePage() {
                   )}
                   <div className="flex-1 overflow-auto">
                     <div className="max-w-4xl mx-auto p-8">
-                      <textarea
-                        data-page-id={pageId}
-                        className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f7a4a]"
-                        placeholder="Start writing your notes here..."
-                        value={content.content}
-                        onChange={(e) => setPageContents((prev) => ({
-                          ...prev,
-                          [pageId]: { ...prev[pageId], content: e.target.value },
-                        }))}
-                      />
+                      {docPreviewPageId === pageId ? (
+                        <div className="min-h-[500px] text-lg leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:text-lg [&_h3]:font-semibold [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-bold [&_em]:italic [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-muted [&_blockquote]:pl-4 [&_blockquote]:italic [&_hr]:my-4">
+                          <ReactMarkdown
+                            components={{
+                              a: ({ href, children }) => (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                            }}
+                          >
+                            {content.content || '*No content yet*'}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <textarea
+                          data-page-id={pageId}
+                          className="w-full min-h-[500px] p-4 text-lg leading-relaxed resize-none border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f7a4a]"
+                          placeholder="Start writing your notes here..."
+                          value={content.content}
+                          onChange={(e) => setPageContents((prev) => ({
+                            ...prev,
+                            [pageId]: { ...prev[pageId], content: e.target.value },
+                          }))}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1604,6 +1688,79 @@ export default function WorkspacePage() {
                   disabled={!newItemTitle.trim() || isCreatingItem}
                 >
                   {isCreatingItem ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Link dialog */}
+      {linkDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                Insert link
+              </CardTitle>
+              <CardDescription>Enter link text and URL. The link will open in a new tab when clicked.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Link text</label>
+                <Input
+                  placeholder="Display text"
+                  value={linkDialog.linkText}
+                  onChange={(e) => setLinkDialog((d) => d ? { ...d, linkText: e.target.value } : d)}
+                  onKeyDown={(e) => e.key === 'Enter' && (document.getElementById('link-url-input') as HTMLInputElement)?.focus()}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL</label>
+                <Input
+                  id="link-url-input"
+                  placeholder="https://..."
+                  value={linkDialog.linkUrl}
+                  onChange={(e) => setLinkDialog((d) => d ? { ...d, linkUrl: e.target.value } : d)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const content = pageContents[linkDialog.pageId];
+                      if (!content || !linkDialog.linkUrl.trim()) return;
+                      const { pageId, start, end, linkText, linkUrl } = linkDialog;
+                      const text = content.content;
+                      const insert = '[' + (linkText.trim() || linkUrl) + '](' + linkUrl.trim() + ')';
+                      setPageContents((prev) => ({
+                        ...prev,
+                        [pageId]: { ...prev[pageId], content: text.substring(0, start) + insert + text.substring(end) },
+                      }));
+                      setLinkDialog(null);
+                    }
+                    if (e.key === 'Escape') setLinkDialog(null);
+                  }}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setLinkDialog(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    const content = pageContents[linkDialog.pageId];
+                    if (!content || !linkDialog.linkUrl.trim()) return;
+                    const { pageId, start, end, linkText, linkUrl } = linkDialog;
+                    const text = content.content;
+                    const insert = '[' + (linkText.trim() || linkUrl) + '](' + linkUrl.trim() + ')';
+                    setPageContents((prev) => ({
+                      ...prev,
+                      [pageId]: { ...prev[pageId], content: text.substring(0, start) + insert + text.substring(end) },
+                    }));
+                    setLinkDialog(null);
+                  }}
+                  disabled={!linkDialog.linkUrl.trim()}
+                >
+                  Insert
                 </Button>
               </div>
             </CardContent>
