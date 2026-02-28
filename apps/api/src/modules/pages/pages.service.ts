@@ -26,6 +26,7 @@ export class PagesService {
         workspaceId: dto.workspaceId,
         title: dto.title,
         parentId: dto.parentId,
+        tags: dto.tags ?? [],
         order: (maxOrder._max.order || 0) + 1,
         // Create empty doc and canvas
         doc: {
@@ -165,6 +166,7 @@ export class PagesService {
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { doc: { plainText: { contains: query, mode: 'insensitive' } } },
+          { tags: { has: query } },
         ],
       },
       include: {

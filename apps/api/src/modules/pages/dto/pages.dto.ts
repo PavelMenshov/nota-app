@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, MaxLength, MinLength, IsEnum } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsArray } from 'class-validator';
 
 export class CreatePageDto {
   @ApiProperty({ example: 'cuid123' })
@@ -16,6 +16,13 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  @ApiPropertyOptional({ example: ['lecture', 'exam'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  tags?: string[];
 }
 
 export class UpdatePageDto {
@@ -41,6 +48,13 @@ export class UpdatePageDto {
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  @ApiPropertyOptional({ example: ['lecture', 'exam'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  tags?: string[];
 }
 
 export class GeneratePageShareLinkDto {

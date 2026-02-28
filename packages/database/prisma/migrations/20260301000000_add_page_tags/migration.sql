@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "pages" ADD COLUMN IF NOT EXISTS "tags" TEXT[] DEFAULT ARRAY[]::TEXT[];

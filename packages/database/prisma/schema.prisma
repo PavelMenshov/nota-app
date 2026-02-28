@@ -143,6 +143,9 @@ model Page {
   icon        String?
   coverImage  String?
   
+  // Tags for search and filtering
+  tags        String[] @default([])
+  
   // Share link settings
   shareLink    String?  @unique
   shareLinkEnabled Boolean @default(false)

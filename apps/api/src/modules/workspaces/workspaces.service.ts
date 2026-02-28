@@ -7,6 +7,72 @@ import { v4 as uuidv4 } from 'uuid';
 export class WorkspacesService {
   constructor(private prisma: PrismaService) {}
 
+  async createDemo(userId: string) {
+    const workspace = await this.prisma.workspace.create({
+      data: {
+        name: 'Demo Course (Pitch)',
+        description: 'Test workspace for demo — Blackboard-style structure. Use folders and pages to organize your course.',
+        members: {
+          create: {
+            userId,
+            role: 'OWNER',
+          },
+        },
+      },
+      include: {
+        members: true,
+      },
+    });
+
+    const createPage = async (
+      title: string,
+      order: number,
+      parentId?: string,
+    ) => {
+      return this.prisma.page.create({
+        data: {
+          workspaceId: workspace.id,
+          title,
+          order,
+          parentId: parentId || null,
+          doc: {
+            create: {
+              content: { type: 'doc', content: [] },
+              plainText: '',
+            },
+          },
+          canvas: {
+            create: {
+              content: { elements: [], viewport: { x: 0, y: 0, zoom: 1 } },
+            },
+          },
+        },
+      });
+    };
+
+    await createPage('Syllabus', 0);
+    const module1 = await createPage('Module 1 — Introduction', 1);
+    await createPage('Week 1: Getting started', 0, module1.id);
+    await createPage('Week 2: Core concepts', 1, module1.id);
+    const module2 = await createPage('Module 2 — Assignments', 2);
+    await createPage('Assignment 1', 0, module2.id);
+    await createPage('Assignment 2', 1, module2.id);
+
+    return this.prisma.workspace.findUnique({
+      where: { id: workspace.id },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, email: true, name: true, avatarUrl: true },
+            },
+          },
+        },
+        pages: { orderBy: { order: 'asc' } },
+      },
+    });
+  }
+
   async create(userId: string, dto: CreateWorkspaceDto) {
     const name = (dto.name ?? '').trim();
     if (!name) {

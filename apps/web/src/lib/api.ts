@@ -270,7 +270,7 @@ export const workspacesApi = {
       id: string;
       name: string;
       description: string | null;
-      pages: Array<{ id: string; title: string; icon: string | null }>;
+      pages: Array<{ id: string; title: string; icon: string | null; parentId?: string | null }>;
       members: Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>;
     }>(`/api/workspaces/${id}`, { token }),
 
@@ -283,6 +283,12 @@ export const workspacesApi = {
 
   delete: (token: string, id: string) =>
     fetchApi<{ success: boolean }>(`/api/workspaces/${id}`, { method: 'DELETE', token }),
+
+  createDemo: (token: string) =>
+    fetchApi<{ id: string; name: string }>('/api/workspaces/demo', {
+      method: 'POST',
+      token,
+    }),
 
   addMember: (token: string, workspaceId: string, data: { email: string; role?: string }) =>
     fetchApi<{ id: string }>(`/api/workspaces/${workspaceId}/members`, {
@@ -351,7 +357,7 @@ export const pagesApi = {
       sources: Array<{ id: string; fileName: string; fileUrl: string; pageCount: number | null }>;
     }>(`/api/pages/${id}`, { token }),
 
-  update: (token: string, id: string, data: { title?: string; icon?: string; coverImage?: string }) =>
+  update: (token: string, id: string, data: { title?: string; icon?: string; coverImage?: string; tags?: string[] }) =>
     fetchApi<{ id: string; title: string }>(`/api/pages/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

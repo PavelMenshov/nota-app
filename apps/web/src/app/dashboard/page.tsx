@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [loadingCoursesId, setLoadingCoursesId] = useState<string | null>(null);
   const [showLinkWorkspaceModal, setShowLinkWorkspaceModal] = useState<{ integrationId: string } | null>(null);
   const [linkingWorkspaceId, setLinkingWorkspaceId] = useState<string | null>(null);
+  const [isCreatingDemo, setIsCreatingDemo] = useState(false);
   const router = useRouter();
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -148,6 +149,22 @@ export default function DashboardPage() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleCreateDemo = async () => {
+    if (!token) return;
+    setIsCreatingDemo(true);
+    try {
+      const workspace = await workspacesApi.createDemo(token);
+      toast({ title: 'Demo workspace created!' });
+      loadWorkspaces();
+      router.push(`/workspace/${workspace.id}`);
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Failed to create demo workspace.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    } finally {
+      setIsCreatingDemo(false);
     }
   };
 
@@ -382,13 +399,23 @@ export default function DashboardPage() {
                 Organize pages, docs, and PDFs in one place.
               </p>
             </div>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="w-full sm:w-auto h-10 px-5 rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New workspace
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCreateDemo}
+                disabled={isCreatingDemo}
+                className="h-10 px-5 rounded-md font-medium"
+              >
+                {isCreatingDemo ? 'Creating...' : 'Demo for pitch'}
+              </Button>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="w-full sm:w-auto h-10 px-5 rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New workspace
+              </Button>
+            </div>
           </div>
 
           {workspaces.length === 0 ? (
@@ -400,13 +427,23 @@ export default function DashboardPage() {
             <p className="text-muted-foreground mt-2 text-sm max-w-sm mx-auto">
               Create your first workspace to get started.
             </p>
-            <Button
-              className="mt-6 h-10 px-5 rounded-md font-medium"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create workspace
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
+              <Button
+                variant="outline"
+                className="h-10 px-5 rounded-md font-medium"
+                onClick={handleCreateDemo}
+                disabled={isCreatingDemo}
+              >
+                {isCreatingDemo ? 'Creating...' : 'Load demo for pitch'}
+              </Button>
+              <Button
+                className="h-10 px-5 rounded-md font-medium"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create workspace
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

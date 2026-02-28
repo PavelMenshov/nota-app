@@ -38,6 +38,13 @@ export class WorkspacesController {
     return this.workspacesService.findAll(req.user.userId);
   }
 
+  @Post('demo')
+  @ApiOperation({ summary: 'Create a demo workspace for pitch (Blackboard-style)' })
+  @ApiResponse({ status: 201, description: 'Demo workspace created' })
+  async createDemo(@Request() req: { user: { userId: string } }) {
+    return this.workspacesService.createDemo(req.user.userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a workspace by ID' })
   @ApiResponse({ status: 200, description: 'Workspace details' })
