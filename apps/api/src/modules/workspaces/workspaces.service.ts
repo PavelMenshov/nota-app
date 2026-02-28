@@ -11,7 +11,7 @@ export class WorkspacesService {
     const workspace = await this.prisma.workspace.create({
       data: {
         name: 'Demo Course (Pitch)',
-        description: 'Test workspace for demo — Blackboard-style structure. Use folders and pages to organize your course.',
+        description: 'Sample academic workspace for demos and pitches. Contains pre-filled Syllabus, module overviews, and a canvas example — ideal for showing Nota to stakeholders.',
         members: {
           create: {
             userId,
@@ -24,10 +24,36 @@ export class WorkspacesService {
       },
     });
 
+    const emptyDoc = { type: 'doc' as const, content: [] };
+    const emptyPlain = '';
+
+    const docContent = (
+      blocks: Array<{ type: 'paragraph' | 'heading'; level?: number; text: string }>,
+    ) => {
+      const content = blocks.map((b) =>
+        b.type === 'heading'
+          ? {
+              type: 'heading' as const,
+              attrs: { level: b.level ?? 2 },
+              content: [{ type: 'text' as const, text: b.text }],
+            }
+          : {
+              type: 'paragraph' as const,
+              content: [{ type: 'text' as const, text: b.text }],
+            },
+      );
+      return {
+        json: { type: 'doc' as const, content },
+        plainText: blocks.map((b) => b.text).join('\n\n'),
+      };
+    };
+
     const createPage = async (
       title: string,
       order: number,
       parentId?: string,
+      doc?: { json: object; plainText: string },
+      canvas?: { elements: object[]; viewport: { x: number; y: number; zoom: number } },
     ) => {
       return this.prisma.page.create({
         data: {
@@ -37,25 +63,60 @@ export class WorkspacesService {
           parentId: parentId || null,
           doc: {
             create: {
-              content: { type: 'doc', content: [] },
-              plainText: '',
+              content: (doc?.json ?? emptyDoc) as object,
+              plainText: doc?.plainText ?? emptyPlain,
             },
           },
           canvas: {
             create: {
-              content: { elements: [], viewport: { x: 0, y: 0, zoom: 1 } },
+              content: (canvas ?? { elements: [], viewport: { x: 0, y: 0, zoom: 1 } }) as object,
             },
           },
         },
+        include: { doc: true, canvas: true },
       });
     };
 
-    await createPage('Syllabus', 0);
-    const module1 = await createPage('Module 1 — Introduction', 1);
-    await createPage('Week 1: Getting started', 0, module1.id);
+    const syllabusDoc = docContent([
+      { type: 'heading', level: 1, text: 'Course Syllabus' },
+      { type: 'paragraph', text: 'Welcome to the demo course. This workspace shows how Nota brings notes, whiteboards, and PDFs together on a single page.' },
+      { type: 'heading', level: 2, text: 'Learning objectives' },
+      { type: 'paragraph', text: '• Understand the structure of a Nota workspace (Doc, Canvas, Sources).\n• Use the Canvas to brainstorm and map ideas.\n• Attach PDFs in Sources and extract highlights into your notes.' },
+      { type: 'heading', level: 2, text: 'Schedule' },
+      { type: 'paragraph', text: 'Module 1 — Introduction (Weeks 1–2). Module 2 — Assignments (see Assignment 1 and 2). Use the Tasks and Calendar tabs in the sidebar to track deadlines and events.' },
+    ]);
+
+    const module1Doc = docContent([
+      { type: 'heading', level: 1, text: 'Module 1 — Introduction' },
+      { type: 'paragraph', text: 'This module covers the basics. Open the Doc tab to edit this text, the Canvas tab to add sticky notes and shapes, and the Sources tab to upload PDFs.' },
+      { type: 'paragraph', text: 'Tip: Use AI (Summary / Flashcards) from the toolbar to generate a summary or flashcard set from this page.' },
+    ]);
+
+    const week1Doc = docContent([
+      { type: 'heading', level: 1, text: 'Week 1: Getting started' },
+      { type: 'paragraph', text: 'First steps: create pages, add content in Doc, and try the Canvas board. Invite collaborators via the workspace share link.' },
+    ]);
+
+    const assignment1Doc = docContent([
+      { type: 'heading', level: 1, text: 'Assignment 1' },
+      { type: 'paragraph', text: 'Due: see Tasks. Submit your work as described in the course policy. Attach supporting PDFs in the Sources tab and reference them in your Doc.' },
+    ]);
+
+    const demoCanvasElements = [
+      { id: 'demo-1', type: 'sticky-note', x: 80, y: 60, width: 160, height: 100, text: 'Ideas for the pitch', color: '#FEF08A', tag: 'demo' },
+      { id: 'demo-2', type: 'sticky-note', x: 280, y: 80, width: 140, height: 80, text: 'Doc + Canvas + PDF', color: '#BBF7D0' },
+      { id: 'demo-3', type: 'sticky-note', x: 460, y: 70, width: 150, height: 90, text: 'Collaboration & sharing', color: '#BFDBFE' },
+    ];
+
+    await createPage('Syllabus', 0, undefined, syllabusDoc);
+    const module1 = await createPage('Module 1 — Introduction', 1, undefined, module1Doc);
+    await createPage('Week 1: Getting started', 0, module1.id, week1Doc, {
+      elements: demoCanvasElements,
+      viewport: { x: 0, y: 0, zoom: 1 },
+    });
     await createPage('Week 2: Core concepts', 1, module1.id);
     const module2 = await createPage('Module 2 — Assignments', 2);
-    await createPage('Assignment 1', 0, module2.id);
+    await createPage('Assignment 1', 0, module2.id, assignment1Doc);
     await createPage('Assignment 2', 1, module2.id);
 
     return this.prisma.workspace.findUnique({
