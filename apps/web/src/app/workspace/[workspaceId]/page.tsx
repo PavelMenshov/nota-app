@@ -1176,6 +1176,7 @@ export default function WorkspacePage() {
                         </Button>
                       </div>
                     </div>
+                    </div>
                   </div>
                   {/* Attached files + Search in PDFs */}
                   {content.sources.length > 0 && (

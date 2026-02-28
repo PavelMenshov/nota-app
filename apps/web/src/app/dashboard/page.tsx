@@ -359,7 +359,7 @@ export default function DashboardPage() {
           onClick={() => setShowCreateModal(false)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowCreateModal(false); }}
+          onKeyDown={(e) => { if (e.key === ' ') setShowCreateModal(false); }}
           aria-label="Close modal"
         >
           <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
@@ -375,6 +375,7 @@ export default function DashboardPage() {
                   placeholder="e.g. Machine Learning Course"
                   value={newWorkspaceName}
                   onChange={(e) => setNewWorkspaceName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (newWorkspaceName.trim() && !isCreating) handleCreateWorkspace(); } }}
                   autoFocus
                   className="rounded-md h-10"
                 />
@@ -386,6 +387,7 @@ export default function DashboardPage() {
                   placeholder="Brief description..."
                   value={newWorkspaceDesc}
                   onChange={(e) => setNewWorkspaceDesc(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (newWorkspaceName.trim() && !isCreating) handleCreateWorkspace(); } }}
                   className="rounded-md h-10"
                 />
               </div>
@@ -409,7 +411,7 @@ export default function DashboardPage() {
           onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowEditModal(false); setEditingWorkspace(null); } }}
+          onKeyDown={(e) => { if (e.key === ' ') { setShowEditModal(false); setEditingWorkspace(null); } }}
           aria-label="Close modal"
         >
           <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
@@ -420,11 +422,26 @@ export default function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-ws-name" className="text-sm font-medium">Name</Label>
-                <Input id="edit-ws-name" placeholder="Workspace name" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus className="rounded-md h-10" />
+                <Input
+                  id="edit-ws-name"
+                  placeholder="Workspace name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (editName.trim() && !isEditing) handleEditWorkspace(); } }}
+                  autoFocus
+                  className="rounded-md h-10"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-ws-desc" className="text-sm font-medium">Description (optional)</Label>
-                <Input id="edit-ws-desc" placeholder="Brief description..." value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="rounded-md h-10" />
+                <Input
+                  id="edit-ws-desc"
+                  placeholder="Brief description..."
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (editName.trim() && !isEditing) handleEditWorkspace(); } }}
+                  className="rounded-md h-10"
+                />
               </div>
               <div className="flex gap-3 pt-1">
                 <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}>Cancel</Button>
