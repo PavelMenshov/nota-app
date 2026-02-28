@@ -12,7 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { WorkspacesService } from './workspaces.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateWorkspaceDto, UpdateWorkspaceDto, AddMemberDto, UpdateMemberRoleDto, GenerateShareLinkDto } from './dto/workspaces.dto';
+import { CreateWorkspaceDto, UpdateWorkspaceDto, AddMemberDto, UpdateMemberRoleDto, GenerateShareLinkDto, LinkWorkspaceLmsDto } from './dto/workspaces.dto';
 
 @ApiTags('workspaces')
 @Controller('workspaces')
@@ -113,6 +113,17 @@ export class WorkspacesController {
     @Body() dto: GenerateShareLinkDto,
   ) {
     return this.workspacesService.generateShareLink(id, req.user.userId, dto.role);
+  }
+
+  @Post(':id/lms')
+  @ApiOperation({ summary: 'Link workspace to an LMS integration' })
+  @ApiResponse({ status: 200, description: 'Workspace linked to LMS' })
+  async linkLms(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() dto: LinkWorkspaceLmsDto,
+  ) {
+    return this.workspacesService.linkLms(id, req.user.userId, dto.integrationId);
   }
 
   @Post('join/:shareLink')

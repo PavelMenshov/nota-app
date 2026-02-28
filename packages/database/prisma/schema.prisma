@@ -40,6 +40,7 @@ model User {
   exportJobs         ExportJob[]
   pdfAnnotations     PDFAnnotation[]
   flashcardSets      FlashcardSet[]
+  lmsIntegrations    LmsIntegration[]
 
   @@map("users")
 }
@@ -103,10 +104,12 @@ model Workspace {
   updatedAt   DateTime @updatedAt
   
   // Relations
-  members       WorkspaceMember[]
-  pages         Page[]
-  tasks         Task[]
-  calendarEvents CalendarEvent[]
+  members          WorkspaceMember[]
+  pages            Page[]
+  tasks            Task[]
+  calendarEvents   CalendarEvent[]
+  lmsIntegrationId String?   @unique
+  lmsIntegration   LmsIntegration? @relation(fields: [lmsIntegrationId], references: [id], onDelete: SetNull)
 
   @@map("workspaces")
 }
@@ -539,4 +542,62 @@ enum JobStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// ================================
+// LMS (Learning Management System)
+// ================================
+
+enum LmsProvider {
+  BLACKBOARD
+  CANVAS
+  MOODLE
+}
+
+model LmsIntegration {
+  id           String       @id @default(cuid())
+  userId       String
+  provider     LmsProvider
+  baseUrl      String       @db.Text
+  accessToken  String       @db.Text  // Stored as-is for demo; encrypt in production
+  refreshToken String?      @db.Text
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
+  workspaces Workspace[]
+
+  @@map("lms_integrations")
+}
+
+model Course {
+  id               String    @id @default(cuid())
+  lmsIntegrationId String
+  externalId       String
+  name             String
+  code             String?
+  term             String?
+  syncedAt         DateTime  @default(now())
+  
+  lmsIntegration LmsIntegration @relation(fields: [lmsIntegrationId], references: [id], onDelete: Cascade)
+  assignments    Assignment[]
+
+  @@unique([lmsIntegrationId, externalId])
+  @@map("lms_courses")
+}
+
+model Assignment {
+  id        String    @id @default(cuid())
+  courseId  String
+  externalId String
+  name      String
+  dueDate   DateTime?
+  points    Float?
+  
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, externalId])
+  @@map("lms_assignments")
 }

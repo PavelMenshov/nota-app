@@ -16,6 +16,7 @@ import { AIModule } from './modules/ai/ai.module';
 import { ExportModule } from './modules/export/export.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { FilesModule } from './modules/files/files.module';
+import { LmsModule } from './modules/lms/lms.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 
 @Module({
@@ -43,6 +44,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
     AIModule,
     ExportModule,
     RealtimeModule,
+    LmsModule,
   ],
   controllers: [AppController],
   providers: [

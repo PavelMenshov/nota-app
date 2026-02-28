@@ -255,6 +255,21 @@ export class WorkspacesService {
     });
   }
 
+  async linkLms(workspaceId: string, userId: string, integrationId: string) {
+    await this.checkPermission(workspaceId, userId, ['OWNER', 'EDITOR']);
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    await this.prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { lmsIntegrationId: integrationId },
+    });
+    return { success: true, integrationId };
+  }
+
   async joinByShareLink(shareLink: string, userId: string) {
     const workspace = await this.prisma.workspace.findUnique({
       where: { shareLink },

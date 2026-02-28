@@ -58,3 +58,10 @@ export class GenerateShareLinkDto {
   @IsEnum(['EDITOR', 'VIEWER'])
   role?: 'EDITOR' | 'VIEWER';
 }
+
+export class LinkWorkspaceLmsDto {
+  @ApiProperty({ example: 'cuid_integration_id' })
+  @IsString()
+  @MinLength(1)
+  integrationId!: string;
+}

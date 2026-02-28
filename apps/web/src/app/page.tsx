@@ -4,607 +4,360 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { NotaIcon } from '@/components/NotaIcon';
+import { useInView } from '@/hooks/use-in-view';
+import { cn } from '@/lib/utils';
 
-// Use environment variable or default to localhost for API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+const FOCUS_RING =
+  'focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md';
+
+function Reveal({
+  children,
+  className,
+  style,
+}: Readonly<{
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}>) {
+  const { ref, visible } = useInView();
+  return (
+    <div
+      ref={ref}
+      data-visible={visible}
+      className={cn('animate-fade-slide-up', className)}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { ref: featuresSectionRef, visible: featuresSectionVisible } =
+    useInView({ rootMargin: '0px 0px -5% 0px' });
+
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const features = [
+    {
+      title: 'Notes & docs',
+      description:
+        'Rich documents with version history, share links, and role-based access. One page can host multiple sources.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Canvas & whiteboard',
+      description:
+        'Sketch, brainstorm, and collaborate in real time. Switch between doc and canvas without leaving the page.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'PDFs & annotations',
+      description:
+        'Upload PDFs to any page. Highlight, annotate, and pull highlights into your doc with one click.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Workspaces & pages',
+      description:
+        'Organize by course or project. Nested pages with doc, canvas, and PDF sources—linkable and shareable.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Real-time collaboration',
+      description:
+        'Edit docs and canvas together. Presence, optional cursors, and conflict-free sync for study groups and faculty.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Tasks & calendar',
+      description:
+        'Tasks with deadlines and status linked to pages. Calendar events for deadlines and office hours.',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const steps = [
+    { step: 1, title: 'Create a workspace', body: 'Sign up free and create a workspace—e.g. a course or project.' },
+    { step: 2, title: 'Add pages & surfaces', body: 'Add pages. Each page gets doc, canvas, and PDF—use what you need.' },
+    { step: 3, title: 'Collaborate & share', body: 'Invite others, set roles, and export to PDF or DOCX when you\'re done.' },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="#top" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground no-underline">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">N</span>
-            </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Link
+            href="#top"
+            className={cn('flex items-center gap-2.5 font-semibold tracking-tight text-foreground no-underline', FOCUS_RING)}
+          >
+            <NotaIcon size={32} className="shrink-0" />
             Nota
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="#core" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors">Features</Link>
-            <Link href="#docs" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors">Docs</Link>
+            <Link href="#features" className={cn('text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors', FOCUS_RING)}>
+              Features
+            </Link>
+            <Link href="#how-it-works" className={cn('text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors', FOCUS_RING)}>
+              How it works
+            </Link>
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/auth/login" className="hidden sm:inline-flex">
-              <Button variant="ghost" size="sm" className="rounded-md h-9">Sign in</Button>
+              <Button variant="ghost" size="sm" className={cn('rounded-md h-9', FOCUS_RING)}>
+                Sign in
+              </Button>
             </Link>
             <Link href="/auth/register">
-              <Button size="sm" className="rounded-md h-9 bg-primary hover:bg-primary/90">Get started</Button>
+              <Button size="sm" className={cn('rounded-md h-9 bg-primary hover:bg-primary/90', FOCUS_RING)}>
+                Get started
+              </Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden h-9 w-9 rounded-md border border-border flex items-center justify-center"
+              className={cn('md:hidden h-9 w-9 rounded-md border border-border flex items-center justify-center', FOCUS_RING)}
               aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
         </div>
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border py-2 px-4 flex flex-col gap-1">
-            <Link href="#core" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground py-2">Features</Link>
-            <Link href="#docs" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground py-2">Docs</Link>
+            <Link href="#features" onClick={() => setMobileMenuOpen(false)} className={cn('text-sm text-muted-foreground hover:text-foreground py-2', FOCUS_RING)}>
+              Features
+            </Link>
+            <Link href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className={cn('text-sm text-muted-foreground hover:text-foreground py-2', FOCUS_RING)}>
+              How it works
+            </Link>
           </div>
         )}
       </header>
 
       <main id="top" className="relative">
-        {/* Hero */}
-        <section className="pt-[62px] pb-7">
-          <div className="max-w-[1140px] mx-auto px-6">
-            {/* Kicker */}
-            <div className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12.5px] font-bold">
-              <div className="w-[9px] h-[9px] rounded-full bg-[#21a061] shadow-[0_0_0_4px_rgba(31,122,74,0.10)]" />
-              For students and faculty — notes, PDFs, and canvas in one place
-            </div>
-
-            {/* H1 */}
-            <h1 className="mt-3.5 text-[clamp(38px,5vw,64px)] font-extrabold leading-[1.02] tracking-[-0.05em] text-[#141414]">
-              One workspace for notes, canvas, and PDFs -{' '}
-              <span className="text-[#1f7a4a]">connected by design</span>.
-            </h1>
-
-            {/* Subtitle */}
-            <p className="mt-3.5 max-w-[62ch] text-[#5b6167] text-[15.5px] leading-[1.7]">
-              Nota is the academic &ldquo;page-first&rdquo; OS: a workspace contains pages, and each page can host surfaces
-              (doc, canvas, PDFs). Everything stays linkable, versioned, and shareable - without visual noise.
-            </p>
-
-            {/* CTAs */}
-            <div className="mt-[18px] flex flex-wrap items-center gap-2.5">
-              <Link href="/auth/register">
-                <Button size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)]">
-                  Start free
+        {/* Hero — one headline + CTA */}
+        <section className="pt-16 pb-12 sm:pt-20 sm:pb-16">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <Reveal>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground">
+                Notes, canvas & PDFs in one workspace.{' '}
+                <span className="text-primary">Built for academia.</span>
+              </h1>
+              <p className="mt-5 max-w-2xl text-muted-foreground text-lg leading-relaxed">
+                The page-first workspace that replaces fragmented tools: docs, whiteboards, and PDFs live on each page. Versioned, shareable, and designed for students and faculty—without the clutter.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href="/auth/register" className={cn('inline-flex', FOCUS_RING)}>
+                  <Button
+                    size="lg"
+                    className="h-12 px-7 text-base font-semibold rounded-full cta-primary-shimmer cta-shimmer-animate text-white border-0 shadow-[0_16px_34px_rgba(31,122,74,0.18)]"
+                  >
+                    Get started free
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className={cn('h-12 px-7 text-base font-semibold rounded-full border-border bg-card/80 hover:bg-card', FOCUS_RING)}
+                  onClick={scrollToFeatures}
+                >
+                  Try demo
                 </Button>
-              </Link>
-              <Link href="#core">
-                <Button variant="ghost" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] hover:bg-[rgba(255,255,255,0.90)] hover:border-[rgba(20,20,20,0.14)] text-[#141414]">
-                  See features
-                </Button>
-              </Link>
-            </div>
-
-            {/* Showcase */}
-            <div className="mt-[22px] rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] overflow-hidden">
-              {/* Showcase header */}
-              <div className="h-11 flex items-center justify-between px-3.5 border-b border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.78)]">
-                <div className="flex gap-2 items-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[rgba(255,92,92,0.78)]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[rgba(255,201,71,0.80)]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[rgba(56,196,112,0.80)]" />
-                </div>
-                <div className="font-mono text-[11px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)]">
-                  Nota • workspace preview
-                </div>
-                <div className="font-mono text-[11px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)] opacity-60 hidden sm:block">
-                  pages • docs • pdf
-                </div>
               </div>
+            </Reveal>
+          </div>
+        </section>
 
-              {/* Showcase body */}
-              <div className="p-3.5 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-3.5">
-                {/* Page preview */}
-                <div className="rounded-2xl border border-[rgba(20,20,20,0.07)] bg-white p-[18px] min-h-[420px] relative">
-                  <div className="w-[38px] h-[38px] rounded-xl border border-[rgba(20,20,20,0.07)] bg-[rgba(31,122,74,0.08)] grid place-items-center text-[#1f7a4a] font-black text-lg">
-                    E
+        {/* Social proof — For universities */}
+        <section className="py-10 sm:py-14 border-y border-border/60 bg-muted/30">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <Reveal>
+              <p className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                For universities & institutions
+              </p>
+              <p className="mt-3 text-center text-muted-foreground max-w-2xl mx-auto text-base">
+                Replace fragmented tools with one workspace. Nota fits your existing workflows and integrates with university data and LMS—so students and faculty stay in one place.
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Features — one cohesive section with stagger on scroll */}
+        <section
+          id="features"
+          ref={featuresSectionRef}
+          data-visible={featuresSectionVisible}
+          className="py-14 sm:py-20 features-section-reveal"
+        >
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <Reveal>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                Everything you need in one place
+              </h2>
+              <p className="mt-3 text-muted-foreground text-lg max-w-2xl">
+                Workspaces, pages, and three surfaces per page: doc, canvas, and PDF. Built for academic use.
+              </p>
+            </Reveal>
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="feature-card landing-card-hover rounded-2xl border border-border bg-card p-6 h-full flex flex-col"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    {feature.icon}
                   </div>
-                  <h3 className="mt-3 text-[22px] font-bold tracking-tight">Acme Inc. • Semester Hub</h3>
-
-                  <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="rounded-[14px] border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.75)] p-3">
-                      <h4 className="font-mono text-[12px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)]">Policies</h4>
-                      <div className="mt-2.5 flex flex-col gap-2">
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Course outline
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">doc</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Reading list
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">pdf</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Study system
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">canvas</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-[14px] border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.75)] p-3">
-                      <h4 className="font-mono text-[12px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)]">Company Priorities</h4>
-                      <div className="mt-2.5 flex flex-col gap-2">
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Problem Set 4
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">task</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Office hours
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">event</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                          Exam prep
-                          <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">plan</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3.5 rounded-[14px] border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.75)] p-3">
-                    <h4 className="font-mono text-[12px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)]">Roadmap</h4>
-                    <div className="mt-2.5 flex flex-col gap-2">
-                      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                        Launch AI-assisted onboarding
-                        <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">status</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                        Migrate to modern cloud
-                        <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">priority</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-[rgba(20,20,20,0.06)] bg-[rgba(255,255,255,0.8)] text-[#5b6167] text-[13px]">
-                        Build GTM capabilities
-                        <span className="ml-auto font-mono text-[10px] tracking-[0.10em] uppercase px-2 py-1.5 rounded-full border border-[rgba(31,122,74,0.20)] bg-[rgba(31,122,74,0.08)] text-[rgba(20,20,20,0.72)]">by team</span>
-                      </div>
-                    </div>
-                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-muted-foreground text-sm leading-relaxed flex-1">
+                    {feature.description}
+                  </p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                {/* AI Assistant */}
-                <div className="rounded-2xl border border-[rgba(20,20,20,0.07)] bg-white p-3.5 min-h-[420px] flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-2.5 pb-2 border-b border-[rgba(20,20,20,0.07)]">
+        {/* How it works */}
+        <section id="how-it-works" className="py-14 sm:py-20 bg-muted/30">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <Reveal>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                How it works
+              </h2>
+              <p className="mt-3 text-muted-foreground text-lg max-w-2xl">
+                Get from signup to your first page in minutes.
+              </p>
+            </Reveal>
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
+              {steps.map((item) => (
+                <Reveal key={item.step}>
+                  <div className="flex sm:flex-col gap-4 sm:gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0" aria-hidden>
+                      {item.step}
+                    </div>
                     <div>
-                      <div className="font-bold text-[13px]">AI Study Assistant</div>
-                      <div className="text-[12px] text-[#7a828a]">Grounded in your pages & PDFs</div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
+                        {item.body}
+                      </p>
                     </div>
-                    <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-[rgba(20,20,20,0.12)] bg-[rgba(255,255,255,0.9)] text-[rgba(20,20,20,0.78)]">⌘ K</kbd>
                   </div>
-
-                  <div className="border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.80)] rounded-[14px] px-3 py-2.5 text-[#5b6167] text-[13px] leading-[1.6]">
-                    <strong className="text-[#141414]">Turn this page into a hub</strong> for your course notes, roadmap, and priorities.
-                    I can create a &ldquo;Roadmap&rdquo; database, extract highlights from PDFs into doc blocks, and schedule review sessions.
-                  </div>
-
-                  <div className="border border-[rgba(20,20,20,0.07)] bg-[rgba(251,250,247,0.80)] rounded-[14px] px-3 py-2.5 text-[#5b6167] text-[13px] leading-[1.6]">
-                    <strong className="text-[#141414]">Found:</strong> 96 results across <em>docs</em>, <em>PDF highlights</em>, and <em>tasks</em>.<br />
-                    Want me to group by <strong className="text-[#141414]">Week</strong> or by <strong className="text-[#141414]">Course</strong>?
-                  </div>
-
-                  <div className="mt-auto flex gap-2.5 flex-wrap pt-2.5 border-t border-[rgba(20,20,20,0.07)] text-[#7a828a] text-[12px]">
-                    <span className="inline-flex items-center gap-2 px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.85)]">
-                      <div className="w-2 h-2 rounded-full bg-[#21a061]" />
-                      All sources
-                    </span>
-                    <span className="inline-flex items-center gap-2 px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.85)]">
-                      <div className="w-2 h-2 rounded-full bg-[#21a061]" />
-                      Versioned
-                    </span>
-                    <span className="inline-flex items-center gap-2 px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.85)]">
-                      <div className="w-2 h-2 rounded-full bg-[#21a061]" />
-                      Shareable
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </Reveal>
+              ))}
             </div>
+          </div>
+        </section>
 
-            {/* CTA box */}
-            <div className="mt-[18px] rounded-[26px] border border-[rgba(20,20,20,0.07)] bg-gradient-to-b from-[rgba(255,255,255,0.86)] to-[rgba(255,255,255,0.70)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] p-5 flex items-center justify-between gap-3.5 flex-wrap" id="get-started">
-              <div>
-                <h3 className="text-lg font-bold tracking-tight">Ready to try Nota?</h3>
-                <p className="mt-1.5 text-[#5b6167] text-[13.5px] leading-[1.6] max-w-[70ch]">
-                  Create a free account, add a workspace, and start with docs, canvas, and PDFs in one place.
+        {/* Final CTA */}
+        <section className="py-14 sm:py-20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <Reveal>
+              <div className="rounded-2xl border border-border bg-card p-8 sm:p-10 text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  Ready to try Nota?
+                </h2>
+                <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+                  Create a free account, add a workspace, and start with notes, canvas, and PDFs in one place.
                 </p>
-              </div>
-              <div className="flex gap-2.5 flex-wrap">
-                <Link href="/auth/register">
-                  <Button size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)]">
-                    Create workspace
-                  </Button>
-                </Link>
-                <Link href="#core">
-                  <Button variant="ghost" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] hover:bg-[rgba(255,255,255,0.90)] hover:border-[rgba(20,20,20,0.14)]">
-                    See features
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Desktop App Section */}
-        <section className="py-[60px]" id="desktop">
-          <div className="max-w-[1140px] mx-auto px-6">
-            <div className="rounded-[26px] border border-[rgba(20,20,20,0.10)] bg-gradient-to-br from-[rgba(255,255,255,0.92)] to-[rgba(255,255,255,0.85)] shadow-[0_20px_50px_rgba(20,20,20,0.10)] overflow-hidden">
-              <div className="p-8 md:p-12">
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                  {/* Left side - Text content */}
-                  <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(31,122,74,0.10)] text-[#1f7a4a] text-xs font-bold mb-4">
-                      NEW
-                    </div>
-                    <h2 className="text-4xl font-extrabold tracking-tight text-[#141414] mb-4">
-                      Now Available as Desktop App
-                    </h2>
-                    <p className="text-[#5b6167] text-base leading-relaxed mb-6">
-                      Experience Nota with native desktop performance. Enjoy faster loading times, offline support, 
-                      and seamless system integration on Windows, macOS, and Linux.
-                    </p>
-                    
-                    {/* Feature list */}
-                    <ul className="space-y-3 mb-6 list-none">
-                      <li className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center shrink-0">
-                          <svg className="w-3.5 h-3.5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
-                        <span className="text-sm font-medium text-[#141414]">3x faster performance with native rendering</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center shrink-0">
-                          <svg className="w-3.5 h-3.5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                        </div>
-                        <span className="text-sm font-medium text-[#141414]">Enhanced security with sandboxed environment</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center shrink-0">
-                          <svg className="w-3.5 h-3.5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
-                        </div>
-                        <span className="text-sm font-medium text-[#141414]">Work offline, sync automatically when online</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-lg bg-[rgba(31,122,74,0.12)] flex items-center justify-center shrink-0">
-                          <svg className="w-3.5 h-3.5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        </div>
-                        <span className="text-sm font-medium text-[#141414]">Automatic updates to always get latest features</span>
-                      </li>
-                    </ul>
-
-                    {/* CTA */}
-                    <div className="flex flex-wrap gap-3">
-                      <Link href="/auth/register">
-                        <Button size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)]">
-                          Get Started Free
-                        </Button>
-                      </Link>
-                      <Link href="#docs">
-                        <Button variant="outline" size="lg" className="h-12 px-6 text-[13px] font-bold rounded-full border-[rgba(20,20,20,0.15)] bg-white hover:bg-[rgba(255,255,255,0.92)]">
-                          View Documentation
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Right side - Visual/Stats */}
-                  <div className="space-y-4">
-                    {/* Platform badges — simple text icons for reliable display */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#0078d4]/10 text-[#0078d4] font-bold text-sm mb-2">W</div>
-                        <div className="text-xs font-bold text-[#141414]">Windows</div>
-                        <div className="text-[10px] text-[#7a828a] mt-1">10, 11</div>
-                      </div>
-                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#555]/10 text-[#141414] font-bold text-sm mb-2">M</div>
-                        <div className="text-xs font-bold text-[#141414]">macOS</div>
-                        <div className="text-[10px] text-[#7a828a] mt-1">11+</div>
-                      </div>
-                      <div className="text-center p-4 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.90)]">
-                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#fcc624]/20 text-[#141414] font-bold text-sm mb-2">L</div>
-                        <div className="text-xs font-bold text-[#141414]">Linux</div>
-                        <div className="text-[10px] text-[#7a828a] mt-1">Ubuntu, Fedora</div>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="p-6 rounded-2xl border border-[rgba(20,20,20,0.08)] bg-gradient-to-br from-[rgba(31,122,74,0.05)] to-transparent">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-3xl font-bold text-[#1f7a4a]">100%</div>
-                          <div className="text-xs text-[#5b6167] mt-1">Feature Parity</div>
-                        </div>
-                        <div>
-                          <div className="text-3xl font-bold text-[#1f7a4a]">Free</div>
-                          <div className="text-xs text-[#5b6167] mt-1">Open Source</div>
-                        </div>
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-[rgba(20,20,20,0.08)]">
-                        <div className="text-xs text-[#7a828a]">
-                          ✓ Same features across web and desktop
-                          <br />
-                          ✓ Seamless sync between all devices
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Download note */}
-                    <p className="text-xs text-center text-[#7a828a] px-4">
-                      Create an account to access download options for your platform
-                    </p>
-                  </div>
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  <Link href="/auth/register" className={cn('inline-flex', FOCUS_RING)}>
+                    <Button
+                      size="lg"
+                      className="h-12 px-7 text-base font-semibold rounded-full cta-primary-shimmer text-white border-0 shadow-[0_16px_34px_rgba(31,122,74,0.18)]"
+                    >
+                      Get started free
+                    </Button>
+                  </Link>
+                  <Link href="/auth/login" className={cn('inline-flex', FOCUS_RING)}>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className={cn('h-12 px-7 text-base font-semibold rounded-full', FOCUS_RING)}
+                    >
+                      Sign in
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
-
-        {/* Sections */}
-        <Section
-          id="core"
-          title="Workspaces & pages"
-          description="Organize everything in workspaces. Each page has Doc, Canvas, and PDF sources — with version history, sharing links, and roles (owner / editor / viewer)."
-        >
-          <FeatureRow
-            title="One page, three surfaces"
-            description="Switch between document, whiteboard, and PDFs without leaving the page. Built for academic workflows: notes, sketches, and readings in one place."
-            capabilities={[
-              'Workspaces and nested pages',
-              'Doc, Canvas, and PDF sources per page',
-              'Version history and activity log',
-              'Share links and role-based access',
-            ]}
-          />
-        </Section>
-
-        <Section
-          id="collab"
-          title="Real-time collaboration"
-          description="Edit docs and canvas together. See who's online, optional cursors, and conflict-free sync."
-        >
-          <FeatureRow
-            title="Collaborate without the noise"
-            description="Presence indicators and optional cursors. Calm, focused collaboration for study groups and faculty."
-            capabilities={[
-              'Live presence (who\'s online)',
-              'Real-time doc and canvas editing',
-              'Comments on doc and canvas',
-            ]}
-          />
-        </Section>
-
-        <Section
-          id="pdf"
-          title="PDFs and annotations"
-          description="Upload PDFs to any page. Highlight, annotate, and pull highlights into your doc with one click."
-        >
-          <FeatureRow
-            title="PDFs as first-class materials"
-            description="Highlight text, add notes, and extract highlights into your document — with source and page references."
-            capabilities={[
-              'Upload and view PDFs per page',
-              'Highlights, notes, and comments',
-              'Extract highlights to doc blocks',
-              'Full-text search in PDFs',
-            ]}
-          />
-        </Section>
-
-        <Section
-          id="export"
-          title="Export"
-          description="Export any page or doc to PDF or DOCX. Runs as a background job — you get a download link when it's ready."
-        >
-          <FeatureRow
-            title="Export and share"
-            description="One-click export to PDF or DOCX. Optional bridge to Notion."
-            capabilities={[
-              'Export to PDF and DOCX',
-              'Job queue + download when ready',
-            ]}
-          />
-        </Section>
-
-        <Section
-          id="tasks"
-          title="Tasks & calendar"
-          description="Tasks with deadlines and status, linked to pages. Calendar events for deadlines and office hours."
-        >
-          <FeatureRow
-            title="Stay on track"
-            description="Tasks and calendar live next to your pages. Link tasks to specific pages and events to workspaces."
-            capabilities={[
-              'Tasks: title, due date, status, link to page',
-              'Calendar events for workspace or page',
-            ]}
-          />
-        </Section>
-
-        {/* Documentation & Resources Section */}
-        <Section
-          id="docs"
-          title="Documentation & Resources"
-          description="Everything you need to get started with Nota. Explore our guides, API documentation, and community resources."
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Getting Started Guide */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">Getting Started</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Quick start guide to set up Nota, create your first workspace, and understand the core concepts.
-              </p>
-              <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                Read guide
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* API Documentation */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">API Documentation</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Comprehensive API reference for integrating Nota into your applications. RESTful endpoints and WebSocket support.
-              </p>
-              <a href={`${API_URL}/api/docs`} target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                View API docs
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-
-            {/* Architecture Guide */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">Architecture Overview</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Learn about Nota&apos;s microservices design, tech stack, and how different components work together.
-              </p>
-              <a href="https://github.com/PavelMenshov/nota-platform#-architecture" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                Explore architecture
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-
-            {/* User Guide */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">User Guide</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Detailed tutorials on using Nota features: docs, canvas, PDF annotations, tasks, and collaboration tools.
-              </p>
-              <Link href="#core" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                Browse tutorials
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Security & Privacy */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">Security & Privacy</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Learn about our security practices, data encryption, GDPR compliance, and how we protect your academic work.
-              </p>
-              <Link href="#security" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                Security info
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Community */}
-            <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-5 hover:shadow-[0_14px_32px_rgba(20,20,20,0.10)] transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(31,122,74,0.18)] to-[rgba(31,122,74,0.06)] flex items-center justify-center mb-3">
-                <svg className="w-5 h-5 text-[#1f7a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold tracking-tight mb-2">Community & Support</h3>
-              <p className="text-[#5b6167] text-[13px] leading-[1.7] mb-3">
-                Join our community of students and educators. Get help, share ideas, and contribute to the project.
-              </p>
-              <a href="https://github.com/PavelMenshov/nota-platform/issues" target="_blank" rel="noopener noreferrer" className="text-[#1f7a4a] text-[13px] font-semibold hover:underline inline-flex items-center gap-1">
-                Join community
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </Section>
 
         {/* Footer */}
-        <footer className="py-[34px] pb-[50px] border-t border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.35)] mt-20">
-          <div className="max-w-[1140px] mx-auto px-6">
-            <div className="flex items-start justify-between gap-[18px] flex-wrap">
+        <footer className="py-12 border-t border-border bg-muted/20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-8">
               <div>
-                <div className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
+                <div className="flex items-center gap-2.5 font-extrabold tracking-tight text-foreground">
                   <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
                   <span>Nota</span>
                 </div>
-                <p className="mt-2 text-[#5b6167] text-[13px] max-w-[60ch]">
-                  Calm UI, strong model: workspace › pages › surfaces. Versioned, shareable, collaborative - designed for academic flow.
+                <p className="mt-2 text-muted-foreground text-sm max-w-md">
+                  Calm UI, strong model: workspace › pages › surfaces. Versioned, shareable, collaborative—designed for academic flow.
                 </p>
-                
-                {/* Contact Information */}
-                <div className="mt-4 space-y-2">
-                  <h4 className="text-[13px] font-bold text-[#141414] tracking-tight">Contact Our Team</h4>
-                  <div className="flex flex-col gap-1.5 text-[12px] text-[#5b6167]">
-                    <a href="mailto:team@nota.app" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      team@nota.app
-                    </a>
-                    <a href="https://github.com/PavelMenshov/nota-platform" target="_blank" rel="noopener noreferrer" className="hover:text-[#1f7a4a] transition-colors flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                      </svg>
-                      GitHub Repository
-                    </a>
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <span>Hong Kong Polytechnic University</span>
-                    </div>
-                  </div>
+                <div className="mt-4 flex flex-wrap gap-3 text-sm">
+                  <a
+                    href={`${API_URL}/api/docs`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn('text-primary hover:underline', FOCUS_RING)}
+                  >
+                    API docs
+                  </a>
+                  <a
+                    href="https://github.com/PavelMenshov/nota-platform"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn('text-primary hover:underline', FOCUS_RING)}
+                  >
+                    GitHub
+                  </a>
                 </div>
               </div>
-
-              <div className="flex gap-2.5 flex-wrap">
-                <Link href="#core" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
-                  Core
+              <div className="flex flex-wrap gap-2">
+                <Link href="#features" className={cn('px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors', FOCUS_RING)}>
+                  Features
                 </Link>
-                <Link href="#collab" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
-                  Collab
+                <Link href="#how-it-works" className={cn('px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors', FOCUS_RING)}>
+                  How it works
                 </Link>
-                <Link href="#pdf" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
-                  PDF
-                </Link>
-                <Link href="#export" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
-                  Export
-                </Link>
-                <Link href="#tasks" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
-                  Tasks
-                </Link>
-                <Link href="/auth/login" className="px-2.5 py-2 rounded-full border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.70)] text-[#5b6167] text-[12px] font-semibold hover:border-[rgba(20,20,20,0.14)] hover:text-[#141414]">
+                <Link href="/auth/login" className={cn('px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors', FOCUS_RING)}>
                   Sign in
                 </Link>
               </div>
@@ -612,80 +365,6 @@ export default function HomePage() {
           </div>
         </footer>
       </main>
-    </div>
-  );
-}
-
-// Section component
-function Section({
-  id,
-  title,
-  description,
-  children,
-}: {
-  id: string;
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="py-[60px]">
-      <div className="max-w-[1140px] mx-auto px-6">
-        <h2 className="text-[clamp(24px,3vw,40px)] font-bold tracking-[-0.04em] leading-[1.1] text-[#141414]">
-          {title}
-        </h2>
-        <p className="mt-3 text-[#5b6167] text-[15px] leading-[1.75] max-w-[72ch]">
-          {description}
-        </p>
-        <div className="mt-[22px] grid grid-cols-1 gap-3">
-          {children}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// FeatureRow component
-function FeatureRow({
-  title,
-  description,
-  note,
-  capabilities,
-}: {
-  title: string;
-  description: string;
-  note?: string;
-  capabilities: string[];
-}) {
-  return (
-    <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.72)] shadow-[0_10px_28px_rgba(20,20,20,0.06)] p-[18px] grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-[18px] items-start">
-      <div>
-        <h3 className="text-base font-bold tracking-tight">{title}</h3>
-        <p className="mt-2 text-[#5b6167] text-[13.5px] leading-[1.7]">{description}</p>
-        {note && (
-          <p className="mt-2.5 text-[#7a828a] text-[13.5px]">
-            {note.split(/(`[^`]+`)/g).map((part, i) =>
-              part.startsWith('`') && part.endsWith('`') ? (
-                <kbd key={i} className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-[rgba(20,20,20,0.12)] bg-[rgba(255,255,255,0.9)] text-[rgba(20,20,20,0.78)]">
-                  {part.slice(1, -1)}
-                </kbd>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        )}
-      </div>
-      <div className="rounded-2xl border border-[rgba(20,20,20,0.08)] bg-[rgba(255,255,255,0.86)] p-3.5">
-        <div className="font-mono text-[11px] tracking-[0.12em] uppercase text-[rgba(20,20,20,0.55)] mb-2.5">
-          Capabilities
-        </div>
-        <ul className="space-y-1.5 text-[#5b6167] text-[13px] leading-[1.7] list-disc pl-[18px]">
-          {capabilities.map((cap, i) => (
-            <li key={i}>{cap}</li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }

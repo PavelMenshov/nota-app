@@ -741,6 +741,44 @@ export const sourcesApi = {
     ),
 };
 
+// LMS API
+export const lmsApi = {
+  listIntegrations: (token: string) =>
+    fetchApi<Array<{
+      id: string;
+      provider: string;
+      baseUrl: string;
+      createdAt: string;
+      _count: { courses: number };
+    }>>('/api/lms/integrations', { token }),
+
+  createIntegration: (
+    token: string,
+    data: { provider: string; baseUrl: string; accessToken: string; refreshToken?: string }
+  ) =>
+    fetchApi<{ id: string; provider: string; baseUrl: string; createdAt: string }>(
+      '/api/lms/integrations',
+      { method: 'POST', body: JSON.stringify(data), token }
+    ),
+
+  getCourses: (token: string, integrationId: string) =>
+    fetchApi<Array<{
+      id: string;
+      externalId: string;
+      name: string;
+      code: string | null;
+      term: string | null;
+      syncedAt: string;
+    }>>(`/api/lms/integrations/${integrationId}/courses`, { token }),
+
+  linkWorkspace: (token: string, workspaceId: string, integrationId: string) =>
+    fetchApi<{ success: boolean; integrationId: string }>(`/api/workspaces/${workspaceId}/lms`, {
+      method: 'POST',
+      body: JSON.stringify({ integrationId }),
+      token,
+    }),
+};
+
 // Export API
 export const exportApi = {
   create: (token: string, type: 'PDF' | 'DOCX' | 'MARKDOWN', config: { pageIds?: string[]; workspaceId?: string }) =>

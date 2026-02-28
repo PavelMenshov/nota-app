@@ -119,3 +119,91 @@
 .bg-gradient-radial {
   background: radial-gradient(circle, var(--tw-gradient-stops));
 }
+
+/* Landing page scroll-in and hover animations */
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-hover-scale {
+  to {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes cta-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.animate-fade-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.animate-fade-slide-up[data-visible='true'] {
+  animation: fade-slide-up 0.6s ease-out forwards;
+}
+
+/* Features section: stagger cards when section enters viewport */
+.features-section-reveal[data-visible='true'] .feature-card {
+  animation: fade-slide-up 0.5s ease-out forwards;
+}
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(1) { animation-delay: 0ms; }
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(2) { animation-delay: 60ms; }
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(3) { animation-delay: 120ms; }
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(4) { animation-delay: 180ms; }
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(5) { animation-delay: 240ms; }
+.features-section-reveal[data-visible='true'] .feature-card:nth-child(6) { animation-delay: 300ms; }
+
+/* Start feature cards hidden so stagger can reveal them */
+.features-section-reveal .feature-card {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.landing-card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.landing-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 14px 40px rgba(20, 20, 20, 0.1);
+}
+.landing-card-hover:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.cta-primary-shimmer {
+  background: linear-gradient(
+    90deg,
+    #1f7a4a 0%,
+    #21a061 25%,
+    #2dd176 50%,
+    #21a061 75%,
+    #1f7a4a 100%
+  );
+  background-size: 200% auto;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+.cta-primary-shimmer:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 16px 34px rgba(31, 122, 74, 0.25);
+}
+.cta-primary-shimmer:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.cta-primary-shimmer.cta-shimmer-animate {
+  animation: cta-shimmer 4s linear infinite;
+}
