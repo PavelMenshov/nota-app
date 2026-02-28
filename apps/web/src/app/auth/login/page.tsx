@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { NotaIcon } from '@/components/NotaIcon';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,28 +21,19 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       const response = await authApi.login(email, password);
       setAuth(response.accessToken, response.user);
-      toast({ 
-        title: 'Welcome back!', 
-        description: `Logged in as ${response.user.email}` 
-      });
+      toast({ title: 'Welcome back!', description: `Logged in as ${response.user.email}` });
       router.push('/welcome');
     } catch (error) {
       let title = 'Login failed';
       let description = 'Invalid credentials';
-      
       if (error instanceof ApiError) {
         if (error.isNetworkError) {
-          title = 'Connection Error';
+          title = 'Connection error';
           description = error.message;
-          
-          // Add helpful info if available
-          if (error.helpText) {
-            description += '\n\n' + error.helpText;
-          }
+          if (error.helpText) description += '\n\n' + error.helpText;
         } else if (error.statusCode === 401) {
           description = 'Invalid email or password. Please try again.';
         } else {
@@ -52,97 +42,72 @@ export default function LoginPage() {
       } else if (error instanceof Error) {
         description = error.message;
       }
-      
-      toast({
-        title,
-        description,
-        variant: 'destructive',
-      });
+      toast({ title, description, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fbfaf7] via-[#fbfaf7] to-[#f8f6f2]">
-      {/* Radial gradient overlays */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-[18%] w-[900px] h-[520px] bg-gradient-radial from-[rgba(31,122,74,0.10)] to-transparent opacity-55 -translate-y-[10%]" />
-        <div className="absolute top-0 right-[18%] w-[900px] h-[520px] bg-gradient-radial from-[rgba(31,122,74,0.06)] to-transparent opacity-60" />
-      </div>
-
-      {/* Topbar */}
-      <header className="sticky top-0 z-20 bg-[rgba(251,250,247,0.76)] backdrop-blur-[10px] border-b border-[rgba(20,20,20,0.07)]">
-        <div className="max-w-[1140px] mx-auto px-6">
-          <div className="h-[70px] flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight text-[#141414]">
-              <NotaIcon size={34} className="shadow-[0_10px_20px_rgba(31,122,74,0.12)]" />
-              <span className="text-base">Nota</span>
-            </Link>
-            <Link href="/auth/register">
-              <Button variant="ghost" size="sm" className="h-10 px-3.5 text-[13px] font-bold rounded-full border border-[rgba(20,20,20,0.10)] bg-white hover:bg-[rgba(255,255,255,0.92)] hover:border-[rgba(20,20,20,0.16)] shadow-[0_10px_26px_rgba(20,20,20,0.06)] transition-all">
-                Create account
-              </Button>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
+      <header className="border-b border-border bg-card">
+        <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2.5 text-foreground no-underline font-semibold tracking-tight">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">N</span>
+            </div>
+            Nota
+          </Link>
+          <Link href="/auth/register">
+            <Button variant="outline" size="sm" className="rounded-md h-9">
+              Create account
+            </Button>
+          </Link>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="relative flex items-center justify-center px-4 py-20">
-        <div className="w-full max-w-[440px]">
-          {/* Card */}
-          <div className="rounded-[20px] border border-[rgba(20,20,20,0.07)] bg-[rgba(255,255,255,0.92)] shadow-[0_14px_40px_rgba(20,20,20,0.08)] backdrop-blur-[10px] p-8">
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[400px]">
+          <div className="rounded-lg border border-border bg-card shadow-lg p-8">
             <div className="space-y-6">
-              {/* Header */}
-              <div className="space-y-2">
-                <h1 className="text-2xl font-extrabold tracking-tight text-[#141414]">Sign in to Nota</h1>
-                <p className="text-[14px] text-[#5b6167]">Enter your credentials to access your workspace</p>
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Sign in</h1>
+                <p className="text-sm text-muted-foreground mt-1">Enter your credentials to access your workspaces.</p>
               </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[13px] font-bold text-[#141414]">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@example.com"
+                    placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-11 rounded-xl border-[rgba(20,20,20,0.10)] bg-white focus:border-[#1f7a4a] focus:ring-[rgba(31,122,74,0.12)] text-[14px]"
+                    className="h-10 rounded-md"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[13px] font-bold text-[#141414]">Password</Label>
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-11 rounded-xl border-[rgba(20,20,20,0.10)] bg-white focus:border-[#1f7a4a] focus:ring-[rgba(31,122,74,0.12)] text-[14px]"
+                    className="h-10 rounded-md"
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full h-12 text-[13px] font-bold rounded-full bg-gradient-to-b from-[#1f7a4a] to-[rgba(31,122,74,0.92)] border border-[rgba(31,122,74,0.45)] text-white shadow-[0_16px_34px_rgba(31,122,74,0.18)] hover:from-[#1f7a4a] hover:to-[rgba(31,122,74,0.86)] hover:border-[rgba(31,122,74,0.55)] transition-all disabled:opacity-50"
-                >
-                  {isLoading ? 'Signing in...' : 'Sign in'}
+                <Button type="submit" disabled={isLoading} className="w-full h-10 rounded-md bg-primary hover:bg-primary/90">
+                  {isLoading ? 'Signing in…' : 'Sign in'}
                 </Button>
               </form>
-
-              {/* Footer */}
-              <div className="text-center">
-                <p className="text-[13px] text-[#5b6167]">
-                  Don&apos;t have an account?{' '}
-                  <Link href="/auth/register" className="font-bold text-[#1f7a4a] hover:underline">
-                    Create one
-                  </Link>
-                </p>
-              </div>
+              <p className="text-center text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link href="/auth/register" className="font-medium text-primary hover:underline">
+                  Create one
+                </Link>
+              </p>
             </div>
           </div>
         </div>

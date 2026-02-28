@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, FolderOpen, LogOut, Settings, Search, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
+import { Plus, FolderOpen, LogOut, Settings, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { workspacesApi } from '@/lib/api';
+import { workspacesApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface Workspace {
@@ -77,9 +77,12 @@ export default function DashboardPage() {
       setNewWorkspaceDesc('');
       loadWorkspaces();
     } catch (error) {
+      let message = 'Failed to create workspace. Check that the API is running and you are logged in.';
+      if (error instanceof ApiError) message = error.message;
+      else if (error instanceof Error) message = error.message;
       toast({
         title: 'Error',
-        description: 'Failed to create workspace',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -156,55 +159,48 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border/80 bg-background/95 backdrop-blur-md">
-        <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2.5 text-foreground hover:opacity-90 transition-opacity">
-              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+    <div className="min-h-screen bg-[hsl(var(--background))]">
+      {/* Header — clean app bar */}
+      <header className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
+        <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-8">
+            <Link href="/dashboard" className="flex items-center gap-2.5 text-foreground no-underline">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">N</span>
               </div>
-              <span className="text-lg font-semibold tracking-tight">Nota</span>
+              <span className="font-semibold text-foreground tracking-tight">Nota</span>
             </Link>
-            <div className="hidden md:block w-px h-6 bg-border" />
-            <div className="hidden md:flex items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search workspaces..."
-                  className="w-56 lg:w-72 pl-9 h-9 rounded-lg border-border bg-muted/50 text-sm placeholder:text-muted-foreground focus:bg-background"
-                />
-              </div>
-            </div>
+            <nav className="hidden md:flex items-center gap-1">
+              <span className="text-sm font-medium text-foreground px-3 py-2 rounded-md bg-muted/80">Workspaces</span>
+            </nav>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground hidden sm:inline max-w-[180px] truncate">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:inline max-w-[200px] truncate">
               {user?.email}
             </span>
             <div className="relative">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-8 w-8 rounded-md"
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               >
                 <Settings className="h-4 w-4" />
               </Button>
               {showProfileDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card shadow-lg z-20 p-3">
-                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-border">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-primary" />
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border bg-card shadow-lg z-20 py-2">
+                  <div className="flex items-center gap-3 px-3 py-2 mb-2 border-b border-border">
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+                      <p className="font-medium text-sm truncate text-foreground">{user?.name || 'User'}</p>
                       <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive rounded-lg"
+                    className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive rounded-none h-9 px-3"
                     onClick={handleLogout}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
@@ -217,59 +213,59 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 py-8 lg:py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
+      {/* Main */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Workspaces
             </h1>
-            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
-              Create and manage your academic workspaces
+            <p className="text-muted-foreground mt-1 text-sm">
+              Organize pages, docs, and PDFs in one place.
             </p>
           </div>
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="w-full sm:w-auto h-10 rounded-lg font-medium shadow-sm bg-primary hover:bg-primary/90"
+            className="w-full sm:w-auto h-10 px-5 rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Workspace
+            New workspace
           </Button>
         </div>
 
         {workspaces.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4 rounded-2xl border border-dashed border-border bg-muted/30">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-              <FolderOpen className="h-8 w-8 text-primary" />
+          <div className="rounded-xl border border-dashed border-border bg-card py-20 px-6 text-center">
+            <div className="mx-auto h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-6">
+              <FolderOpen className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">No workspaces yet</h2>
-            <p className="text-muted-foreground mt-2 text-center max-w-sm">
-              Create your first workspace to organize pages, docs, and PDFs in one place.
+            <h2 className="text-lg font-semibold text-foreground">No workspaces yet</h2>
+            <p className="text-muted-foreground mt-2 text-sm max-w-sm mx-auto">
+              Create your first workspace to get started.
             </p>
             <Button
-              className="mt-6 rounded-lg font-medium"
+              className="mt-6 h-10 px-5 rounded-md font-medium"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create Workspace
+              Create workspace
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {workspaces.map((workspace) => (
               <div key={workspace.id} className="relative group">
-                <Link href={`/workspace/${workspace.id}`}>
-                  <Card className="h-full rounded-xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:bg-card cursor-pointer">
-                    <CardHeader className="pb-3">
+                <Link href={`/workspace/${workspace.id}`} className="block">
+                  <Card className="h-full rounded-lg border border-border bg-card transition-all hover:shadow-md hover:border-primary/30 overflow-hidden">
+                    <CardHeader className="pb-2">
                       <div className="flex items-start gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <FolderOpen className="h-6 w-6 text-primary" />
+                        <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FolderOpen className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-base font-semibold leading-tight line-clamp-1">
                             {workspace.name}
                           </CardTitle>
-                          <CardDescription className="mt-1 text-sm">
+                          <CardDescription className="mt-0.5 text-sm">
                             {workspace._count.pages} {workspace._count.pages === 1 ? 'page' : 'pages'}
                           </CardDescription>
                         </div>
@@ -277,19 +273,19 @@ export default function DashboardPage() {
                     </CardHeader>
                     {workspace.description && (
                       <CardContent className="pt-0">
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
                           {workspace.description}
                         </p>
                       </CardContent>
                     )}
                   </Card>
                 </Link>
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <div className="relative">
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 rounded-lg bg-card/90 border border-border shadow-sm hover:bg-muted"
+                      className="h-8 w-8 rounded-md bg-card border border-border shadow-sm"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -299,9 +295,9 @@ export default function DashboardPage() {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                     {activeMenu === workspace.id && (
-                      <div className="absolute right-0 top-full mt-1.5 w-40 rounded-lg border border-border bg-card shadow-lg z-20 py-1 overflow-hidden">
+                      <div className="absolute right-0 top-full mt-1 w-36 rounded-md border border-border bg-card shadow-lg py-1">
                         <button
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-foreground"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -312,7 +308,7 @@ export default function DashboardPage() {
                           Edit
                         </button>
                         <button
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 text-left"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -335,48 +331,47 @@ export default function DashboardPage() {
 
       {/* Create Workspace Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md rounded-xl border border-border shadow-xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Create Workspace</CardTitle>
-              <CardDescription>Add a new workspace for your project or course</CardDescription>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCreateModal(false)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowCreateModal(false); }}
+          aria-label="Close modal"
+        >
+          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold">Create workspace</CardTitle>
+              <CardDescription>Add a new workspace for your project or course.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="create-ws-name" className="text-sm font-medium text-foreground">Name</Label>
+                <Label htmlFor="create-ws-name" className="text-sm font-medium">Name</Label>
                 <Input
                   id="create-ws-name"
-                  placeholder="e.g., Machine Learning Course"
+                  placeholder="e.g. Machine Learning Course"
                   value={newWorkspaceName}
                   onChange={(e) => setNewWorkspaceName(e.target.value)}
                   autoFocus
-                  className="rounded-lg h-10"
+                  className="rounded-md h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-ws-desc" className="text-sm font-medium text-foreground">Description (optional)</Label>
+                <Label htmlFor="create-ws-desc" className="text-sm font-medium">Description (optional)</Label>
                 <Input
                   id="create-ws-desc"
                   placeholder="Brief description..."
                   value={newWorkspaceDesc}
                   onChange={(e) => setNewWorkspaceDesc(e.target.value)}
-                  className="rounded-lg h-10"
+                  className="rounded-md h-10"
                 />
               </div>
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-lg h-10"
-                  onClick={() => setShowCreateModal(false)}
-                >
+              <div className="flex gap-3 pt-1">
+                <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
-                <Button
-                  className="flex-1 rounded-lg h-10"
-                  onClick={handleCreateWorkspace}
-                  disabled={!newWorkspaceName.trim() || isCreating}
-                >
-                  {isCreating ? 'Creating...' : 'Create'}
+                <Button className="flex-1 rounded-md h-10 bg-primary hover:bg-primary/90" onClick={handleCreateWorkspace} disabled={!newWorkspaceName.trim() || isCreating}>
+                  {isCreating ? 'Creating…' : 'Create'}
                 </Button>
               </div>
             </CardContent>
@@ -386,82 +381,56 @@ export default function DashboardPage() {
 
       {/* Edit Workspace Modal */}
       {showEditModal && editingWorkspace && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md rounded-xl border border-border shadow-xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Edit Workspace</CardTitle>
-              <CardDescription>Update workspace name and description</CardDescription>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowEditModal(false); setEditingWorkspace(null); } }}
+          aria-label="Close modal"
+        >
+          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold">Edit workspace</CardTitle>
+              <CardDescription>Update name and description.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-ws-name" className="text-sm font-medium text-foreground">Name</Label>
-                <Input
-                  id="edit-ws-name"
-                  placeholder="Workspace name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  autoFocus
-                  className="rounded-lg h-10"
-                />
+                <Label htmlFor="edit-ws-name" className="text-sm font-medium">Name</Label>
+                <Input id="edit-ws-name" placeholder="Workspace name" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus className="rounded-md h-10" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-ws-desc" className="text-sm font-medium text-foreground">Description (optional)</Label>
-                <Input
-                  id="edit-ws-desc"
-                  placeholder="Brief description..."
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  className="rounded-lg h-10"
-                />
+                <Label htmlFor="edit-ws-desc" className="text-sm font-medium">Description (optional)</Label>
+                <Input id="edit-ws-desc" placeholder="Brief description..." value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="rounded-md h-10" />
               </div>
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-lg h-10"
-                  onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 rounded-lg h-10"
-                  onClick={handleEditWorkspace}
-                  disabled={!editName.trim() || isEditing}
-                >
-                  {isEditing ? 'Saving...' : 'Save'}
-                </Button>
+              <div className="flex gap-3 pt-1">
+                <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}>Cancel</Button>
+                <Button className="flex-1 rounded-md h-10 bg-primary hover:bg-primary/90" onClick={handleEditWorkspace} disabled={!editName.trim() || isEditing}>{isEditing ? 'Saving…' : 'Save'}</Button>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-sm rounded-xl border border-border shadow-xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Delete Workspace</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Are you sure? This will permanently delete this workspace and all its pages.
-              </CardDescription>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowDeleteConfirm(null)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowDeleteConfirm(null); }}
+          aria-label="Close modal"
+        >
+          <Card className="w-full max-w-sm rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold">Delete workspace</CardTitle>
+              <CardDescription>This will permanently delete this workspace and all its pages. This cannot be undone.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-lg h-10"
-                  onClick={() => setShowDeleteConfirm(null)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1 rounded-lg h-10"
-                  onClick={() => handleDeleteWorkspace(showDeleteConfirm)}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </Button>
+                <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
+                <Button variant="destructive" className="flex-1 rounded-md h-10" onClick={() => handleDeleteWorkspace(showDeleteConfirm)} disabled={isDeleting}>{isDeleting ? 'Deleting…' : 'Delete'}</Button>
               </div>
             </CardContent>
           </Card>
