@@ -6,7 +6,7 @@ import {
   Type,
   Square,
   ArrowRight,
-  Image,
+  Image as ImageIcon,
   MessageCircle,
   Trash2,
   Plus,
@@ -282,7 +282,7 @@ export default function CanvasEditor({ initialContent, onSave }: CanvasEditorPro
         <ToolBtn icon={<Type className="h-4 w-4" />} label="Text Block" active={tool === 'text-block'} onClick={() => setTool('text-block')} />
         <ToolBtn icon={<Square className="h-4 w-4" />} label="Shape" active={tool === 'shape'} onClick={() => setTool('shape')} />
         <ToolBtn icon={<ArrowRight className="h-4 w-4" />} label="Connector" active={tool === 'connector'} onClick={() => { setTool('connector'); setConnectingFrom(null); }} />
-        <ToolBtn icon={<Image className="h-4 w-4" />} label="Image Card" active={tool === 'image-card'} onClick={() => setTool('image-card')} />
+        <ToolBtn icon={<ImageIcon className="h-4 w-4" />} label="Image Card" active={tool === 'image-card'} onClick={() => setTool('image-card')} />
         <ToolBtn icon={<MessageCircle className="h-4 w-4" />} label="Comment" active={tool === 'comment'} onClick={() => setTool('comment')} />
         <div className="w-px h-6 bg-border mx-1" />
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleZoom(0.1)} title="Zoom In">

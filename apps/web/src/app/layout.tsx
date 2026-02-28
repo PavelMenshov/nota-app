@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Nota Platform - All-in-One Academic Ecosystem',
@@ -13,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+    <html lang="en" suppressHydrationWarning className={plusJakarta.variable}>
+      <body className="font-sans antialiased min-h-screen bg-background text-foreground">
         {children}
         <Toaster />
       </body>

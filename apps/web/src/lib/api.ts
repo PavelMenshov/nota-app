@@ -409,9 +409,10 @@ export const docApi = {
       token,
     }),
 
-  resolveComment: (token: string, pageId: string, commentId: string) =>
+  resolveComment: (token: string, pageId: string, commentId: string, resolved = true) =>
     fetchApi<{ id: string }>(`/api/pages/${pageId}/doc/comments/${commentId}/resolve`, {
       method: 'PUT',
+      body: JSON.stringify({ resolved }),
       token,
     }),
 

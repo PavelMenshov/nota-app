@@ -121,7 +121,7 @@ export default function WorkspacePage() {
   // Page editor state (per-tab)
   const [pageContents, setPageContents] = useState<Record<string, { title: string; content: string; sources: SourceData[] }>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const [, setIsLoadingPage] = useState(false);
 
   // Folder expand state
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());

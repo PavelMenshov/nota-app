@@ -23,9 +23,11 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/sources.dto';
 import { diskStorage } from 'multer';
 import { extname, join, basename } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 // Ensure uploads directory exists (fallback for multer temp storage)
 const uploadsDir = join(process.cwd(), 'uploads');
@@ -118,8 +120,24 @@ export class SourcesController {
       size: file.size,
       mimeType: file.mimetype,
     };
-    
-    return this.sourcesService.uploadSource(pageId, req.user.userId, fileData);
+
+    let options: { pageCount?: number; extractedText?: string } | undefined;
+    if (file.mimetype === 'application/pdf' && file.path && existsSync(file.path)) {
+      try {
+        const dataBuffer = readFileSync(file.path);
+        const pdfData = await pdfParse(dataBuffer);
+        const text = typeof pdfData.text === 'string' ? pdfData.text : '';
+        const numPages = pdfData.numpages ?? pdfData.numPages ?? pdfData.nbPages;
+        options = {
+          extractedText: text.slice(0, 500_000),
+          pageCount: typeof numPages === 'number' ? numPages : undefined,
+        };
+      } catch {
+        // Non-critical: upload succeeds without extracted text
+      }
+    }
+
+    return this.sourcesService.uploadSource(pageId, req.user.userId, fileData, options);
   }
 
   @Get('sources/files/:filename')

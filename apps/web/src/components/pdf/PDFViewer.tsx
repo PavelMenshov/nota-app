@@ -8,7 +8,6 @@ import {
   ZoomOut,
   Highlighter,
   MessageSquare,
-  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -51,12 +50,13 @@ export default function PDFViewer({
   onCreateAnnotation,
   onDeleteAnnotation,
 }: PDFViewerProps) {
+  void sourceId; // reserved for future use (e.g. deep links)
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
   const [annotationMode, setAnnotationMode] = useState<'none' | 'highlight' | 'comment'>('none');
   const [selectedColor, setSelectedColor] = useState(HIGHLIGHT_COLORS[0]);
   const [commentText, setCommentText] = useState('');
-  const [showAnnotations, setShowAnnotations] = useState(true);
+  const [showAnnotations] = useState(true);
 
   const totalPages = pageCount || 1;
 
@@ -270,7 +270,7 @@ export default function PDFViewer({
                     <p className="mt-1 text-muted-foreground line-clamp-2">{ann.content}</p>
                   )}
                   {ann.selectedText && (
-                    <p className="mt-1 italic text-muted-foreground line-clamp-2">"{ann.selectedText}"</p>
+                    <p className="mt-1 italic text-muted-foreground line-clamp-2">&quot;{ann.selectedText}&quot;</p>
                   )}
                   {ann.user?.name && (
                     <p className="mt-1 text-muted-foreground">— {ann.user.name}</p>

@@ -49,7 +49,7 @@ export class SourcesService {
     pageId: string,
     userId: string,
     file: { filename: string; url: string; size: number; mimeType: string },
-    pageCount?: number,
+    options?: { pageCount?: number; extractedText?: string },
   ) {
     await this.getPageWithAccess(pageId, userId, ['OWNER', 'EDITOR']);
 
@@ -69,7 +69,8 @@ export class SourcesService {
         fileUrl: file.url,
         fileSize: file.size,
         mimeType: file.mimeType,
-        pageCount,
+        pageCount: options?.pageCount,
+        extractedText: options?.extractedText ?? undefined,
       },
     });
 
