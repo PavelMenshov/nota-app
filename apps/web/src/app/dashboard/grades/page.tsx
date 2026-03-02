@@ -205,15 +205,15 @@ export default function MyGradesPage() {
                         disabled={syncingGrades === current.id}
                       >
                         <RefreshCw className={`h-4 w-4 mr-1 ${syncingGrades === current.id ? 'animate-spin' : ''}`} />
-                        {syncingGrades === current.id ? 'Syncing…' : 'Sync from Blackboard'}
+                        {syncingGrades === current.id ? 'Syncing…' : `Sync from ${current.provider}`}
                       </Button>
                     </div>
-                    <CardDescription>Gradebook columns from your courses. Sync to pull latest from LMS.</CardDescription>
+                    <CardDescription>Grades from your courses. Sync to pull latest from Blackboard, Canvas, or Moodle.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {loadingGrades && <p className="text-sm text-muted-foreground">Loading…</p>}
                     {!loadingGrades && (!gradesByCourse || gradesByCourse.length === 0) && (
-                      <p className="text-sm text-muted-foreground">No grades yet. Click &quot;Sync from Blackboard&quot; to pull your grades.</p>
+                      <p className="text-sm text-muted-foreground">No grades yet. Click sync above to pull your grades from your LMS.</p>
                     )}
                     {!loadingGrades && gradesByCourse && gradesByCourse.length > 0 && (
                       <div className="space-y-6">
@@ -266,7 +266,7 @@ export default function MyGradesPage() {
                         disabled={syncingAnnouncements === current.id}
                       >
                         <RefreshCw className={`h-4 w-4 mr-1 ${syncingAnnouncements === current.id ? 'animate-spin' : ''}`} />
-                        {syncingAnnouncements === current.id ? 'Syncing…' : 'Sync from Blackboard'}
+                        {syncingAnnouncements === current.id ? 'Syncing…' : `Sync from ${current.provider}`}
                       </Button>
                     </div>
                     <CardDescription>Course announcements from your LMS.</CardDescription>
@@ -274,7 +274,7 @@ export default function MyGradesPage() {
                   <CardContent>
                     {loadingAnnouncements && <p className="text-sm text-muted-foreground">Loading…</p>}
                     {!loadingAnnouncements && (!announcements || announcements.length === 0) && (
-                      <p className="text-sm text-muted-foreground">No announcements yet. Click &quot;Sync from Blackboard&quot; to pull them.</p>
+                      <p className="text-sm text-muted-foreground">No announcements yet. Click sync above to pull them from your LMS.</p>
                     )}
                     {!loadingAnnouncements && announcements && announcements.length > 0 && (
                       <ul className="space-y-4">

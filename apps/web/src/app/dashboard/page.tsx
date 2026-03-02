@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail, CalendarClock } from 'lucide-react';
+import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail, CalendarClock, ExternalLink, Library, FileCheck, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { useAuthStore } from '@/lib/store';
 import { workspacesApi, lmsApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { NOTA_OPEN_CREATE_WORKSPACE } from '@/components/app/CommandPalette';
+import { getStudentAppLinks } from '@/lib/student-apps';
 
 interface Workspace {
   id: string;
@@ -510,6 +511,41 @@ function DashboardContent() {
               </a>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Calendar events can include a meeting link (Zoom, Meet, Outlook). Use Zoom/Outlook for calls and mail.</p>
+          </section>
+        )}
+
+        {/* Student apps: Google Classroom, Library, Turnitin */}
+        {getStudentAppLinks().length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Student apps</h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Quick links to tools you use for study. Your institution can customize these.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {getStudentAppLinks().map((app) => {
+                const Icon = app.id === 'google-classroom' ? LayoutGrid : app.id === 'library' ? Library : FileCheck;
+                return (
+                  <a
+                    key={app.id}
+                    href={app.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 hover:bg-muted/50 hover:border-primary/30 transition-colors"
+                  >
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground flex items-center gap-1">
+                        {app.label}
+                        <ExternalLink className="h-3.5 w-3 text-muted-foreground shrink-0" />
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{app.description}</p>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
           </section>
         )}
 
