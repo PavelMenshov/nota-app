@@ -527,8 +527,8 @@ function DashboardContent() {
           </section>
         )}
 
-        {/* Student apps: Classroom, Library, Turnitin (customizable in Settings) */}
-        {getStudentAppLinks(quickLinks).length > 0 && (
+        {/* Student apps: Classroom, Library, Turnitin (Outlook/Zoom only in workspace sidebar) */}
+        {getStudentAppLinks(quickLinks, { forDashboard: true }).length > 0 && (
           <section className="mb-10">
             <h2 className="text-lg font-semibold text-foreground mb-3">Student apps</h2>
             <p className="text-sm text-muted-foreground mb-3">
@@ -536,7 +536,7 @@ function DashboardContent() {
               <Link href="/dashboard/settings" className="text-primary hover:underline">Settings</Link>.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {getStudentAppLinks(quickLinks).map((app) => {
+              {getStudentAppLinks(quickLinks, { forDashboard: true }).map((app) => {
                 const Icon = app.id === 'google-classroom' || app.id.startsWith('classroom-custom')
                   ? (app.label.includes('Teams') ? Video : LayoutGrid)
                   : app.id === 'library' || app.id.startsWith('library-custom')

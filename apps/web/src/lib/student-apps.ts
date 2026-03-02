@@ -126,9 +126,12 @@ function buildClassroomLinks(preferences?: QuickLinksPreferences): StudentAppLin
   return links;
 }
 
-function buildOtherLinks(): StudentAppLink[] {
+const SIDEBAR_ONLY_APP_IDS = new Set(['outlook', 'zoom']);
+
+function buildOtherLinks(includeSidebarOnlyApps = true): StudentAppLink[] {
   const apps = [TURNITIN, OUTLOOK, ZOOM];
   return apps
+    .filter((app) => includeSidebarOnlyApps || !SIDEBAR_ONLY_APP_IDS.has(app.id))
     .map((app) => {
       const envUrl = getEnvUrl(app.id);
       if (envUrl === null) return null;
@@ -139,12 +142,22 @@ function buildOtherLinks(): StudentAppLink[] {
     .filter((app): app is StudentAppLink => app != null);
 }
 
+export interface GetStudentAppLinksOptions {
+  /** When true, Outlook and Zoom are excluded (dashboard Student apps). When false/omitted, all links are returned (e.g. workspace sidebar). */
+  forDashboard?: boolean;
+}
+
 /**
  * Returns student app links. Pass optional preferences (from Settings) to use presets and custom library/classroom links.
+ * Use forDashboard: true on the dashboard so Outlook and Zoom only appear in the workspace sidebar.
  */
-export function getStudentAppLinks(preferences?: QuickLinksPreferences): StudentAppLink[] {
+export function getStudentAppLinks(
+  preferences?: QuickLinksPreferences,
+  options?: GetStudentAppLinksOptions,
+): StudentAppLink[] {
+  const includeSidebarOnlyApps = options?.forDashboard !== true;
   const classroom = buildClassroomLinks(preferences);
   const library = buildLibraryLinks(preferences);
-  const others = buildOtherLinks();
+  const others = buildOtherLinks(includeSidebarOnlyApps);
   return [...classroom, ...library, ...others];
 }

@@ -32,7 +32,7 @@ export const zh = {
     invalidCredentials: '邮箱或密码错误，请重试。',
     accountExists: '该邮箱已被注册，请直接登录。',
     continueWith: '或使用以下方式继续',
-    withEmail: '邮箱',
+    withEmail: '使用邮箱登录',
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',

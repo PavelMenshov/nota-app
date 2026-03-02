@@ -30,7 +30,7 @@ export const en = {
     invalidCredentials: 'Invalid email or password. Please try again.',
     accountExists: 'An account with this email already exists. Log in instead.',
     continueWith: 'Or continue with',
-    withEmail: 'Email',
+    withEmail: 'Log in with email',
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',

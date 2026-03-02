@@ -554,11 +554,16 @@ export class WorkspacesService {
       throw new ForbiddenException('User is already a member');
     }
 
+    const role = dto.role || 'VIEWER';
+    if (role === 'PROFESSOR') {
+      throw new ForbiddenException('Professor role is assigned by the system, not by invitation.');
+    }
+
     return this.prisma.workspaceMember.create({
       data: {
         workspaceId,
         userId: user.id,
-        role: dto.role || 'VIEWER',
+        role,
       },
       include: {
         user: {
@@ -607,6 +612,10 @@ export class WorkspacesService {
 
   async updateMemberRole(workspaceId: string, memberId: string, userId: string, role: 'OWNER' | 'PROFESSOR' | 'EDITOR' | 'VIEWER') {
     await this.checkPermission(workspaceId, userId, ['OWNER']);
+
+    if (role === 'PROFESSOR') {
+      throw new ForbiddenException('Professor role is assigned by the system.');
+    }
 
     const member = await this.prisma.workspaceMember.findFirst({
       where: { id: memberId, workspaceId },

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History, Library, LayoutGrid, Video, ExternalLink, FileCheck, MoreVertical } from 'lucide-react';
+import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History, Library, LayoutGrid, Video, ExternalLink, FileCheck, MoreVertical, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,10 +15,30 @@ import { workspacesApi, pagesApi, docApi, canvasApi, sourcesApi, aiApi, settings
 import { getStudentAppLinks } from '@/lib/student-apps';
 import { useToast } from '@/hooks/use-toast';
 import { useLocale } from '@/contexts/LocaleContext';
-import { RichTextEditor, defaultDoc, isProseMirrorDoc } from '@/components/editor/RichTextEditor';
-import CanvasEditor, { type CanvasState } from '@/components/canvas/CanvasEditor';
-import PDFViewer from '@/components/pdf/PDFViewer';
+import { defaultDoc, isProseMirrorDoc } from '@/lib/editor-utils';
 import type { JSONContent } from '@tiptap/react';
+import type { CanvasState } from '@/components/canvas/CanvasEditor';
+
+const EditorPlaceholder = () => (
+  <div className="flex flex-1 items-center justify-center p-8">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
+
+const RichTextEditor = dynamic(
+  () => import('@/components/editor/RichTextEditor').then((m) => ({ default: m.RichTextEditor })),
+  { ssr: false, loading: EditorPlaceholder },
+);
+
+const CanvasEditor = dynamic(
+  () => import('@/components/canvas/CanvasEditor'),
+  { ssr: false, loading: EditorPlaceholder },
+);
+
+const PDFViewer = dynamic(
+  () => import('@/components/pdf/PDFViewer'),
+  { ssr: false, loading: EditorPlaceholder },
+);
 
 type PageMode = 'doc' | 'canvas' | 'sources';
 
@@ -96,7 +117,7 @@ export default function WorkspacePage() {
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER' | 'PROFESSOR'>('VIEWER');
+  const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('VIEWER');
   const [students, setStudents] = useState<Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>>([]);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
@@ -760,7 +781,11 @@ export default function WorkspacePage() {
                     ? (app.label.includes('Teams') ? Video : LayoutGrid)
                     : app.id === 'library' || app.id.startsWith('library-custom')
                       ? Library
-                      : FileCheck;
+                      : app.id === 'outlook'
+                        ? Mail
+                        : app.id === 'zoom'
+                          ? Video
+                          : FileCheck;
                   return (
                     <a
                       key={app.id}
@@ -1266,13 +1291,14 @@ export default function WorkspacePage() {
                             onChange={(e) => handleUpdateMemberRole(m.id, e.target.value)}
                           >
                             <option value="OWNER">Owner</option>
-                            <option value="PROFESSOR">Professor</option>
                             <option value="EDITOR">Editor</option>
                             <option value="VIEWER">Viewer</option>
                           </select>
                         )
                       ) : (
-                        <span className="text-muted-foreground capitalize">{m.role.toLowerCase()}</span>
+                        <span className="text-muted-foreground capitalize">
+                          {(currentMember?.role === 'OWNER' || currentMember?.role === 'PROFESSOR') ? m.role.toLowerCase() : (m.role === 'PROFESSOR' ? 'editor' : m.role.toLowerCase())}
+                        </span>
                       )}
                     </div>
                   ))}
@@ -1313,11 +1339,10 @@ export default function WorkspacePage() {
                 <select
                   className="rounded-md border border-input bg-background px-3 py-2 text-sm w-28"
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER' | 'PROFESSOR')}
+                  onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER')}
                 >
                   <option value="VIEWER">Viewer</option>
                   <option value="EDITOR">Editor</option>
-                  {currentMember?.role === 'OWNER' && <option value="PROFESSOR">Professor</option>}
                 </select>
                 <Button onClick={handleAddMember} disabled={!inviteEmail.trim() || isAddingMember}>
                   {isAddingMember ? 'Adding...' : 'Add'}

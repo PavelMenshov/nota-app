@@ -32,7 +32,7 @@ export const ru: Messages = {
     invalidCredentials: 'Неверный email или пароль.',
     accountExists: 'Аккаунт с этим email уже существует. Войдите.',
     continueWith: 'Или войти через',
-    withEmail: 'Email',
+    withEmail: 'Войти по email',
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',

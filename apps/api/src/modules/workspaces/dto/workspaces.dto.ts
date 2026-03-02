@@ -40,6 +40,7 @@ export class AddMemberDto {
   @IsEmail()
   email!: string;
 
+  /** Invite as EDITOR or VIEWER only. PROFESSOR is system-assigned (service rejects it here). */
   @ApiPropertyOptional({ enum: ['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'], default: 'VIEWER' })
   @IsOptional()
   @IsEnum(['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'])
