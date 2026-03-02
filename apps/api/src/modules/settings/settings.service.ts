@@ -34,9 +34,9 @@ export class SettingsService {
       where: { id: userId },
       select: { preferences: true },
     });
-    const prefs = user?.preferences as { locale?: 'en' | 'zh' } | null;
+    const prefs = user?.preferences as { locale?: string } | null;
     const raw = prefs?.locale ?? 'en';
-    const locale = raw === 'ru' ? 'en' : raw;
+    const locale = raw === 'zh' ? 'zh' : 'en';
     return { locale };
   }
 
