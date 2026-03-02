@@ -142,7 +142,7 @@ export default function MyGradesPage() {
   if (!isAuthenticated || !token) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Sign in to view your grades.</p>
+        <p className="text-muted-foreground">Log in to view your grades.</p>
       </div>
     );
   }

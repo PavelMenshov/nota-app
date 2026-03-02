@@ -83,7 +83,7 @@ export default function PDFViewer({
   useEffect(() => {
     if (!accessToken) {
       setPdfBlobUrl(null);
-      setPdfLoadError('Sign in to view this file');
+      setPdfLoadError('Log in to view this file');
       return () => {};
     }
 

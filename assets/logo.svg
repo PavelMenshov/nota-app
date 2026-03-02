@@ -1,17 +1,6 @@
 <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="nota-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1f7a4a"/>
-      <stop offset="100%" stop-color="#165a36"/>
-    </linearGradient>
-    <linearGradient id="nota-shine" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </linearGradient>
-  </defs>
-  <rect width="100" height="100" rx="22" fill="url(#nota-bg)"/>
-  <rect width="100" height="100" rx="22" fill="url(#nota-shine)"/>
-  <!-- N: left stem, top bar, diagonal, right stem (filled) -->
+  <rect width="100" height="100" rx="22" fill="#1a7c47"/>
+  <!-- N: left stem, diagonal, right stem; dot accent -->
   <path d="M22 78V22h8v36l22-36h8v44h-8V50L30 78H22z" fill="white" fill-rule="evenodd"/>
   <circle cx="66" cy="24" r="5" fill="white"/>
 </svg>

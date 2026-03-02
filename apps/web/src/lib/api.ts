@@ -913,23 +913,16 @@ export const integrationsApi = {
     }),
 };
 
-// Settings API (library & classroom quick-links)
-export type LibraryQuickLinkOption = {
-  provider: 'google' | 'custom';
-  customUrl?: string;
-  customLabel?: string;
-};
-export type ClassroomQuickLinkOption = {
-  provider: 'google' | 'teams' | 'custom';
-  customUrl?: string;
-  customLabel?: string;
-};
+// Settings API (library & classroom quick-links; multiple custom URLs with names)
+export type CustomLink = { url: string; label: string };
+export type LibraryLinks = { preset?: 'google' | 'none'; custom?: CustomLink[] };
+export type ClassroomLinks = { preset?: 'google' | 'teams' | 'none'; custom?: CustomLink[] };
 export type QuickLinksPreferences = {
-  library?: LibraryQuickLinkOption;
-  classroom?: ClassroomQuickLinkOption;
+  library?: LibraryLinks;
+  classroom?: ClassroomLinks;
 };
 
-export type LocaleOption = 'en' | 'ru' | 'zh';
+export type LocaleOption = 'en' | 'zh';
 
 export const settingsApi = {
   getQuickLinks: (token: string) =>

@@ -3,25 +3,45 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, Settings, User, Video, Mail, CheckCircle, BookOpen } from 'lucide-react';
+import { ChevronLeft, Settings, User, Video, Mail, CheckCircle, BookOpen, Plus, Trash2, Monitor, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { authApi, integrationsApi, settingsApi, type QuickLinksPreferences } from '@/lib/api';
+import { authApi, integrationsApi, settingsApi, type QuickLinksPreferences, type CustomLink } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from '@/contexts/LocaleContext';
+
+/** Normalize old API shape (provider/customUrl) to new shape (preset + custom[]) */
+function normalizeQuickLinks(data: QuickLinksPreferences): QuickLinksPreferences {
+  const lib = data.library as { provider?: string; customUrl?: string; customLabel?: string; preset?: string; custom?: CustomLink[] } | undefined;
+  const cls = data.classroom as { provider?: string; customUrl?: string; customLabel?: string; preset?: string; custom?: CustomLink[] } | undefined;
+  const library = lib
+    ? lib.preset !== undefined
+      ? { preset: (lib.preset as 'google' | 'none') || 'google', custom: lib.custom ?? [] }
+      : lib.provider === 'custom' && lib.customUrl
+        ? { preset: 'none' as const, custom: [{ url: lib.customUrl, label: lib.customLabel || 'Library' }] }
+        : { preset: (lib.provider === 'google' ? 'google' : 'none') as 'google' | 'none', custom: [] }
+    : undefined;
+  const classroom = cls
+    ? cls.preset !== undefined
+      ? { preset: (cls.preset as 'google' | 'teams' | 'none') || 'google', custom: cls.custom ?? [] }
+      : cls.provider === 'custom' && cls.customUrl
+        ? { preset: 'none' as const, custom: [{ url: cls.customUrl, label: cls.customLabel || 'Classroom' }] }
+        : { preset: (cls.provider === 'teams' ? 'teams' : cls.provider === 'google' ? 'google' : 'none') as 'google' | 'teams' | 'none', custom: [] }
+    : undefined;
+  return { library, classroom };
+}
 
 export default function DashboardSettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token, user, updateUser, isAuthenticated } = useAuthStore();
+  const { token, user, isAuthenticated } = useAuthStore();
+  const { t } = useLocale();
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [integrations, setIntegrations] = useState<{ zoom: boolean; outlook: boolean } | null>(null);
   const [connectingZoom, setConnectingZoom] = useState(false);
   const [connectingOutlook, setConnectingOutlook] = useState(false);
@@ -29,14 +49,10 @@ export default function DashboardSettingsPage() {
   const [quickLinksSaving, setQuickLinksSaving] = useState(false);
   const oauthHandled = useRef(false);
 
-  // Library: google | custom (with URL and optional label)
-  const [libraryProvider, setLibraryProvider] = useState<'google' | 'custom'>('google');
-  const [libraryCustomUrl, setLibraryCustomUrl] = useState('');
-  const [libraryCustomLabel, setLibraryCustomLabel] = useState('');
-  // Classroom: google | teams | custom
-  const [classroomProvider, setClassroomProvider] = useState<'google' | 'teams' | 'custom'>('google');
-  const [classroomCustomUrl, setClassroomCustomUrl] = useState('');
-  const [classroomCustomLabel, setClassroomCustomLabel] = useState('');
+  const [libraryPreset, setLibraryPreset] = useState<'google' | 'none'>('google');
+  const [libraryCustom, setLibraryCustom] = useState<CustomLink[]>([]);
+  const [classroomPreset, setClassroomPreset] = useState<'google' | 'teams' | 'none'>('google');
+  const [classroomCustom, setClassroomCustom] = useState<CustomLink[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -44,17 +60,9 @@ export default function DashboardSettingsPage() {
       return;
     }
     if (!token) return;
-    authApi
-      .me(token)
-      .then((data) => {
-        setName(data.name ?? '');
-        setAvatarUrl(data.avatarUrl ?? '');
-      })
-      .catch(() => {
-        toast({ title: 'Failed to load profile', variant: 'destructive' });
-      })
-      .finally(() => setIsLoading(false));
-  }, [token, isAuthenticated, router, toast]);
+    setIsLoading(true);
+    authApi.me(token).catch(() => {}).finally(() => setIsLoading(false));
+  }, [token, isAuthenticated, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -66,16 +74,15 @@ export default function DashboardSettingsPage() {
     settingsApi
       .getQuickLinks(token)
       .then((data) => {
-        setQuickLinks(data);
-        if (data.library) {
-          setLibraryProvider(data.library.provider);
-          setLibraryCustomUrl(data.library.customUrl ?? '');
-          setLibraryCustomLabel(data.library.customLabel ?? '');
+        const norm = normalizeQuickLinks(data);
+        setQuickLinks(norm);
+        if (norm.library) {
+          setLibraryPreset((norm.library.preset as 'google' | 'none') ?? 'google');
+          setLibraryCustom(norm.library.custom ?? []);
         }
-        if (data.classroom) {
-          setClassroomProvider(data.classroom.provider);
-          setClassroomCustomUrl(data.classroom.customUrl ?? '');
-          setClassroomCustomLabel(data.classroom.customLabel ?? '');
+        if (norm.classroom) {
+          setClassroomPreset((norm.classroom.preset as 'google' | 'teams' | 'none') ?? 'google');
+          setClassroomCustom(norm.classroom.custom ?? []);
         }
       })
       .catch(() => {});
@@ -126,58 +133,29 @@ export default function DashboardSettingsPage() {
     if (!token) return;
     setQuickLinksSaving(true);
     try {
-      const payload: QuickLinksPreferences = {};
-      if (libraryProvider === 'custom' && libraryCustomUrl.trim()) {
-        payload.library = {
-          provider: 'custom',
-          customUrl: libraryCustomUrl.trim(),
-          customLabel: libraryCustomLabel.trim() || undefined,
-        };
-      } else {
-        payload.library = { provider: 'google' };
-      }
-      if (classroomProvider === 'custom' && classroomCustomUrl.trim()) {
-        payload.classroom = {
-          provider: 'custom',
-          customUrl: classroomCustomUrl.trim(),
-          customLabel: classroomCustomLabel.trim() || undefined,
-        };
-      } else if (classroomProvider === 'teams') {
-        payload.classroom = {
-          provider: 'teams',
-          customUrl: classroomCustomUrl.trim() || undefined,
-          customLabel: classroomCustomLabel.trim() || undefined,
-        };
-      } else {
-        payload.classroom = { provider: 'google' };
-      }
+      const payload: QuickLinksPreferences = {
+        library: { preset: libraryPreset, custom: libraryCustom.filter((c) => c.url.trim() && c.label.trim()) },
+        classroom: { preset: classroomPreset, custom: classroomCustom.filter((c) => c.url.trim() && c.label.trim()) },
+      };
       await settingsApi.updateQuickLinks(token, payload);
       setQuickLinks(payload);
-      toast({ title: 'Library & classroom saved' });
+      toast({ title: t('settings.saved') });
     } catch {
-      toast({ title: 'Failed to save', variant: 'destructive' });
+      toast({ title: t('settings.saveFailed'), variant: 'destructive' });
     } finally {
       setQuickLinksSaving(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) return;
-    setIsSaving(true);
-    try {
-      const updated = await authApi.updateProfile(token, {
-        name: name.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined,
-      });
-      updateUser({ name: updated.name ?? undefined, avatarUrl: updated.avatarUrl ?? undefined });
-      toast({ title: 'Settings saved' });
-    } catch {
-      toast({ title: 'Failed to save settings', variant: 'destructive' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const addLibraryCustom = () => setLibraryCustom((prev) => [...prev, { url: '', label: '' }]);
+  const removeLibraryCustom = (i: number) => setLibraryCustom((prev) => prev.filter((_, idx) => idx !== i));
+  const updateLibraryCustom = (i: number, field: 'url' | 'label', value: string) =>
+    setLibraryCustom((prev) => prev.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
+
+  const addClassroomCustom = () => setClassroomCustom((prev) => [...prev, { url: '', label: '' }]);
+  const removeClassroomCustom = (i: number) => setClassroomCustom((prev) => prev.filter((_, idx) => idx !== i));
+  const updateClassroomCustom = (i: number, field: 'url' | 'label', value: string) =>
+    setClassroomCustom((prev) => prev.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
 
   if (isLoading) {
     return (
@@ -194,73 +172,34 @@ export default function DashboardSettingsPage() {
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <ChevronLeft className="h-4 w-4" />
-        Back to Dashboard
+        {t('nav.backToDashboard')}
       </Link>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Settings
+            {t('settings.title')}
           </CardTitle>
-          <CardDescription>Manage your account and profile</CardDescription>
+          <CardDescription>{t('settings.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex items-center gap-4 pb-4 border-b border-border">
-              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                {user?.avatarUrl ? (
-                  <Image
-                    src={user.avatarUrl}
-                    alt=""
-                    width={56}
-                    height={56}
-                    className="h-14 w-14 rounded-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <User className="h-7 w-7 text-primary" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-foreground">{user?.name || 'User'}</p>
-                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-              </div>
+          <div className="flex items-center gap-4 pb-4 border-b border-border">
+            <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+              {user?.avatarUrl ? (
+                <Image src={user.avatarUrl} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-cover" unoptimized />
+              ) : (
+                <User className="h-7 w-7 text-primary" />
+              )}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="settings-name">Display name</Label>
-              <Input
-                id="settings-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="max-w-md"
-              />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-foreground">{user?.name || t('auth.user')}</p>
+              <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+              <Link href="/dashboard/profile">
+                <Button variant="outline" size="sm" className="mt-2">{t('nav.profile')}</Button>
+              </Link>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="settings-avatar">Avatar URL</Label>
-              <Input
-                id="settings-avatar"
-                type="url"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://..."
-                className="max-w-md"
-              />
-              <p className="text-xs text-muted-foreground">Link to an image for your profile picture</p>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save changes'}
-              </Button>
-              <Button type="button" variant="outline" asChild>
-                <Link href="/dashboard">Cancel</Link>
-              </Button>
-            </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -268,92 +207,78 @@ export default function DashboardSettingsPage() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Library & Classroom
+            {t('settings.libraryAndClassroom')}
           </CardTitle>
-          <CardDescription>
-            Choose your library (e.g. Google Library or your institution like PolyU) and classroom (e.g. Google Classroom or Microsoft Teams). These links appear on your dashboard.
-          </CardDescription>
+          <CardDescription>{t('settings.libraryAndClassroomDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label>Library</Label>
-            <div className="flex flex-wrap gap-3 items-center">
-              <select
-                value={libraryProvider}
-                onChange={(e) => setLibraryProvider(e.target.value as 'google' | 'custom')}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[180px]"
-              >
-                <option value="google">Google Library</option>
-                <option value="custom">My library (custom URL)</option>
-              </select>
-              {libraryProvider === 'custom' && (
-                <>
-                  <Input
-                    type="url"
-                    placeholder="https://library.example.edu"
-                    value={libraryCustomUrl}
-                    onChange={(e) => setLibraryCustomUrl(e.target.value)}
-                    className="max-w-xs"
-                  />
-                  <Input
-                    placeholder="Label (optional)"
-                    value={libraryCustomLabel}
-                    onChange={(e) => setLibraryCustomLabel(e.target.value)}
-                    className="max-w-[140px]"
-                  />
-                </>
-              )}
+            <Label>{t('settings.libraryPreset')}</Label>
+            <select
+              value={libraryPreset}
+              onChange={(e) => setLibraryPreset(e.target.value as 'google' | 'none')}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[200px]"
+            >
+              <option value="google">{t('settings.googleLibrary')}</option>
+              <option value="none">{t('settings.none')}</option>
+            </select>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">{t('settings.addCustomLibrary')}</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addLibraryCustom}>
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </div>
+              {libraryCustom.map((c, i) => (
+                <div key={i} className="flex flex-wrap gap-2 items-center rounded border border-border p-2">
+                  <Input placeholder={t('settings.customName')} value={c.label} onChange={(e) => updateLibraryCustom(i, 'label', e.target.value)} className="w-32" />
+                  <Input type="url" placeholder={t('settings.customUrl')} value={c.url} onChange={(e) => updateLibraryCustom(i, 'url', e.target.value)} className="flex-1 min-w-[180px]" />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeLibraryCustom(i)} aria-label={t('settings.remove')}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
           <div className="space-y-3">
-            <Label>Classroom</Label>
-            <div className="flex flex-wrap gap-3 items-center">
-              <select
-                value={classroomProvider}
-                onChange={(e) => setClassroomProvider(e.target.value as 'google' | 'teams' | 'custom')}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[200px]"
-              >
-                <option value="google">Google Classroom</option>
-                <option value="teams">Microsoft Teams</option>
-                <option value="custom">My classroom (custom URL)</option>
-              </select>
-              {classroomProvider === 'custom' && (
-                <>
-                  <Input
-                    type="url"
-                    placeholder="https://..."
-                    value={classroomCustomUrl}
-                    onChange={(e) => setClassroomCustomUrl(e.target.value)}
-                    className="max-w-xs"
-                  />
-                  <Input
-                    placeholder="Label (optional)"
-                    value={classroomCustomLabel}
-                    onChange={(e) => setClassroomCustomLabel(e.target.value)}
-                    className="max-w-[140px]"
-                  />
-                </>
-              )}
-              {classroomProvider === 'teams' && (
-                <Input
-                  placeholder="Custom label (optional)"
-                  value={classroomCustomLabel}
-                  onChange={(e) => setClassroomCustomLabel(e.target.value)}
-                  className="max-w-[160px]"
-                />
-              )}
+            <Label>{t('settings.classroomPreset')}</Label>
+            <select
+              value={classroomPreset}
+              onChange={(e) => setClassroomPreset(e.target.value as 'google' | 'teams' | 'none')}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[200px]"
+            >
+              <option value="google">{t('settings.googleClassroom')}</option>
+              <option value="teams">{t('settings.microsoftTeams')}</option>
+              <option value="none">{t('settings.none')}</option>
+            </select>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">{t('settings.addCustomClassroom')}</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addClassroomCustom}>
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </div>
+              {classroomCustom.map((c, i) => (
+                <div key={i} className="flex flex-wrap gap-2 items-center rounded border border-border p-2">
+                  <Input placeholder={t('settings.customName')} value={c.label} onChange={(e) => updateClassroomCustom(i, 'label', e.target.value)} className="w-32" />
+                  <Input type="url" placeholder={t('settings.customUrl')} value={c.url} onChange={(e) => updateClassroomCustom(i, 'url', e.target.value)} className="flex-1 min-w-[180px]" />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeClassroomCustom(i)} aria-label={t('settings.remove')}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
           <Button type="button" onClick={handleSaveQuickLinks} disabled={quickLinksSaving}>
-            {quickLinksSaving ? 'Saving...' : 'Save library & classroom'}
+            {quickLinksSaving ? t('common.saving') : t('settings.saveLibraryClassroom')}
           </Button>
         </CardContent>
       </Card>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-lg">Integrations</CardTitle>
-          <CardDescription>Connect Zoom and Outlook for calendar meetings</CardDescription>
+          <CardTitle className="text-lg">{t('settings.integrations')}</CardTitle>
+          <CardDescription>{t('settings.integrationsDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -362,12 +287,7 @@ export default function DashboardSettingsPage() {
               <span className="font-medium">Zoom</span>
               {integrations?.zoom && <CheckCircle className="h-4 w-4 text-green-600" />}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleConnectZoom}
-              disabled={connectingZoom || connectingOutlook}
-            >
+            <Button variant="outline" size="sm" onClick={handleConnectZoom} disabled={connectingZoom || connectingOutlook}>
               {integrations?.zoom ? 'Reconnect Zoom' : 'Connect Zoom'}
             </Button>
           </div>
@@ -377,15 +297,34 @@ export default function DashboardSettingsPage() {
               <span className="font-medium">Outlook</span>
               {integrations?.outlook && <CheckCircle className="h-4 w-4 text-green-600" />}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleConnectOutlook}
-              disabled={connectingZoom || connectingOutlook}
-            >
+            <Button variant="outline" size="sm" onClick={handleConnectOutlook} disabled={connectingZoom || connectingOutlook}>
               {integrations?.outlook ? 'Reconnect Outlook' : 'Connect Outlook'}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            {t('settings.desktopAndSupport')}
+          </CardTitle>
+          <CardDescription>{t('settings.desktopAndSupportDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button variant="outline" asChild>
+            <a href="https://github.com/nota-platform/nota-platform/releases" target="_blank" rel="noopener noreferrer">
+              <Monitor className="h-4 w-4 mr-2" />
+              {t('settings.downloadForPC')}
+            </a>
+          </Button>
+          <Button variant="outline" asChild>
+            <a href="mailto:support@nota.app?subject=Nota%20support" target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              {t('settings.contactTeam')}
+            </a>
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -65,7 +65,7 @@ export default function SharePage() {
           <Link href={openInWorkspace}>
             <Button size="sm" variant="outline" className="gap-2">
               <ExternalLink className="h-4 w-4" />
-              {isAuthenticated() ? 'Open in Nota' : 'Sign in to open'}
+              {isAuthenticated() ? 'Open in Nota' : 'Log in to open'}
             </Button>
           </Link>
         </div>

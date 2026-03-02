@@ -31,7 +31,7 @@ export class SettingsController {
 
   @Get('locale')
   @ApiOperation({ summary: 'Get language preference' })
-  @ApiResponse({ status: 200, description: 'Current locale (en, ru, zh)' })
+  @ApiResponse({ status: 200, description: 'Current locale (en, zh)' })
   async getLocale(@Request() req: { user: { userId: string } }) {
     return this.settingsService.getLocale(req.user.userId);
   }

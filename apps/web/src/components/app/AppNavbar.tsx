@@ -20,7 +20,7 @@ interface AppNavbarProps {
   workspaceName?: string | null;
 }
 
-const LOCALE_LABELS: Record<LocaleOption, string> = { en: 'EN', ru: 'RU', zh: '中文' };
+const LOCALE_LABELS: Record<LocaleOption, string> = { en: 'EN', zh: '中文' };
 
 export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNavbarProps>) {
   const router = useRouter();
@@ -194,7 +194,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
         <div className="flex items-center gap-2 shrink-0">
           {/* Language selector */}
           <div className="flex items-center rounded-md border border-border bg-muted/30 overflow-hidden">
-            {(['en', 'ru', 'zh'] as const).map((loc) => (
+            {(['en', 'zh'] as const).map((loc) => (
               <button
                 key={loc}
                 type="button"
@@ -204,7 +204,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
-                title={loc === 'en' ? 'English' : loc === 'ru' ? 'Русский' : '中文'}
+                title={loc === 'en' ? 'English' : '中文'}
                 aria-label={`Language: ${LOCALE_LABELS[loc]}`}
               >
                 {LOCALE_LABELS[loc]}
@@ -298,7 +298,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                   </div>
                 </div>
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/profile"
                   className="block"
                   onClick={() => setUserMenuOpen(false)}
                 >

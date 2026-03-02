@@ -8,7 +8,7 @@ const STORAGE_KEY = 'nota-locale';
 function getStoredLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'en' || stored === 'ru' || stored === 'zh') return stored;
+  if (stored === 'en' || stored === 'zh') return stored;
   return 'en';
 }
 

@@ -34,12 +34,13 @@ export class SettingsService {
       where: { id: userId },
       select: { preferences: true },
     });
-    const prefs = user?.preferences as { locale?: 'en' | 'ru' | 'zh' } | null;
-    const locale = prefs?.locale ?? 'en';
+    const prefs = user?.preferences as { locale?: 'en' | 'zh' } | null;
+    const raw = prefs?.locale ?? 'en';
+    const locale = raw === 'ru' ? 'en' : raw;
     return { locale };
   }
 
-  async updateLocale(userId: string, locale: 'en' | 'ru' | 'zh'): Promise<LocalePreference> {
+  async updateLocale(userId: string, locale: 'en' | 'zh'): Promise<LocalePreference> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { preferences: true },

@@ -3,14 +3,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History } from 'lucide-react';
+import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History, Library, LayoutGrid, Video, ExternalLink, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRealtime } from '@/hooks/use-realtime';
 import { useAuthStore } from '@/lib/store';
 import { NOTA_OPEN_CREATE_PAGE } from '@/components/app/CommandPalette';
-import { workspacesApi, pagesApi, docApi, canvasApi, sourcesApi, aiApi } from '@/lib/api';
+import { workspacesApi, pagesApi, docApi, canvasApi, sourcesApi, aiApi, settingsApi, type QuickLinksPreferences } from '@/lib/api';
+import { getStudentAppLinks } from '@/lib/student-apps';
 import { useToast } from '@/hooks/use-toast';
 import { RichTextEditor, defaultDoc, isProseMirrorDoc } from '@/components/editor/RichTextEditor';
 import CanvasEditor, { type CanvasState } from '@/components/canvas/CanvasEditor';
@@ -105,6 +106,7 @@ export default function WorkspacePage() {
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [aiFlashcards, setAiFlashcards] = useState<Array<{ id: string; front: string; back: string }> | null>(null);
   const [aiLoading, setAiLoading] = useState<'summary' | 'flashcards' | null>(null);
+  const [quickLinks, setQuickLinks] = useState<QuickLinksPreferences>({});
 
   const activeTab = openTabs.find((t) => t.id === activeTabId);
   const { connected: realtimeConnected, presenceUsers } = useRealtime({
@@ -113,6 +115,11 @@ export default function WorkspacePage() {
     onDocUpdate: undefined,
     onCanvasUpdate: undefined,
   });
+
+  useEffect(() => {
+    if (!token) return;
+    settingsApi.getQuickLinks(token).then(setQuickLinks).catch(() => {});
+  }, [token]);
 
   useEffect(() => {
     setAiSummary(null);
@@ -604,6 +611,34 @@ export default function WorkspacePage() {
               });
             })()}
           </ul>
+
+          {getStudentAppLinks(quickLinks).length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <span className="text-sm font-medium text-muted-foreground block mb-2">Quick links</span>
+              <div className="space-y-1">
+                {getStudentAppLinks(quickLinks).map((app) => {
+                  const Icon = app.id === 'google-classroom' || app.id.startsWith('classroom-custom')
+                    ? (app.label.includes('Teams') ? Video : LayoutGrid)
+                    : app.id === 'library' || app.id.startsWith('library-custom')
+                      ? Library
+                      : FileCheck;
+                  return (
+                    <a
+                      key={app.id}
+                      href={app.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate flex-1">{app.label}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         <main className="flex flex-1 flex-col min-h-0">

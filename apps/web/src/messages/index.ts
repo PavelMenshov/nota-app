@@ -1,12 +1,11 @@
 import { en } from './en';
-import { ru } from './ru';
 import { zh } from './zh';
+import type { Messages } from './en';
 
-export type Locale = 'en' | 'ru' | 'zh';
+export type Locale = 'en' | 'zh';
 
-export const messages: Record<Locale, typeof en> = {
+export const messages: Record<Locale, Messages> = {
   en,
-  ru,
   zh,
 };
 

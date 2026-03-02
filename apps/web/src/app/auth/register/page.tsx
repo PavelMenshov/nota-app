@@ -10,6 +10,9 @@ import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { NotaIcon } from '@/components/NotaIcon';
+import { useLocale } from '@/contexts/LocaleContext';
+
+type AuthProvider = 'google' | 'microsoft' | 'apple' | 'sso';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -19,6 +22,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +42,7 @@ export default function RegisterPage() {
           if (error.helpText) description += '\n\n' + error.helpText;
         } else if (error.statusCode === 409) {
           title = 'Account already exists';
-          description = 'An account with this email already exists. Sign in instead.';
+          description = t('auth.accountExists');
         } else {
           description = error.message;
         }
@@ -51,6 +55,10 @@ export default function RegisterPage() {
     }
   };
 
+  const handleProviderClick = (_provider: AuthProvider) => {
+    toast({ title: t('auth.comingSoon'), variant: 'default' });
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
       <header className="border-b border-border bg-card">
@@ -61,7 +69,7 @@ export default function RegisterPage() {
           </Link>
           <Link href="/auth/login">
             <Button variant="outline" size="sm" className="rounded-md h-9">
-              Sign in
+              {t('auth.logIn')}
             </Button>
           </Link>
         </div>
@@ -72,31 +80,61 @@ export default function RegisterPage() {
           <div className="rounded-lg border border-border bg-card shadow-lg p-8">
             <div className="space-y-6">
               <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Create account</h1>
-                <p className="text-sm text-muted-foreground mt-1">Get started with Nota in a few seconds.</p>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('auth.register')}</h1>
+                <p className="text-sm text-muted-foreground mt-1">{t('auth.registerSubtitle')}</p>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">Name</Label>
-                  <Input id="name" type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required className="h-10 rounded-md" />
+
+              {/* Register with email */}
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-foreground">{t('auth.withEmail')}</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">{t('auth.name')}</Label>
+                    <Input id="name" type="text" placeholder={t('settings.displayNamePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} required className="h-10 rounded-md" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
+                    <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 rounded-md" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium">{t('auth.password')}</Label>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="h-10 rounded-md" />
+                    <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+                  </div>
+                  <Button type="submit" disabled={isLoading} className="w-full h-10 rounded-md bg-primary hover:bg-primary/90">
+                    {isLoading ? t('auth.registering') : t('auth.createAccount')}
+                  </Button>
+                </form>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                  <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 rounded-md" />
+                <div className="relative flex justify-center text-xs uppercase tracking-wider">
+                  <span className="bg-card px-2 text-muted-foreground">{t('auth.continueWith')}</span>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="h-10 rounded-md" />
-                  <p className="text-xs text-muted-foreground">At least 8 characters.</p>
-                </div>
-                <Button type="submit" disabled={isLoading} className="w-full h-10 rounded-md bg-primary hover:bg-primary/90">
-                  {isLoading ? 'Creating account…' : 'Create account'}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('google')}>
+                  {t('auth.withGoogle')}
                 </Button>
-              </form>
+                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('microsoft')}>
+                  {t('auth.withMicrosoft')}
+                </Button>
+                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('apple')}>
+                  {t('auth.withApple')}
+                </Button>
+                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('sso')}>
+                  {t('auth.withSSO')}
+                </Button>
+              </div>
+
               <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
+                {t('auth.hasAccount')}{' '}
                 <Link href="/auth/login" className="font-medium text-primary hover:underline">
-                  Sign in
+                  {t('auth.logIn')}
                 </Link>
               </p>
             </div>

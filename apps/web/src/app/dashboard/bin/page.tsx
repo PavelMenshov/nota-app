@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Trash2, RotateCcw, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ export default function DashboardBinPage() {
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [purgingId, setPurgingId] = useState<string | null>(null);
   const [purgingExpired, setPurgingExpired] = useState(false);
+  const [purgeConfirmId, setPurgeConfirmId] = useState<string | null>(null);
+  const purgeModalRef = useRef<HTMLDivElement>(null);
 
   const loadBin = useCallback(async () => {
     if (!token) return;
@@ -78,9 +80,14 @@ export default function DashboardBinPage() {
     }
   };
 
-  const handlePurge = async (id: string) => {
-    if (!token) return;
-    if (!confirm('Permanently delete this workspace? This cannot be undone.')) return;
+  const openPurgeConfirm = (id: string) => setPurgeConfirmId(id);
+
+  const closePurgeConfirm = () => setPurgeConfirmId(null);
+
+  const confirmPurge = useCallback(async (idOverride?: string) => {
+    const id = idOverride ?? purgeConfirmId;
+    if (!token || !id) return;
+    setPurgeConfirmId(null);
     setPurgingId(id);
     try {
       await workspacesApi.deletePermanent(token, id);
@@ -91,7 +98,28 @@ export default function DashboardBinPage() {
     } finally {
       setPurgingId(null);
     }
-  };
+  }, [token, purgeConfirmId, toast]);
+
+  useEffect(() => {
+    if (!purgeConfirmId) return;
+    const el = purgeModalRef.current;
+    if (el) (el as HTMLElement).focus();
+  }, [purgeConfirmId]);
+
+  useEffect(() => {
+    if (!purgeConfirmId) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closePurgeConfirm();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmPurge(purgeConfirmId);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [purgeConfirmId, confirmPurge]);
 
   const handlePurgeExpired = async () => {
     if (!token) return;
@@ -187,7 +215,7 @@ export default function DashboardBinPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handlePurge(w.id)}
+                        onClick={() => openPurgeConfirm(w.id)}
                         disabled={purgingId !== null}
                       >
                         {purgingId === w.id ? t('common.saving') : t('dashboard.deletePermanent')}
@@ -213,6 +241,38 @@ export default function DashboardBinPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Permanent delete confirmation modal: Cancel (button or Esc), Confirm (button or Enter) */}
+      {purgeConfirmId && (
+        <div
+          ref={purgeModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="purge-confirm-title"
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 outline-none"
+          onClick={(e) => e.target === e.currentTarget && closePurgeConfirm()}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { e.preventDefault(); closePurgeConfirm(); }
+            if (e.key === 'Enter') { e.preventDefault(); confirmPurge(); }
+          }}
+        >
+          <Card className="w-full max-w-sm shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle id="purge-confirm-title" className="text-lg">{t('bin.confirmPurgeTitle')}</CardTitle>
+              <CardDescription>{t('bin.confirmPurgeMessage')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={closePurgeConfirm}>
+                {t('common.cancel')}
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={confirmPurge}>
+                {t('bin.confirm')}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
