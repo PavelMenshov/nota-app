@@ -31,7 +31,7 @@ export class LmsService {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        ...(options?.body && { body: JSON.stringify(options.body) }),
+        ...(options?.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
       },
     });
     if (!res.ok) {
@@ -364,7 +364,6 @@ export class LmsService {
   ) {
     const base = this.baseUrl(integration);
     const token = integration.accessToken;
-    type CanvasCourse = { id: number; name: string; course_code?: string };
     type CanvasAssignment = { id: number; name: string; points_possible?: number };
     type CanvasSubmission = { assignment_id: number; score?: number; grade?: string; feedback?: string };
     let courses = integration.courses.length > 0
@@ -466,8 +465,8 @@ export class LmsService {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`Moodle API ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    if (data?.exception) throw new Error(data.message || data.exception);
+    const data = (await res.json()) as T & { exception?: unknown; message?: string };
+    if (data?.exception) throw new Error(String(data.message ?? data.exception));
     return data as T;
   }
 
