@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { NotaIcon } from '@/components/NotaIcon';
 import { useInView } from '@/hooks/use-in-view';
 import { cn } from '@/lib/utils';
+import { APP_CONFIG } from '@/lib/app-config';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -187,6 +188,20 @@ export default function HomePage() {
                     Get started free
                   </Button>
                 </Link>
+                <a
+                  href={APP_CONFIG.DOWNLOADS.WINDOWS}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn('inline-flex', FOCUS_RING)}
+                >
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className={cn('h-12 px-7 text-base font-semibold rounded-full border-border bg-card/80 hover:bg-card', FOCUS_RING)}
+                  >
+                    Download for Windows
+                  </Button>
+                </a>
                 <Button
                   variant="outline"
                   size="lg"
@@ -196,6 +211,11 @@ export default function HomePage() {
                   Try demo
                 </Button>
               </div>
+              {!APP_CONFIG.HAS_WINDOWS_DOWNLOAD && (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Windows: check GitHub Releases for the latest build.
+                </p>
+              )}
             </Reveal>
           </div>
         </section>
@@ -304,6 +324,20 @@ export default function HomePage() {
                       Get started free
                     </Button>
                   </Link>
+                  <a
+                    href={APP_CONFIG.DOWNLOADS.WINDOWS}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn('inline-flex', FOCUS_RING)}
+                  >
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className={cn('h-12 px-7 text-base font-semibold rounded-full', FOCUS_RING)}
+                    >
+                      Download for Windows
+                    </Button>
+                  </a>
                   <Link href="/auth/login" className={cn('inline-flex', FOCUS_RING)}>
                     <Button
                       variant="outline"

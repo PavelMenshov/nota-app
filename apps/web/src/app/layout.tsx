@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { DesktopConfigSync } from '@/components/DesktopConfigSync';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -51,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={plusJakarta.variable}>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+        <DesktopConfigSync />
         {children}
         <Toaster />
       </body>

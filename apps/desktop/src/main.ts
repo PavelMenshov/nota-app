@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, shell, ipcMain, dialog } from 'electron';
+import * as fs from 'fs';
 import * as path from 'path';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
@@ -13,8 +14,22 @@ let mainWindow: BrowserWindow | null = null;
 // Development or production mode
 const isDev = process.env.NODE_ENV === 'development';
 
-// Web app URL (use environment variable or default)
-const WEB_APP_URL = process.env.WEB_APP_URL || APP_CONFIG.DEFAULT_WEB_APP_URL;
+// Web app URL: build-time (dist/build-env.json) > env var > default
+function getWebAppUrl(): string {
+  try {
+    const buildEnvPath = path.join(__dirname, 'build-env.json');
+    if (fs.existsSync(buildEnvPath)) {
+      const data = JSON.parse(fs.readFileSync(buildEnvPath, 'utf8'));
+      if (data?.WEB_APP_URL && typeof data.WEB_APP_URL === 'string') {
+        return data.WEB_APP_URL;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return process.env.WEB_APP_URL || APP_CONFIG.DEFAULT_WEB_APP_URL;
+}
+const WEB_APP_URL = getWebAppUrl();
 
 // Track load attempts for retry logic
 let loadAttempts = 0;

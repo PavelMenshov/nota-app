@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsc && node ../../scripts/wait-for-web.js && electron .",
-    "build": "tsc",
+    "build": "tsc && node scripts/inject-build-env.js",
     "start": "electron .",
     "package": "electron-builder",
     "package:win": "electron-builder --win",
@@ -26,6 +26,11 @@
     "win": {
       "target": ["nsis", "portable"],
       "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": ["dmg", "zip"],

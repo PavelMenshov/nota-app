@@ -120,6 +120,7 @@ export interface CalendarEvent {
   allDay: boolean;
   location: string | null;
   color: string | null;
+  meetingUrl: string | null;
 }
 
 // Comment types

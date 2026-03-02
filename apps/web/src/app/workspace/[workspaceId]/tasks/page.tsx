@@ -210,8 +210,14 @@ export default function WorkspaceTasksPage() {
       </main>
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateModal(false); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateModal(false); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Create Task</h3>
               <Input
@@ -247,8 +253,14 @@ export default function WorkspaceTasksPage() {
       )}
 
       {taskToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setTaskToDelete(null); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setTaskToDelete(null); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Delete task?</h3>
               <p className="text-sm text-muted-foreground">&quot;{taskToDelete.title}&quot; will be deleted.</p>

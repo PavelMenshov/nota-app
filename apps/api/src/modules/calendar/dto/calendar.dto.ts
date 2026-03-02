@@ -47,6 +47,12 @@ export class CreateEventDto {
   @IsString()
   @MaxLength(20)
   color?: string;
+
+  @ApiPropertyOptional({ example: 'https://zoom.us/j/123456789' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  meetingUrl?: string;
 }
 
 export class UpdateEventDto {
@@ -94,4 +100,10 @@ export class UpdateEventDto {
   @IsOptional()
   @IsString()
   pageId?: string;
+
+  @ApiPropertyOptional({ example: 'https://zoom.us/j/123456789' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  meetingUrl?: string;
 }

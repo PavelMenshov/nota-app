@@ -157,6 +157,11 @@ export default function WelcomePage() {
                 <p className="text-xs text-center text-[#7a828a]">
                   Free • Version {APP_CONFIG.APP_VERSION} • {APP_CONFIG.APP_SIZE_MB}
                 </p>
+                {!APP_CONFIG.HAS_WINDOWS_DOWNLOAD && (
+                  <p className="text-xs text-center text-[#7a828a]">
+                    Check GitHub Releases for the latest {getPlatformName()} build.
+                  </p>
+                )}
               </CardContent>
             </Card>
 

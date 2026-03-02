@@ -1,9 +1,9 @@
-# Placeholder for icon files
-# Place your application icons here:
-# - icon.png (512x512 or larger, for Linux)
-# - icon.ico (Windows icon, multi-resolution)
-# - icon.icns (macOS icon bundle)
+# Application icons
 
-To generate icons from a single PNG source:
-- Use electron-icon-builder or similar tools
-- Recommended size: 1024x1024 PNG with transparency
+Place your application icons here for packaged builds:
+
+- **icon.ico** – Windows (multi-resolution, e.g. 256×256). Required for a custom app icon on Windows; if missing, remove the `icon` entry under `win` in `package.json` or the build may fail.
+- **icon.png** – Linux (512×512 or larger).
+- **icon.icns** – macOS icon bundle.
+
+To generate icons from a single PNG source, use tools like `electron-icon-builder`. Recommended source: 1024×1024 PNG with transparency.

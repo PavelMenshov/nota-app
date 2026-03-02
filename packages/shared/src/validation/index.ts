@@ -82,6 +82,7 @@ export const createEventSchema = z.object({
   allDay: z.boolean().optional(),
   location: z.string().max(200).optional(),
   color: z.string().max(20).optional(),
+  meetingUrl: z.string().max(2000).optional().or(z.literal('')),
 });
 
 export const updateEventSchema = z.object({
@@ -93,6 +94,7 @@ export const updateEventSchema = z.object({
   location: z.string().max(200).optional(),
   color: z.string().max(20).optional(),
   pageId: z.string().cuid().optional().nullable(),
+  meetingUrl: z.string().max(2000).optional().nullable().or(z.literal('')),
 });
 
 // Comment validation

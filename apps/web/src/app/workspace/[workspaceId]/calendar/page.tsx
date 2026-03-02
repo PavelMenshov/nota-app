@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Trash2, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Trash2, Pencil, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +20,7 @@ interface CalendarEvent {
   allDay: boolean;
   location: string | null;
   color: string | null;
+  meetingUrl: string | null;
 }
 
 function startEndOfMonth(date: Date) {
@@ -49,6 +50,7 @@ export default function WorkspaceCalendarPage() {
   const [formStart, setFormStart] = useState('');
   const [formEnd, setFormEnd] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formMeetingUrl, setFormMeetingUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -81,6 +83,7 @@ export default function WorkspaceCalendarPage() {
     setFormStart(today);
     setFormEnd(today);
     setFormDescription('');
+    setFormMeetingUrl('');
     setShowModal(true);
   };
 
@@ -90,6 +93,7 @@ export default function WorkspaceCalendarPage() {
     setFormStart(e.startTime.slice(0, 16));
     setFormEnd(e.endTime.slice(0, 16));
     setFormDescription(e.description ?? '');
+    setFormMeetingUrl(e.meetingUrl ?? '');
     setShowModal(true);
   };
 
@@ -97,11 +101,14 @@ export default function WorkspaceCalendarPage() {
     if (!token || !formTitle.trim()) return;
     setIsSaving(true);
     try {
+      const meetingUrl = formMeetingUrl.trim() || undefined;
       if (editingId) {
         await calendarApi.update(token, editingId, {
           title: formTitle.trim(),
           startTime: new Date(formStart).toISOString(),
           endTime: new Date(formEnd).toISOString(),
+          description: formDescription.trim() || undefined,
+          meetingUrl: meetingUrl ?? null,
         });
         toast({ title: 'Event updated' });
       } else {
@@ -111,6 +118,7 @@ export default function WorkspaceCalendarPage() {
           startTime: new Date(formStart).toISOString(),
           endTime: new Date(formEnd).toISOString(),
           description: formDescription.trim() || undefined,
+          meetingUrl,
         });
         toast({ title: 'Event created' });
       }
@@ -199,6 +207,18 @@ export default function WorkspaceCalendarPage() {
                     {ev.description && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{ev.description}</p>
                     )}
+                    {ev.meetingUrl && (
+                      <a
+                        href={ev.meetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Video className="h-3.5 w-3.5" />
+                        Join meeting
+                      </a>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button size="sm" variant="ghost" onClick={() => openEdit(ev)}>
@@ -225,8 +245,14 @@ export default function WorkspaceCalendarPage() {
         if (isSaving) submitLabel = 'Saving...';
         else if (editingId) submitLabel = 'Update';
         return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowModal(false); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowModal(false); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">{editingId ? 'Edit Event' : 'New Event'}</h3>
               <Input
@@ -267,6 +293,17 @@ export default function WorkspaceCalendarPage() {
                   className="mt-0.5"
                 />
               </div>
+              <div>
+                <label htmlFor="event-meeting" className="text-xs text-muted-foreground">Meeting link (Zoom, Meet, Outlook)</label>
+                <Input
+                  id="event-meeting"
+                  type="url"
+                  placeholder="https://zoom.us/j/... or Outlook/Teams link"
+                  value={formMeetingUrl}
+                  onChange={(e) => setFormMeetingUrl(e.target.value)}
+                  className="mt-0.5"
+                />
+              </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
                   Cancel
@@ -282,8 +319,14 @@ export default function WorkspaceCalendarPage() {
       })()}
 
       {eventToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setEventToDelete(null); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setEventToDelete(null); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Delete event?</h3>
               <p className="text-sm text-muted-foreground">&quot;{eventToDelete.title}&quot; will be deleted.</p>

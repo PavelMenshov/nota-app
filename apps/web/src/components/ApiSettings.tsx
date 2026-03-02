@@ -54,7 +54,11 @@ export function ApiSettings({ onSave }: ApiSettingsProps) {
     }
 
     try {
-      setConfig({ apiUrl: apiUrl.trim() });
+      const url = apiUrl.trim();
+      setConfig({ apiUrl: url });
+      if (typeof window !== 'undefined' && window.electronAPI?.setApiUrl) {
+        window.electronAPI.setApiUrl(url);
+      }
       setSuccess(true);
       setTimeout(() => {
         onSave?.();
@@ -68,6 +72,9 @@ export function ApiSettings({ onSave }: ApiSettingsProps) {
 
   const handleReset = () => {
     setConfig({ apiUrl: undefined });
+    if (typeof window !== 'undefined' && window.electronAPI?.setApiUrl) {
+      window.electronAPI.setApiUrl('');
+    }
     setApiUrl(getApiUrl());
     setSuccess(false);
     setError('');

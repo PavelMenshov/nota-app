@@ -199,16 +199,10 @@ pnpm db:migrate    # Run migrations
 
 ## Documentation
 
-- [**Getting Started**](./docs/GETTING-STARTED.md) — main onboarding and setup
-- [Local dev (Russian)](./docs/LOCAL_DEV_RU.md) — краткий запуск на русском
-- [Docs index](./docs/README.md) — overview of all docs
-- [API Reference](./docs/API.md)
-- [Architecture](./docs/ARCHITECTURE.md)
-- [Security](./docs/SECURITY.md)
-- [Desktop App](./docs/DESKTOP-APP.md)
-- [Prisma Setup](./docs/PRISMA-SETUP.md)
-- [API connection troubleshooting](./docs/API-CONNECTION-TROUBLESHOOTING.md)
-- [Release checklist](./docs/RELEASE_CHECKLIST.md) — before opening the repo or creating a release
+- [**Getting Started**](./docs/GETTING-STARTED.md) — setup, run, troubleshooting, release checklist
+- [Local dev (Russian)](./docs/LOCAL_DEV_RU.md)
+- [Docs index](./docs/README.md) — list of all docs
+- [API](./docs/API.md) · [Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md) · [Desktop](./docs/DESKTOP-APP.md) · [Prisma](./docs/PRISMA-SETUP.md)
 
 ---
 

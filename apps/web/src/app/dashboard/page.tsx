@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar } from 'lucide-react';
+import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { createWorkspaceSchema, updateWorkspaceSchema } from '@nota/shared';
 import { useAuthStore } from '@/lib/store';
 import { workspacesApi, lmsApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { NOTA_OPEN_CREATE_WORKSPACE } from '@/components/app/CommandPalette';
 
 interface Workspace {
   id: string;
@@ -74,6 +75,12 @@ function DashboardContent() {
 
   useEffect(() => {
     setAuthChecked(true);
+  }, []);
+
+  useEffect(() => {
+    const onOpenCreate = () => setShowCreateModal(true);
+    globalThis.addEventListener(NOTA_OPEN_CREATE_WORKSPACE, onOpenCreate);
+    return () => globalThis.removeEventListener(NOTA_OPEN_CREATE_WORKSPACE, onOpenCreate);
   }, []);
 
   useEffect(() => {
@@ -407,7 +414,20 @@ function DashboardContent() {
                   Calendar
                 </Button>
               </Link>
+              <a href="https://zoom.us/schedule" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="h-auto py-3 px-4 gap-2">
+                  <Video className="h-4 w-4" />
+                  Zoom
+                </Button>
+              </a>
+              <a href="https://outlook.office.com" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="h-auto py-3 px-4 gap-2">
+                  <Mail className="h-4 w-4" />
+                  Outlook
+                </Button>
+              </a>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">Calendar events can include a meeting link (Zoom, Meet, Outlook). Use Zoom/Outlook for calls and mail.</p>
           </section>
         )}
 
@@ -694,10 +714,10 @@ function DashboardContent() {
           onClick={() => setShowCreateModal(false)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === ' ' && e.target === e.currentTarget) setShowCreateModal(false); }}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateModal(false); }}
           aria-label="Close modal"
         >
-          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateModal(false); }}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold">Create workspace</CardTitle>
               <CardDescription>Add a new workspace for your project or course.</CardDescription>
@@ -746,10 +766,10 @@ function DashboardContent() {
           onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === ' ' && e.target === e.currentTarget) { setShowEditModal(false); setEditingWorkspace(null); } }}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setShowEditModal(false); setEditingWorkspace(null); } }}
           aria-label="Close modal"
         >
-          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()}>
+          <Card className="w-full max-w-md rounded-lg border border-border shadow-lg bg-card" onClick={e => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') { setShowEditModal(false); setEditingWorkspace(null); } }}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold">Edit workspace</CardTitle>
               <CardDescription>Update name and description.</CardDescription>

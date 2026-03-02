@@ -4,14 +4,14 @@ This guide explains how to set up, develop, and deploy the Nota desktop applicat
 
 ## Overview
 
-The Nota desktop application is built with Electron and provides a native desktop experience for all major platforms (Windows, macOS, and Linux). It wraps the web application in a native shell with enhanced features like:
+The Nota desktop application is built with **Electron** and provides a **native window** for the same Nota web app you use in the browser (similar to how **Notion**’s desktop app works). It gives you:
 
-- **Native Performance**: Faster startup and better resource management
-- **Offline Support**: Work without internet connectivity
-- **System Integration**: Native menus, notifications, and file associations
-- **Auto-updates**: Seamless background updates
-- **Enhanced Security**: Sandboxed environment with local data encryption
+- **Native window**: App runs in its own window, not in a browser tab.
+- **System integration**: Native menus, tray, and shortcuts.
+- **Auto-updates**: Updates can be delivered via electron-updater.
+- **Sandboxed security**: Chromium sandbox and context isolation.
 
+The desktop app **loads the Nota web app from a URL** (your deployed site or `localhost` in dev).
 ## Architecture
 
 ```

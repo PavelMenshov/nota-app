@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search } from 'lucide-react';
+import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search, Command, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { NotaIcon } from '@/components/NotaIcon';
 import { useAuthStore } from '@/lib/store';
+import { useOpenShortcuts } from './CommandPaletteProvider';
+import { COMMAND_PALETTE_OPEN } from './CommandPalette';
 
 interface AppNavbarProps {
   /** When true, show "Back to Dashboard" in nav (e.g. inside workspace) */
@@ -20,9 +21,8 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
   const router = useRouter();
   const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
+  const openShortcuts = useOpenShortcuts();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,26 +93,35 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
           </nav>
         </div>
 
-        {/* Optional search */}
+        {/* Command palette trigger */}
         <div className="hidden lg:flex flex-1 max-w-xs mx-4">
-          <div
-            className={`relative flex items-center rounded-md border transition-colors ${
-              searchFocused ? 'border-primary ring-1 ring-primary/20' : 'border-border bg-muted/30'
-            }`}
+          <button
+            type="button"
+            onClick={() => globalThis.dispatchEvent(new CustomEvent(COMMAND_PALETTE_OPEN))}
+            className="relative flex w-full items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            aria-label="Open command palette (Ctrl+K)"
           >
-            <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              className="pl-8 h-9 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
-          </div>
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="flex-1 truncate">Search workspaces, pages…</span>
+            <kbd className="hidden rounded border border-border bg-background px-1.5 py-0.5 text-xs sm:inline-flex items-center gap-0.5">
+              <Command className="h-3 w-3" />K
+            </kbd>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {openShortcuts && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+              onClick={openShortcuts}
+              aria-label="Keyboard shortcuts (?)"
+              title="Keyboard shortcuts (?)"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
           {workspaceName && (
             <span className="text-sm text-muted-foreground truncate max-w-[120px] hidden xl:inline">
               {workspaceName}

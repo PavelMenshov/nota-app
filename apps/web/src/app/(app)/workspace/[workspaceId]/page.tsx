@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRealtime } from '@/hooks/use-realtime';
 import { useAuthStore } from '@/lib/store';
+import { NOTA_OPEN_CREATE_PAGE } from '@/components/app/CommandPalette';
 import { workspacesApi, pagesApi, docApi, canvasApi, sourcesApi, aiApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { RichTextEditor, defaultDoc, isProseMirrorDoc } from '@/components/editor/RichTextEditor';
@@ -58,6 +59,7 @@ interface OpenTab {
 
 export default function WorkspacePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const workspaceId = params.workspaceId as string;
   const router = useRouter();
   const { token, isAuthenticated, user } = useAuthStore();
@@ -165,6 +167,12 @@ export default function WorkspacePage() {
     loadWorkspace();
   }, [workspaceId, isAuthenticated, router, loadWorkspace]);
 
+  useEffect(() => {
+    const onOpenCreate = () => setShowCreatePageModal(true);
+    globalThis.addEventListener(NOTA_OPEN_CREATE_PAGE, onOpenCreate);
+    return () => globalThis.removeEventListener(NOTA_OPEN_CREATE_PAGE, onOpenCreate);
+  }, []);
+
   const openTab = useCallback((tab: OpenTab) => {
     setOpenTabs((prev) => {
       const exists = prev.some((t) => t.id === tab.id);
@@ -216,6 +224,21 @@ export default function WorkspacePage() {
     },
     [token, openTab, toast]
   );
+
+  const pageIdFromUrl = searchParams.get('page');
+  const openedPageFromUrl = useRef<string | null>(null);
+  useEffect(() => {
+    if (!workspace || !pageIdFromUrl || !loadPageContent) return;
+    if (openedPageFromUrl.current === pageIdFromUrl) return;
+    const pageExists = workspace.pages.some((p) => p.id === pageIdFromUrl);
+    if (pageExists) {
+      openedPageFromUrl.current = pageIdFromUrl;
+      loadPageContent(pageIdFromUrl);
+    }
+  }, [workspace, pageIdFromUrl, loadPageContent]);
+  useEffect(() => {
+    if (!pageIdFromUrl) openedPageFromUrl.current = null;
+  }, [pageIdFromUrl]);
 
   const handleSavePage = async (pageId: string) => {
     if (!token) return;
@@ -918,8 +941,14 @@ export default function WorkspacePage() {
       </div>
 
       {showCreatePageModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowCreatePageModal(false); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowCreatePageModal(false); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">New page</h3>
               <Input
@@ -957,8 +986,14 @@ export default function WorkspacePage() {
       )}
 
       {showCreateFolderModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateFolderModal(false); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateFolderModal(false); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">New folder</h3>
               <Input
@@ -1025,8 +1060,14 @@ export default function WorkspacePage() {
       )}
 
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowInviteModal(false); }}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowInviteModal(false); }}>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold text-lg">Invite to workspace</h3>
               {workspace.members && workspace.members.length > 0 && (

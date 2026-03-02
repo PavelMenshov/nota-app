@@ -39,6 +39,8 @@ pnpm package:mac   # macOS
 pnpm package:linux # Linux
 ```
 
+For **release builds** (e.g. Windows .exe for GitHub Releases): set `WEB_APP_URL` to your production web app URL, then run `pnpm build` and `pnpm package:win`. See [BUILD.md](./BUILD.md) for full instructions and icon notes.
+
 ## Environment Variables
 
 - `WEB_APP_URL`: URL of the web application (default: http://localhost:3000)

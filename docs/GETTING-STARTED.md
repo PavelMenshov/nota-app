@@ -273,6 +273,16 @@ They'll receive an invitation email.
 
 ## Troubleshooting
 
+### API connection (web app shows "Cannot connect to API server")
+
+1. **Docker** — `docker compose up -d` and `docker compose ps` (postgres, redis, minio running).
+2. **Env** — `.env` in root and `packages/database/.env`.
+3. **DB** — `pnpm db:generate` and `pnpm db:push`.
+4. **API** — `pnpm dev:api` (or `pnpm dev`). API at `http://localhost:4000`.
+5. **Web** — `pnpm dev:web` if not using `pnpm dev`. Web at `http://localhost:3000`.
+
+Check: `curl http://localhost:4000/api/health`. If CORS errors, set `CORS_ORIGIN` in `.env` to your web URL and restart the API.
+
 ### Database Connection Failed
 
 **Problem**: Can't connect to PostgreSQL
@@ -438,6 +448,13 @@ pnpm lint
 - [API Documentation](http://localhost:4000/api/docs)
 - [Security Guide](./SECURITY.md)
 - [GitHub Repository](https://github.com/PavelMenshov/nota-platform)
+
+## Before release (opening repo or creating a tag)
+
+- **Secrets** — No `.env` or real API keys in repo or history. (Gitleaks runs in CI.)
+- **Clone URL** — Update `git clone` URLs in README/docs if repo is under a different org.
+- **LICENSE** — Present (MIT); update copyright if needed.
+- **Tag/release** — e.g. `git tag -a v0.1.0 -m "Release"` then push tag; create GitHub Release and attach build artifacts (e.g. desktop .exe).
 
 ## Need Help?
 

@@ -26,6 +26,7 @@ export class CalendarService {
         allDay: dto.allDay || false,
         location: dto.location,
         color: dto.color,
+        meetingUrl: dto.meetingUrl || undefined,
       },
       include: {
         creator: {
@@ -141,6 +142,7 @@ export class CalendarService {
         location: dto.location,
         color: dto.color,
         pageId: dto.pageId,
+        meetingUrl: dto.meetingUrl !== undefined ? (dto.meetingUrl || null) : undefined,
       },
       include: {
         creator: {

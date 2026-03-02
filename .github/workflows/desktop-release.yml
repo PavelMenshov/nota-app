@@ -1,0 +1,78 @@
+# Build Windows desktop app and attach to GitHub Release on version tags.
+# Push a tag like v0.1.0 to trigger. Set repository variable WEB_APP_URL to your
+# production web app URL (e.g. https://app.example.com) so the packaged app loads it.
+name: Desktop Release (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Remove win icon from package.json if missing
+        run: |
+          $pkgPath = "apps/desktop/package.json"
+          $json = Get-Content $pkgPath -Raw | ConvertFrom-Json
+          if (-not (Test-Path "apps/desktop/assets/icon.ico")) {
+            $json.build.win.PSObject.Properties.Remove("icon")
+            $json | ConvertTo-Json -Depth 10 | Set-Content $pkgPath
+          }
+        shell: pwsh
+
+      - name: Build desktop (TypeScript)
+        run: pnpm --filter @nota/desktop run build
+        env:
+          WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+
+      - name: Package Windows
+        run: pnpm --filter @nota/desktop run package:win
+        env:
+          WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nota-desktop-windows
+          path: |
+            apps/desktop/release/*.exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: apps/desktop/release/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

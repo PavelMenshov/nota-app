@@ -23,11 +23,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUpdateDownloaded: (callback: () => void) => {
     ipcRenderer.on('update-downloaded', () => callback());
   },
+
+  // API URL for the web app (when running inside desktop). Persists across restarts.
+  getApiUrl: () => ipcRenderer.invoke('get-store-value', 'apiUrl'),
+  setApiUrl: (url: string) => ipcRenderer.invoke('set-store-value', 'apiUrl', url),
 });
 
 // Type declaration for TypeScript
 declare global {
-  interface Window {
+    interface Window {
     electronAPI: {
       getStoreValue: (key: string) => Promise<any>;
       setStoreValue: (key: string, value: any) => Promise<void>;
@@ -35,6 +39,8 @@ declare global {
       onMenuAction: (callback: (action: string) => void) => void;
       onUpdateAvailable: (callback: () => void) => void;
       onUpdateDownloaded: (callback: () => void) => void;
+      getApiUrl: () => Promise<string | undefined>;
+      setApiUrl: (url: string) => Promise<void>;
     };
   }
 }

@@ -577,6 +577,7 @@ export const calendarApi = {
         allDay: boolean;
         location: string | null;
         color: string | null;
+        meetingUrl: string | null;
       }>
     >(url, { token });
   },
@@ -592,6 +593,7 @@ export const calendarApi = {
       allDay?: boolean;
       location?: string;
       color?: string;
+      meetingUrl?: string;
     }
   ) =>
     fetchApi<{ id: string }>('/api/calendar', {
@@ -600,7 +602,7 @@ export const calendarApi = {
       token,
     }),
 
-  update: (token: string, id: string, data: Partial<{ title: string; startTime: string; endTime: string }>) =>
+  update: (token: string, id: string, data: Partial<{ title: string; startTime: string; endTime: string; description?: string; meetingUrl?: string | null }>) =>
     fetchApi<{ id: string }>(`/api/calendar/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
