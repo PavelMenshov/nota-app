@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { tasksApi } from '@/lib/api';
+import { tasksApi, workspacesApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -27,6 +27,7 @@ interface Task {
   status: string;
   priority: string;
   dueDate: string | null;
+  assignedToAll?: boolean;
   creator: { id: string; name: string | null };
   page: { id: string; title: string } | null;
 }
@@ -42,7 +43,7 @@ export default function WorkspaceTasksPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
   const router = useRouter();
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, user } = useAuthStore();
   const { toast } = useToast();
   const { t } = useLocale();
 
@@ -54,6 +55,19 @@ export default function WorkspaceTasksPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [myRole, setMyRole] = useState<string | null>(null);
+  const [assignToAll, setAssignToAll] = useState(false);
+
+  const loadWorkspaceRole = useCallback(async () => {
+    if (!token || !workspaceId) return;
+    try {
+      const w = await workspacesApi.get(token, workspaceId);
+      const me = w.members?.find((m) => m.user.id === user?.id);
+      setMyRole(me?.role ?? null);
+    } catch {
+      setMyRole(null);
+    }
+  }, [token, workspaceId, user?.id]);
 
   const loadTasks = useCallback(async () => {
     if (!token) return;
@@ -78,7 +92,8 @@ export default function WorkspaceTasksPage() {
       return;
     }
     loadTasks();
-  }, [workspaceId, isAuthenticated, router, loadTasks]);
+    loadWorkspaceRole();
+  }, [workspaceId, isAuthenticated, router, loadTasks, loadWorkspaceRole]);
 
   const handleCreateTask = async () => {
     if (!token || !newTaskTitle.trim()) return;
@@ -88,11 +103,13 @@ export default function WorkspaceTasksPage() {
         workspaceId,
         title: newTaskTitle.trim(),
         priority: newTaskPriority,
+        assignedToAll: (myRole === 'OWNER' || myRole === 'PROFESSOR') && assignToAll ? true : undefined,
       });
       toast({ title: 'Task created!' });
       setShowCreateModal(false);
       setNewTaskTitle('');
       setNewTaskPriority('MEDIUM');
+      setAssignToAll(false);
       loadTasks();
     } catch {
       toast({ title: 'Error', description: 'Failed to create task', variant: 'destructive' });
@@ -229,6 +246,17 @@ export default function WorkspaceTasksPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
                 autoFocus
               />
+              {(myRole === 'OWNER' || myRole === 'PROFESSOR') && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={assignToAll}
+                    onChange={(e) => setAssignToAll(e.target.checked)}
+                    className="rounded border-input"
+                  />
+                  Assign to all course members
+                </label>
+              )}
               <div className="flex gap-2">
                 {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
                   <Button
@@ -302,6 +330,9 @@ function TaskCard({
       <CardContent className="p-3 flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm">{task.title}</p>
+          {task.assignedToAll && (
+            <span className="inline-block text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary mt-0.5">Course deadline</span>
+          )}
           {task.page && (
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <FileText className="h-3 w-3 shrink-0" />

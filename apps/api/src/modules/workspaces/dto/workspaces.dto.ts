@@ -40,16 +40,16 @@ export class AddMemberDto {
   @IsEmail()
   email!: string;
 
-  @ApiPropertyOptional({ enum: ['OWNER', 'EDITOR', 'VIEWER'], default: 'VIEWER' })
+  @ApiPropertyOptional({ enum: ['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'], default: 'VIEWER' })
   @IsOptional()
-  @IsEnum(['OWNER', 'EDITOR', 'VIEWER'])
-  role?: 'OWNER' | 'EDITOR' | 'VIEWER';
+  @IsEnum(['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'])
+  role?: 'OWNER' | 'PROFESSOR' | 'EDITOR' | 'VIEWER';
 }
 
 export class UpdateMemberRoleDto {
-  @ApiProperty({ enum: ['OWNER', 'EDITOR', 'VIEWER'] })
-  @IsEnum(['OWNER', 'EDITOR', 'VIEWER'])
-  role!: 'OWNER' | 'EDITOR' | 'VIEWER';
+  @ApiProperty({ enum: ['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'] })
+  @IsEnum(['OWNER', 'PROFESSOR', 'EDITOR', 'VIEWER'])
+  role!: 'OWNER' | 'PROFESSOR' | 'EDITOR' | 'VIEWER';
 }
 
 export class GenerateShareLinkDto {

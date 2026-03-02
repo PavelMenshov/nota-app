@@ -12,7 +12,13 @@ export class TasksService {
   ) {}
 
   async create(userId: string, dto: CreateTaskInput) {
-    await this.workspaceAccess.checkAccess(dto.workspaceId, userId);
+    const { role } = await this.workspaceAccess.checkAccess(dto.workspaceId, userId);
+    if (role === 'VIEWER') {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+    if (dto.assignedToAll && role !== 'OWNER' && role !== 'PROFESSOR') {
+      throw new ForbiddenException('Only owners or professors can assign tasks to all members');
+    }
 
     const task = await this.prisma.task.create({
       data: {
@@ -24,6 +30,7 @@ export class TasksService {
         status: dto.status || 'TODO',
         priority: dto.priority || 'MEDIUM',
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        assignedToAll: dto.assignedToAll ?? false,
       },
       include: {
         creator: {
@@ -157,6 +164,9 @@ export class TasksService {
     if (!member || member.role === 'VIEWER') {
       throw new ForbiddenException('Insufficient permissions');
     }
+    if (dto.assignedToAll !== undefined && dto.assignedToAll && member.role !== 'OWNER' && member.role !== 'PROFESSOR') {
+      throw new ForbiddenException('Only owners or professors can assign tasks to all members');
+    }
 
     return this.prisma.task.update({
       where: { id },
@@ -167,6 +177,7 @@ export class TasksService {
         priority: dto.priority,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         pageId: dto.pageId,
+        assignedToAll: dto.assignedToAll,
       },
       include: {
         creator: {

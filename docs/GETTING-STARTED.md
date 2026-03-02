@@ -95,6 +95,8 @@ pnpm db:generate
 pnpm db:push
 ```
 
+**Prisma and DB commands:** After pulling schema changes or editing `schema.prisma`, run `pnpm db:generate` (and `pnpm db:push` for dev). If you see TypeScript errors like `Property 'user' does not exist on type 'PrismaService'`, run `pnpm db:generate` and restart your IDE/TS server. For migrations in production use `pnpm db:migrate`; for Prisma Studio use `pnpm db:studio`.
+
 ### 6. Start Development Servers
 
 Start both API and web applications:

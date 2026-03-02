@@ -583,7 +583,29 @@ export class WorkspacesService {
     return { success: true };
   }
 
-  async updateMemberRole(workspaceId: string, memberId: string, userId: string, role: 'OWNER' | 'EDITOR' | 'VIEWER') {
+  /** List workspace members who are students (EDITOR or VIEWER). Only OWNER or PROFESSOR can call. */
+  async listStudents(workspaceId: string, userId: string) {
+    await this.checkPermission(workspaceId, userId, ['OWNER', 'PROFESSOR']);
+    return this.prisma.workspaceMember.findMany({
+      where: {
+        workspaceId,
+        role: { in: ['EDITOR', 'VIEWER'] },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async updateMemberRole(workspaceId: string, memberId: string, userId: string, role: 'OWNER' | 'PROFESSOR' | 'EDITOR' | 'VIEWER') {
     await this.checkPermission(workspaceId, userId, ['OWNER']);
 
     const member = await this.prisma.workspaceMember.findFirst({

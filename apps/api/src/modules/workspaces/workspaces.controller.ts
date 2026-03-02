@@ -81,6 +81,16 @@ export class WorkspacesController {
     return this.workspacesService.findOne(id, req.user.userId);
   }
 
+  @Get(':id/students')
+  @ApiOperation({ summary: 'List students in workspace (EDITOR/VIEWER members). OWNER or PROFESSOR only.' })
+  @ApiResponse({ status: 200, description: 'List of students' })
+  async listStudents(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.workspacesService.listStudents(id, req.user.userId);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update a workspace' })
   @ApiResponse({ status: 200, description: 'Workspace updated' })

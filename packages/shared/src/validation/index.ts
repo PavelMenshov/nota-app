@@ -60,6 +60,7 @@ export const createTaskSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   dueDate: z.string().datetime().optional().nullable(),
+  assignedToAll: z.boolean().optional(),
 });
 
 export const updateTaskSchema = z.object({
@@ -69,6 +70,7 @@ export const updateTaskSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   dueDate: z.string().datetime().optional().nullable(),
   pageId: z.string().cuid().optional().nullable(),
+  assignedToAll: z.boolean().optional(),
 });
 
 // Calendar validation

@@ -96,7 +96,8 @@ export default function WorkspacePage() {
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('VIEWER');
+  const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER' | 'PROFESSOR'>('VIEWER');
+  const [students, setStudents] = useState<Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>>([]);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [newFolderTitle, setNewFolderTitle] = useState('');
@@ -131,6 +132,13 @@ export default function WorkspacePage() {
     if (!token) return;
     settingsApi.getQuickLinks(token).then(setQuickLinks).catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    if (!token || !showInviteModal || !workspaceId || !workspace) return;
+    const isProfessorOrOwner = currentMember?.role === 'OWNER' || currentMember?.role === 'PROFESSOR';
+    if (!isProfessorOrOwner) return;
+    workspacesApi.listStudents(token, workspaceId).then(setStudents).catch(() => setStudents([]));
+  }, [token, showInviteModal, workspaceId, workspace, currentMember?.role]);
 
   useEffect(() => {
     setAiSummary(null);
@@ -1258,6 +1266,7 @@ export default function WorkspacePage() {
                             onChange={(e) => handleUpdateMemberRole(m.id, e.target.value)}
                           >
                             <option value="OWNER">Owner</option>
+                            <option value="PROFESSOR">Professor</option>
                             <option value="EDITOR">Editor</option>
                             <option value="VIEWER">Viewer</option>
                           </select>
@@ -1267,6 +1276,30 @@ export default function WorkspacePage() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+              {(currentMember?.role === 'OWNER' || currentMember?.role === 'PROFESSOR') && students.length > 0 && (
+                <div className="space-y-2 border-t pt-4">
+                  <span className="text-sm font-medium text-muted-foreground">Students</span>
+                  <ul className="max-h-32 overflow-y-auto rounded border border-border p-2 space-y-1 text-sm">
+                    {students.map((s) => (
+                      <li key={s.id} className="truncate" title={s.user.email}>
+                        {s.user.name || s.user.email}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const emails = students.map((s) => s.user.email).filter(Boolean).join(',');
+                      if (emails) window.location.href = `mailto:?bcc=${encodeURIComponent(emails)}`;
+                    }}
+                  >
+                    Email all students
+                  </Button>
                 </div>
               )}
               <div className="flex gap-2">
@@ -1280,10 +1313,11 @@ export default function WorkspacePage() {
                 <select
                   className="rounded-md border border-input bg-background px-3 py-2 text-sm w-28"
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER')}
+                  onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER' | 'PROFESSOR')}
                 >
                   <option value="VIEWER">Viewer</option>
                   <option value="EDITOR">Editor</option>
+                  {currentMember?.role === 'OWNER' && <option value="PROFESSOR">Professor</option>}
                 </select>
                 <Button onClick={handleAddMember} disabled={!inviteEmail.trim() || isAddingMember}>
                   {isAddingMember ? 'Adding...' : 'Add'}

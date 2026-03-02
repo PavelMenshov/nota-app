@@ -281,6 +281,12 @@ export const workspacesApi = {
       members: Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>;
     }>(`/api/workspaces/${id}`, { token }),
 
+  listStudents: (token: string, workspaceId: string) =>
+    fetchApi<Array<{ id: string; role: string; user: { id: string; name: string | null; email: string } }>>(
+      `/api/workspaces/${workspaceId}/students`,
+      { token },
+    ),
+
   update: (token: string, id: string, data: { name?: string; description?: string }) =>
     fetchApi<{ id: string; name: string }>(`/api/workspaces/${id}`, {
       method: 'PUT',
@@ -544,6 +550,7 @@ export const tasksApi = {
         status: string;
         priority: string;
         dueDate: string | null;
+        assignedToAll?: boolean;
         creator: { id: string; name: string | null };
         page: { id: string; title: string } | null;
       }>
@@ -559,6 +566,7 @@ export const tasksApi = {
       priority?: string;
       dueDate?: string;
       pageId?: string;
+      assignedToAll?: boolean;
     }
   ) =>
     fetchApi<{ id: string; title: string }>('/api/tasks', {
@@ -570,7 +578,7 @@ export const tasksApi = {
   update: (
     token: string,
     id: string,
-    data: { title?: string; description?: string; status?: string; priority?: string; dueDate?: string }
+    data: { title?: string; description?: string; status?: string; priority?: string; dueDate?: string; assignedToAll?: boolean }
   ) =>
     fetchApi<{ id: string }>(`/api/tasks/${id}`, {
       method: 'PUT',

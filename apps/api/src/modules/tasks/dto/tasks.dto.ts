@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, MaxLength, MinLength, IsEnum, IsDateString, IsBoolean } from 'class-validator';
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'cuid123' })
@@ -37,6 +37,11 @@ export class CreateTaskDto {
   @IsOptional()
   @IsDateString()
   dueDate?: string;
+
+  @ApiPropertyOptional({ description: 'Assign task to all workspace members (course-wide). OWNER/PROFESSOR only.' })
+  @IsOptional()
+  @IsBoolean()
+  assignedToAll?: boolean;
 }
 
 export class UpdateTaskDto {
@@ -72,6 +77,11 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   pageId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  assignedToAll?: boolean;
 }
 
 export class AssigneeDto {
