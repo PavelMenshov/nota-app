@@ -153,4 +153,12 @@ export class AuthService {
     });
     return user;
   }
+
+  /** Permanently delete the user and all related data (cascade). */
+  async deleteAccount(userId: string): Promise<{ success: true }> {
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+    return { success: true };
+  }
 }

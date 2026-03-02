@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail, CalendarClock, ExternalLink, Library, FileCheck, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageBackgroundBubbles } from '@/components/ui/page-background-bubbles';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,9 +53,28 @@ interface CourseWithAssignments extends LmsCourse {
   assignments: LmsAssignment[];
 }
 
+interface CourseGradeRow {
+  id: string;
+  name: string;
+  score: number | null;
+  maxScore: number | null;
+  letterGrade: string | null;
+  feedback: string | null;
+  syncedAt: string;
+}
+
+interface CourseGradesForModal {
+  id: string;
+  name: string;
+  code: string | null;
+  term: string | null;
+  grades: CourseGradeRow[];
+}
+
 function DashboardContent() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cursorOnPage, setCursorOnPage] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
@@ -74,11 +94,18 @@ function DashboardContent() {
   const [lmsBaseUrl, setLmsBaseUrl] = useState('');
   const [lmsToken, setLmsToken] = useState('');
   const [isAddingLms, setIsAddingLms] = useState(false);
-  const [coursesForIntegration, setCoursesForIntegration] = useState<{ id: string; courses: LmsCourse[] } | null>(null);
+  const [coursesForIntegration, setCoursesForIntegration] = useState<{
+    id: string;
+    courses: LmsCourse[];
+    gradesByCourse: CourseGradesForModal[];
+  } | null>(null);
+  const [selectedCourseInModal, setSelectedCourseInModal] = useState<LmsCourse | null>(null);
   const [loadingCoursesId, setLoadingCoursesId] = useState<string | null>(null);
+  const coursesModalRef = useRef<HTMLDivElement>(null);
   const [showLinkWorkspaceModal, setShowLinkWorkspaceModal] = useState<{ integrationId: string } | null>(null);
   const [linkingWorkspaceId, setLinkingWorkspaceId] = useState<string | null>(null);
   const [isCreatingDemo, setIsCreatingDemo] = useState(false);
+  const [isCreatingShowcase, setIsCreatingShowcase] = useState(false);
   // Import deadlines from LMS
   const [showImportDeadlinesModal, setShowImportDeadlinesModal] = useState<{ integrationId: string } | null>(null);
   const [importWorkspaceId, setImportWorkspaceId] = useState<string>('');
@@ -104,6 +131,12 @@ function DashboardContent() {
     globalThis.addEventListener(NOTA_OPEN_CREATE_WORKSPACE, onOpenCreate);
     return () => globalThis.removeEventListener(NOTA_OPEN_CREATE_WORKSPACE, onOpenCreate);
   }, []);
+
+  useEffect(() => {
+    if (coursesForIntegration && coursesModalRef.current) {
+      (coursesModalRef.current as HTMLElement).focus();
+    }
+  }, [coursesForIntegration]);
 
   useEffect(() => {
     if (showDeleteConfirm && deleteModalRef.current) {
@@ -222,6 +255,24 @@ function DashboardContent() {
     }
   };
 
+  const handleCreateShowcase = async () => {
+    if (!token) return;
+    setIsCreatingShowcase(true);
+    try {
+      const workspace = await workspacesApi.createShowcase(token);
+      toast({ title: 'Full showcase created!', description: 'Workspace, tasks, calendar, LMS, grades, and quick links are ready.' });
+      loadWorkspaces();
+      loadLmsIntegrations();
+      loadQuickLinks();
+      router.push(`/workspace/${workspace.id}`);
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Failed to create showcase.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    } finally {
+      setIsCreatingShowcase(false);
+    }
+  };
+
   const handleEditWorkspace = async () => {
     const parsed = updateWorkspaceSchema.safeParse({
       name: editName.trim(),
@@ -309,9 +360,13 @@ function DashboardContent() {
   const handleViewCourses = async (integrationId: string) => {
     if (!token) return;
     setLoadingCoursesId(integrationId);
+    setSelectedCourseInModal(null);
     try {
-      const courses = await lmsApi.getCourses(token, integrationId);
-      setCoursesForIntegration({ id: integrationId, courses });
+      const [courses, gradesPayload] = await Promise.all([
+        lmsApi.getCourses(token, integrationId),
+        lmsApi.getGrades(token, integrationId).catch(() => [] as CourseGradesForModal[]),
+      ]);
+      setCoursesForIntegration({ id: integrationId, courses, gradesByCourse: Array.isArray(gradesPayload) ? gradesPayload : [] });
     } catch {
       toast({ title: 'Failed to load courses', variant: 'destructive' });
     } finally {
@@ -397,8 +452,13 @@ function DashboardContent() {
   const firstWorkspaceId = workspaces[0]?.id;
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <div
+      className="min-h-screen bg-[hsl(var(--background))] relative"
+      onMouseEnter={() => setCursorOnPage(true)}
+      onMouseLeave={() => setCursorOnPage(false)}
+    >
+      <PageBackgroundBubbles active={cursorOnPage} />
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* University / Courses section — first */}
         <section className="mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-4">
@@ -582,10 +642,19 @@ function DashboardContent() {
               <Button
                 variant="outline"
                 onClick={handleCreateDemo}
-                disabled={isCreatingDemo}
+                disabled={isCreatingDemo || isCreatingShowcase}
                 className="h-10 px-5 rounded-md font-medium"
               >
                 {isCreatingDemo ? 'Creating...' : 'Demo for pitch'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCreateShowcase}
+                disabled={isCreatingDemo || isCreatingShowcase}
+                className="h-10 px-5 rounded-md font-medium"
+                title="Dev/showcase: workspace + tasks, calendar, collaborators, university, grades, quick links"
+              >
+                {isCreatingShowcase ? 'Creating...' : 'Load full showcase'}
               </Button>
               <Button
                 onClick={() => setShowCreateModal(true)}
@@ -611,9 +680,18 @@ function DashboardContent() {
                 variant="outline"
                 className="h-10 px-5 rounded-md font-medium"
                 onClick={handleCreateDemo}
-                disabled={isCreatingDemo}
+                disabled={isCreatingDemo || isCreatingShowcase}
               >
                 {isCreatingDemo ? 'Creating...' : 'Load demo for pitch'}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-10 px-5 rounded-md font-medium"
+                onClick={handleCreateShowcase}
+                disabled={isCreatingDemo || isCreatingShowcase}
+                title="Everything for showcase: tasks, calendar, university, grades, collaborators"
+              >
+                {isCreatingShowcase ? 'Creating...' : 'Load full showcase'}
               </Button>
               <Button
                 className="h-10 px-5 rounded-md font-medium"
@@ -768,39 +846,123 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Courses list modal */}
+      {/* Courses list modal: list of all courses with grade; tap course for detail; ESC closes detail then modal */}
       {coursesForIntegration && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setCoursesForIntegration(null)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Escape') setCoursesForIntegration(null); }}
-          aria-label="Close modal"
+          ref={coursesModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="courses-modal-title"
+          tabIndex={-1}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 outline-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              if (selectedCourseInModal) setSelectedCourseInModal(null);
+              else setCoursesForIntegration(null);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              if (selectedCourseInModal) setSelectedCourseInModal(null);
+              else setCoursesForIntegration(null);
+            }
+          }}
         >
-          <Card className="w-full max-w-lg max-h-[80vh] rounded-lg border border-border shadow-lg bg-card flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-3 flex-shrink-0">
-              <CardTitle className="text-lg font-semibold">Courses</CardTitle>
-              <CardDescription>Courses from this integration (demo may show mock data)</CardDescription>
+          <Card className="w-full max-w-lg max-h-[85vh] rounded-lg border border-border shadow-lg bg-card flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="pb-3 flex-shrink-0 flex flex-row items-start justify-between gap-2">
+              <div>
+                <CardTitle id="courses-modal-title" className="text-lg font-semibold">
+                  {selectedCourseInModal ? selectedCourseInModal.name : 'Courses'}
+                </CardTitle>
+                <CardDescription>
+                  {selectedCourseInModal
+                    ? (selectedCourseInModal.code || selectedCourseInModal.term) && [selectedCourseInModal.code, selectedCourseInModal.term].filter(Boolean).join(' · ')
+                    : 'All courses from this integration. Tap a course for details.'}
+                </CardDescription>
+              </div>
+              {selectedCourseInModal ? (
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSelectedCourseInModal(null)} aria-label="Close course detail">
+                  ×
+                </Button>
+              ) : null}
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto">
-              <ul className="space-y-2">
-                {coursesForIntegration.courses.map((c) => (
-                  <li key={c.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50">
-                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate">{c.name}</p>
-                      {(c.code || c.term) && (
-                        <p className="text-xs text-muted-foreground">{[c.code, c.term].filter(Boolean).join(' · ')}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {coursesForIntegration.courses.length === 0 && (
-                <p className="text-sm text-muted-foreground py-4 text-center">No courses found.</p>
+              {selectedCourseInModal ? (
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    {selectedCourseInModal.term && <p>Term: {selectedCourseInModal.term}</p>}
+                    {selectedCourseInModal.code && <p>Code: {selectedCourseInModal.code}</p>}
+                  </div>
+                  {(() => {
+                    const courseGrades = coursesForIntegration.gradesByCourse.find((g) => g.id === selectedCourseInModal.id);
+                    if (!courseGrades || courseGrades.grades.length === 0) {
+                      return <p className="text-sm text-muted-foreground">No grades for this course yet.</p>;
+                    }
+                    return (
+                      <div>
+                        <h4 className="font-medium text-foreground mb-2">Grades</h4>
+                        <div className="rounded-md border border-border overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="text-left p-2 font-medium">Item</th>
+                                <th className="text-right p-2 font-medium">Score</th>
+                                <th className="text-right p-2 font-medium">Letter</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {courseGrades.grades.map((g) => (
+                                <tr key={g.id} className="border-t border-border">
+                                  <td className="p-2">{g.name}</td>
+                                  <td className="p-2 text-right">{g.maxScore != null && g.score != null ? `${g.score} / ${g.maxScore}` : g.score ?? '—'}</td>
+                                  <td className="p-2 text-right font-medium">{g.letterGrade ?? '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  <Button variant="outline" className="w-full rounded-md h-10" onClick={() => setSelectedCourseInModal(null)}>Back to list</Button>
+                </div>
+              ) : (
+                <>
+                  <ul className="space-y-2">
+                    {coursesForIntegration.courses.map((c) => {
+                      const courseGrades = coursesForIntegration.gradesByCourse.find((g) => g.id === c.id);
+                      const displayGrade = courseGrades?.grades?.length
+                        ? courseGrades.grades.map((g) => g.letterGrade).filter(Boolean).join(', ')
+                        : null;
+                      return (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-3 py-2.5 px-3 rounded-md bg-muted/50 hover:bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary text-left"
+                            onClick={() => setSelectedCourseInModal(c)}
+                          >
+                            <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground truncate">{c.name}</p>
+                              {(c.code || c.term) && (
+                                <p className="text-xs text-muted-foreground">{[c.code, c.term].filter(Boolean).join(' · ')}</p>
+                              )}
+                            </div>
+                            {displayGrade && (
+                              <span className="shrink-0 text-sm font-medium text-primary rounded-md bg-primary/10 px-2 py-0.5">{displayGrade}</span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {coursesForIntegration.courses.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No courses found.</p>
+                  )}
+                  <Button variant="outline" className="w-full mt-4 rounded-md h-10" onClick={() => setCoursesForIntegration(null)}>Close</Button>
+                </>
               )}
-              <Button variant="outline" className="w-full mt-4 rounded-md h-10" onClick={() => setCoursesForIntegration(null)}>Close</Button>
             </CardContent>
           </Card>
         </div>

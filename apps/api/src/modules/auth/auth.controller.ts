@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from '@nota/shared';
 import { AuthService } from './auth.service';
@@ -101,5 +101,15 @@ export class AuthController {
     @Body() body: { name?: string; avatarUrl?: string },
   ) {
     return this.authService.updateProfile(req.user.userId, body);
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete my account and all associated data permanently' })
+  @ApiResponse({ status: 200, description: 'Account deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAccount(@Request() req: { user: { userId: string } }) {
+    return this.authService.deleteAccount(req.user.userId);
   }
 }

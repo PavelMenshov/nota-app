@@ -38,7 +38,7 @@ function normalizeQuickLinks(data: QuickLinksPreferences): QuickLinksPreferences
 export default function DashboardSettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token, user, isAuthenticated } = useAuthStore();
+  const { token, user, isAuthenticated, clearAuth } = useAuthStore();
   const { t } = useLocale();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +53,8 @@ export default function DashboardSettingsPage() {
   const [libraryCustom, setLibraryCustom] = useState<CustomLink[]>([]);
   const [classroomPreset, setClassroomPreset] = useState<'google' | 'teams' | 'none'>('google');
   const [classroomCustom, setClassroomCustom] = useState<CustomLink[]>([]);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -114,6 +116,22 @@ export default function DashboardSettingsPage() {
     } catch {
       toast({ title: 'Could not start Zoom connection', variant: 'destructive' });
       setConnectingZoom(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!token) return;
+    setIsDeletingAccount(true);
+    try {
+      await authApi.deleteAccount(token);
+      clearAuth();
+      toast({ title: 'Your account has been permanently deleted.' });
+      router.replace('/');
+    } catch {
+      toast({ title: 'Failed to delete account', variant: 'destructive' });
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteAccountConfirm(false);
     }
   };
 
@@ -327,6 +345,74 @@ export default function DashboardSettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <Card className="mt-6 border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-lg text-destructive flex items-center gap-2">
+            <Trash2 className="h-5 w-5" />
+            Danger zone
+          </CardTitle>
+          <CardDescription>
+            Permanently delete your account and all associated data: profile, workspaces, pages, tasks, calendar, grades, LMS connections, and preferences. This cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteAccountConfirm(true)}
+            disabled={isDeletingAccount}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete my account
+          </Button>
+        </CardContent>
+      </Card>
+
+      {showDeleteAccountConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-title"
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 outline-none"
+          onClick={(e) => e.target === e.currentTarget && !isDeletingAccount && setShowDeleteAccountConfirm(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !isDeletingAccount) {
+              e.preventDefault();
+              setShowDeleteAccountConfirm(false);
+            }
+          }}
+        >
+          <Card className="w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle id="delete-account-title" className="text-lg text-destructive">
+                Delete account?
+              </CardTitle>
+              <CardDescription>
+                This will permanently delete all your data: profile, workspaces, tasks, calendar, grades, and settings. You will not be able to recover your account. Are you sure?
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowDeleteAccountConfirm(false)}
+                disabled={isDeletingAccount}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount}
+              >
+                {isDeletingAccount ? 'Deleting…' : 'Yes, delete my account'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

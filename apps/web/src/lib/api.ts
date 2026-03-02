@@ -248,6 +248,10 @@ export const authApi = {
       '/api/auth/profile',
       { method: 'PUT', body: JSON.stringify(data), token }
     ),
+
+  /** Permanently delete the current user and all associated data. */
+  deleteAccount: (token: string) =>
+    fetchApi<{ success: true }>('/api/auth/me', { method: 'DELETE', token }),
 };
 
 // Workspaces API
@@ -320,6 +324,13 @@ export const workspacesApi = {
 
   createDemo: (token: string) =>
     fetchApi<{ id: string; name: string }>('/api/workspaces/demo', {
+      method: 'POST',
+      token,
+    }),
+
+  /** Dev/showcase mode: creates demo workspace + tasks, calendar, collaborators, LMS courses/grades/announcements, quick links */
+  createShowcase: (token: string) =>
+    fetchApi<{ id: string; name: string }>('/api/workspaces/showcase', {
       method: 'POST',
       token,
     }),

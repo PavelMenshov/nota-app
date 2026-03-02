@@ -137,6 +137,8 @@ pnpm dev
 | API Docs    | http://localhost:4000/api/docs |
 | Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
 
+**Dev / Showcase mode:** On the dashboard, use **Load full showcase** to create a demo workspace with tasks, calendar events, deadlines, collaborators, university (LMS) courses, grades, announcements, and quick links — everything populated for demos and pitches.
+
 ### Troubleshooting
 
 - **Database errors:** ensure Docker is running (`docker compose up -d`), and `DATABASE_URL` in `.env` and `packages/database/.env` points to `localhost:5432` (no `db.prisma.io`).
@@ -193,7 +195,10 @@ pnpm db:generate   # Prisma client
 pnpm db:push       # Apply schema
 pnpm db:studio     # Prisma Studio
 pnpm db:migrate    # Run migrations
+pnpm db:wipe       # Wipe DB (drop + recreate + push) — requires Docker
 ```
+
+**Wiping the database:** Run `pnpm db:wipe` with Docker and the API stopped. This drops the `nota` database, recreates it, and runs `pnpm db:push`. All data (users, workspaces, etc.) is removed. If you don’t use Docker, drop the database manually and then run `pnpm db:push`.
 
 ---
 

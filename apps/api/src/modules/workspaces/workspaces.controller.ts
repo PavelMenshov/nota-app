@@ -70,6 +70,13 @@ export class WorkspacesController {
     return this.workspacesService.createDemo(req.user.userId);
   }
 
+  @Post('showcase')
+  @ApiOperation({ summary: 'Dev/showcase: create full demo (workspace, tasks, calendar, collaborators, LMS, grades, quick links)' })
+  @ApiResponse({ status: 201, description: 'Showcase workspace and data created' })
+  async createShowcase(@Request() req: { user: { userId: string } }) {
+    return this.workspacesService.createShowcase(req.user.userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a workspace by ID' })
   @ApiResponse({ status: 200, description: 'Workspace details' })

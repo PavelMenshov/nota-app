@@ -21,6 +21,7 @@
     "db:migrate": "pnpm --filter @nota/database migrate",
     "db:migrate:deploy": "pnpm --filter @nota/database migrate:deploy",
     "db:studio": "pnpm --filter @nota/database studio",
+    "db:wipe": "node scripts/wipe-db.js",
     "setup": "pnpm install && pnpm db:build && pnpm db:push",
     "postinstall": "pnpm db:build",
     "clean:next": "node scripts/clean-next.js"

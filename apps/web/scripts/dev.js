@@ -26,7 +26,7 @@ if (skipWait) {
   console.log('⚡ Skipping API wait (SKIP_WAIT_FOR_API). Next.js starting immediately.');
   runNext();
 } else {
-  const waitPath = path.join(__dirname, '../../scripts/wait-for-api.js');
+  const waitPath = path.join(__dirname, '../../../scripts/wait-for-api.js');
   const child = spawn(process.execPath, [waitPath], {
     stdio: 'inherit',
     cwd: appDir,

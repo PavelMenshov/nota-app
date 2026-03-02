@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { LmsProvider } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { CreateWorkspaceInput } from '@nota/shared';
 import { UpdateWorkspaceDto, AddMemberDto } from './dto/workspaces.dto';
@@ -286,6 +287,184 @@ export class WorkspacesService {
     });
   }
 
+  /**
+   * Dev/showcase mode: create demo workspace plus tasks, calendar events, collaborators,
+   * LMS integration with courses/grades/announcements, and quick links so the app is fully populated.
+   */
+  async createShowcase(userId: string) {
+    try {
+      return await this.createShowcaseInner(userId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new BadRequestException(`Showcase failed: ${message}`);
+    }
+  }
+
+  private async createShowcaseInner(userId: string) {
+    const demo = await this.createDemo(userId);
+    if (!demo) throw new NotFoundException('Demo workspace not created');
+    const workspaceId = demo.id;
+    const pages = demo.pages ?? [];
+    const getPageIdByTitle = (title: string) => pages.find((p) => p.title === title)?.id;
+
+    const now = new Date();
+    const inDays = (d: number) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
+    const atTime = (d: number, hour: number, min: number) => {
+      const date = inDays(d);
+      date.setHours(hour, min, 0, 0);
+      return date;
+    };
+
+    // Tasks with deadlines
+    const assignment1PageId = getPageIdByTitle('Assignment 1');
+    const assignment2PageId = getPageIdByTitle('Assignment 2');
+    const syllabusPageId = getPageIdByTitle('Syllabus');
+    const taskData = [
+      { title: 'Complete Assignment 1', description: 'Submit Doc + Sources', status: 'TODO' as const, priority: 'HIGH' as const, dueDate: inDays(7), pageId: assignment1PageId, assignedToAll: true },
+      { title: 'Complete Assignment 2', description: 'Use Canvas for diagrams', status: 'TODO' as const, priority: 'MEDIUM' as const, dueDate: inDays(14), pageId: assignment2PageId, assignedToAll: true },
+      { title: 'Review syllabus', description: 'Read course overview', status: 'DONE' as const, priority: 'LOW' as const, dueDate: inDays(-2), pageId: syllabusPageId, assignedToAll: false },
+      { title: 'Week 1 reading', description: 'Finish Module 1 materials', status: 'IN_PROGRESS' as const, priority: 'MEDIUM' as const, dueDate: inDays(3), pageId: getPageIdByTitle('Week 1: Getting started'), assignedToAll: false },
+      { title: 'Office hours sign-up', description: 'Book a slot with the TA', status: 'TODO' as const, priority: 'LOW' as const, dueDate: inDays(5), pageId: null, assignedToAll: false },
+    ];
+    for (const t of taskData) {
+      await this.prisma.task.create({
+        data: {
+          workspaceId,
+          pageId: t.pageId ?? undefined,
+          creatorId: userId,
+          title: t.title,
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          dueDate: t.dueDate,
+          assignedToAll: t.assignedToAll,
+        },
+      });
+    }
+
+    // Calendar events: lectures, office hours, deadlines
+    const eventData = [
+      { title: 'Lecture: Introduction', start: atTime(1, 10, 0), end: atTime(1, 11, 30), location: 'Room 101', meetingUrl: 'https://zoom.us/j/demo', allDay: false },
+      { title: 'Office hours', start: atTime(3, 14, 0), end: atTime(3, 15, 0), location: null, meetingUrl: 'https://teams.microsoft.com/l/meetup-join/demo', allDay: false },
+      { title: 'Assignment 1 due', start: atTime(7, 23, 59), end: atTime(7, 23, 59), location: null, meetingUrl: null, allDay: true },
+      { title: 'Lecture: Core concepts', start: atTime(8, 10, 0), end: atTime(8, 11, 30), location: 'Room 101', meetingUrl: null, allDay: false },
+      { title: 'Assignment 2 due', start: atTime(14, 23, 59), end: atTime(14, 23, 59), location: null, meetingUrl: null, allDay: true },
+      { title: 'Study group', start: atTime(5, 16, 0), end: atTime(5, 17, 0), location: 'Library', meetingUrl: null, allDay: false },
+    ];
+    for (const e of eventData) {
+      await this.prisma.calendarEvent.create({
+        data: {
+          workspaceId,
+          creatorId: userId,
+          title: e.title,
+          startTime: e.start,
+          endTime: e.end,
+          allDay: e.allDay,
+          location: e.location ?? undefined,
+          meetingUrl: e.meetingUrl ?? undefined,
+        },
+      });
+    }
+
+    // Showcase collaborators: ensure demo users exist and add as members
+    const showcaseEmails = [
+      { email: 'showcase-editor@nota.demo', name: 'Alex (Editor)', role: 'EDITOR' as const },
+      { email: 'showcase-viewer@nota.demo', name: 'Sam (Viewer)', role: 'VIEWER' as const },
+    ];
+    for (const { email, name, role } of showcaseEmails) {
+      let showcaseUser = await this.prisma.user.findUnique({ where: { email } });
+      if (!showcaseUser) {
+        showcaseUser = await this.prisma.user.create({
+          data: { email, name },
+        });
+      }
+      const existing = await this.prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId: showcaseUser.id } },
+      });
+      if (!existing) {
+        await this.prisma.workspaceMember.create({
+          data: { workspaceId, userId: showcaseUser.id, role },
+        });
+      }
+    }
+
+    // LMS integration + courses + assignments + grades + announcements (showcase university)
+    const lms = await this.prisma.lmsIntegration.create({
+      data: {
+        userId,
+        provider: LmsProvider.CANVAS,
+        baseUrl: 'https://demo-university.instructure.com',
+        accessToken: 'showcase-demo-token',
+      },
+    });
+    const course1 = await this.prisma.course.create({
+      data: {
+        lmsIntegrationId: lms.id,
+        externalId: 'showcase-cs101',
+        name: 'Introduction to Computer Science',
+        code: 'CS101',
+        term: 'Fall 2025',
+      },
+    });
+    const course2 = await this.prisma.course.create({
+      data: {
+        lmsIntegrationId: lms.id,
+        externalId: 'showcase-cs201',
+        name: 'Data Structures',
+        code: 'CS201',
+        term: 'Fall 2025',
+      },
+    });
+    await this.prisma.assignment.createMany({
+      data: [
+        { courseId: course1.id, externalId: 'a1', name: 'Homework 1', dueDate: inDays(7), points: 100 },
+        { courseId: course1.id, externalId: 'a2', name: 'Homework 2', dueDate: inDays(14), points: 100 },
+        { courseId: course2.id, externalId: 'a1', name: 'Project 1', dueDate: inDays(10), points: 50 },
+      ],
+    });
+    await this.prisma.grade.createMany({
+      data: [
+        { courseId: course1.id, externalColumnId: 'midterm', name: 'Midterm', score: 85, maxScore: 100, letterGrade: 'B+' },
+        { courseId: course1.id, externalColumnId: 'hw1', name: 'Homework 1', score: 92, maxScore: 100, letterGrade: 'A-' },
+      ],
+    });
+    await this.prisma.grade.create({
+      data: { courseId: course2.id, externalColumnId: 'p1', name: 'Project 1', score: 48, maxScore: 50, letterGrade: 'A' },
+    });
+    await this.prisma.lmsAnnouncement.createMany({
+      data: [
+        { lmsIntegrationId: lms.id, courseId: course1.id, externalId: 'ann1', title: 'Welcome to CS101', body: 'Syllabus and schedule are now available. First assignment due next week.', createdAt: inDays(-7) },
+        { lmsIntegrationId: lms.id, courseId: course2.id, externalId: 'ann2', title: 'Project 1 rubric', body: 'See the rubric for Project 1 in Files. Due in 10 days.', createdAt: inDays(-2) },
+      ],
+    });
+
+    // Quick links for dashboard and workspace sidebar (Student apps)
+    const quickLinks = {
+      library: { preset: 'google' as const },
+      classroom: { preset: 'teams' as const },
+    };
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { preferences: true } });
+    const prefs = (user?.preferences as Record<string, unknown>) ?? {};
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { preferences: { ...prefs, quickLinks } },
+    });
+
+    return this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, email: true, name: true, avatarUrl: true },
+            },
+          },
+        },
+        pages: { orderBy: { order: 'asc' } },
+      },
+    });
+  }
+
   async create(userId: string, dto: CreateWorkspaceInput) {
     const name = (dto.name ?? '').trim();
     if (!name) {
@@ -436,7 +615,7 @@ export class WorkspacesService {
 
   /** Move workspace to bin (soft delete). Retained for BIN_RETENTION_DAYS then purged. */
   async delete(id: string, userId: string) {
-    await this.checkPermission(id, userId, ['OWNER']);
+    await this.assertCanDeleteOrRestore(id, userId);
 
     await this.prisma.workspace.update({
       where: { id },
@@ -464,7 +643,7 @@ export class WorkspacesService {
 
   /** Restore a workspace from bin. */
   async restore(id: string, userId: string) {
-    await this.checkPermission(id, userId, ['OWNER']);
+    await this.assertCanDeleteOrRestore(id, userId);
 
     await this.prisma.workspace.update({
       where: { id },
@@ -476,7 +655,7 @@ export class WorkspacesService {
 
   /** Permanently delete a workspace (must be in bin). */
   async purge(id: string, userId: string) {
-    await this.checkPermission(id, userId, ['OWNER']);
+    await this.assertCanDeleteOrRestore(id, userId);
 
     const w = await this.prisma.workspace.findUnique({
       where: { id },
@@ -733,5 +912,29 @@ export class WorkspacesService {
     }
 
     return member;
+  }
+
+  /**
+   * Allow delete/restore/purge if user is OWNER, or if user is the only member (artifact workspace cleanup).
+   */
+  private async assertCanDeleteOrRestore(workspaceId: string, userId: string) {
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: { workspaceId, userId },
+      },
+    });
+    if (!member) {
+      throw new ForbiddenException('You do not have permission to perform this action');
+    }
+    if (member.role === 'OWNER') return;
+
+    const memberCount = await this.prisma.workspaceMember.count({
+      where: { workspaceId },
+    });
+    if (memberCount === 1) {
+      return;
+    }
+
+    throw new ForbiddenException('Only the owner can delete or restore this workspace.');
   }
 }

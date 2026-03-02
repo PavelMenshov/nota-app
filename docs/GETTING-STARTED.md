@@ -97,6 +97,8 @@ pnpm db:push
 
 **Prisma and DB commands:** After pulling schema changes or editing `schema.prisma`, run `pnpm db:generate` (and `pnpm db:push` for dev). If you see TypeScript errors like `Property 'user' does not exist on type 'PrismaService'`, run `pnpm db:generate` and restart your IDE/TS server. For migrations in production use `pnpm db:migrate`; for Prisma Studio use `pnpm db:studio`.
 
+**Wipe the database:** To delete all data and start from a clean schema, run `pnpm db:wipe`. This requires Docker (e.g. `docker compose up -d`). It drops the `nota` database, recreates it, and runs `pnpm db:push`. Stop the API before running it. Without Docker, drop the database manually (e.g. `psql -U nota -d template1 -c "DROP DATABASE IF EXISTS nota;" -c "CREATE DATABASE nota;"`) then run `pnpm db:push`.
+
 ### 6. Start Development Servers
 
 Start both API and web applications:

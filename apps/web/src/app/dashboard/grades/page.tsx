@@ -46,6 +46,21 @@ function formatScore(score: number | null, maxScore: number | null): string {
   return '—';
 }
 
+function gradeRowColor(letterGrade: string | null): string {
+  if (!letterGrade) return '';
+  const g = letterGrade.toUpperCase().replace(/[+-]/, '');
+  if (g === 'A') return 'bg-green-500/10 dark:bg-green-500/20';
+  if (g === 'B') return 'bg-amber-500/10 dark:bg-amber-500/20';
+  if (g === 'C') return 'bg-orange-500/10 dark:bg-orange-500/20';
+  if (g === 'D' || g === 'F') return 'bg-red-500/10 dark:bg-red-500/20';
+  return '';
+}
+
+function isImportantAnnouncement(title: string): boolean {
+  const t = title.toLowerCase();
+  return /important|urgent|!/.test(t) || t.startsWith('welcome');
+}
+
 export default function MyGradesPage() {
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -234,12 +249,12 @@ export default function MyGradesPage() {
                                 </thead>
                                 <tbody>
                                   {course.grades.map((g) => (
-                                    <tr key={g.id} className="border-t border-border">
+                                    <tr key={g.id} className={`border-t border-border ${gradeRowColor(g.letterGrade)}`}>
                                       <td className="p-2">{g.name}</td>
                                       <td className="p-2 text-right">
                                         {formatScore(g.score, g.maxScore)}
                                       </td>
-                                      <td className="p-2 text-right">{g.letterGrade ?? '—'}</td>
+                                      <td className="p-2 text-right font-medium">{g.letterGrade ?? '—'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -279,7 +294,10 @@ export default function MyGradesPage() {
                     {!loadingAnnouncements && announcements && announcements.length > 0 && (
                       <ul className="space-y-4">
                         {announcements.map((a) => (
-                          <li key={a.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                          <li
+                            key={a.id}
+                            className={`border-b border-border pb-4 last:border-0 last:pb-0 rounded-md px-3 py-2 ${isImportantAnnouncement(a.title) ? 'bg-amber-200/50 dark:bg-amber-500/20 border border-amber-400/50 dark:border-amber-500/50' : ''}`}
+                          >
                             <p className="font-medium text-foreground">{a.title}</p>
                             {a.course && (
                               <p className="text-xs text-muted-foreground mt-0.5">{a.course.name} {a.course.code && `(${a.course.code})`}</p>

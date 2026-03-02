@@ -45,6 +45,7 @@ export default function DashboardBinPage() {
   const [purgeConfirmId, setPurgeConfirmId] = useState<string | null>(null);
   const [emptyBinConfirm, setEmptyBinConfirm] = useState(false);
   const purgeModalRef = useRef<HTMLDivElement>(null);
+  const emptyBinModalRef = useRef<HTMLDivElement>(null);
 
   const loadBin = useCallback(async () => {
     if (!token) return;
@@ -107,6 +108,27 @@ export default function DashboardBinPage() {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [purgeConfirmId, confirmPurge]);
+
+  useEffect(() => {
+    if (!emptyBinConfirm) return;
+    const el = emptyBinModalRef.current;
+    if (el) (el as HTMLElement).focus();
+  }, [emptyBinConfirm]);
+
+  useEffect(() => {
+    if (!emptyBinConfirm) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setEmptyBinConfirm(false);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleEmptyBin();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [emptyBinConfirm]);
 
   const handlePurgeExpired = async () => {
     if (!token) return;
@@ -239,14 +261,20 @@ export default function DashboardBinPage() {
         </CardContent>
       </Card>
 
-      {/* Empty bin confirmation */}
+      {/* Empty bin confirmation: Escape to cancel, Enter to confirm */}
       {emptyBinConfirm && (
         <div
+          ref={emptyBinModalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="empty-bin-title"
+          tabIndex={-1}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 outline-none"
           onClick={(e) => e.target === e.currentTarget && setEmptyBinConfirm(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { e.preventDefault(); setEmptyBinConfirm(false); }
+            if (e.key === 'Enter') { e.preventDefault(); handleEmptyBin(); }
+          }}
         >
           <Card className="w-full max-w-sm shadow-lg" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
