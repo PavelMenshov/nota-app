@@ -786,10 +786,111 @@ export const lmsApi = {
       syncedAt: string;
     }>>(`/api/lms/integrations/${integrationId}/courses`, { token }),
 
+  getCoursesWithAssignments: (token: string, integrationId: string) =>
+    fetchApi<Array<{
+      id: string;
+      externalId: string;
+      name: string;
+      code: string | null;
+      term: string | null;
+      syncedAt: string;
+      assignments: Array<{
+        id: string;
+        externalId: string;
+        name: string;
+        dueDate: string | null;
+        points: number | null;
+      }>;
+    }>>(`/api/lms/integrations/${integrationId}/courses-with-assignments`, { token }),
+
+  syncAssignments: (
+    token: string,
+    integrationId: string,
+    data: { workspaceId: string; assignmentIds: string[] }
+  ) =>
+    fetchApi<{ synced: number; tasks: Array<{ id: string; title: string; dueDate: string | null }> }>(
+      `/api/lms/integrations/${integrationId}/sync`,
+      { method: 'POST', body: JSON.stringify(data), token }
+    ),
+
   linkWorkspace: (token: string, workspaceId: string, integrationId: string) =>
     fetchApi<{ success: boolean; integrationId: string }>(`/api/workspaces/${workspaceId}/lms`, {
       method: 'POST',
       body: JSON.stringify({ integrationId }),
+      token,
+    }),
+
+  getGrades: (token: string, integrationId: string) =>
+    fetchApi<Array<{
+      id: string;
+      externalId: string;
+      name: string;
+      code: string | null;
+      term: string | null;
+      grades: Array<{
+        id: string;
+        name: string;
+        score: number | null;
+        maxScore: number | null;
+        letterGrade: string | null;
+        feedback: string | null;
+        syncedAt: string;
+      }>;
+    }>>(`/api/lms/integrations/${integrationId}/grades`, { token }),
+
+  syncGrades: (token: string, integrationId: string) =>
+    fetchApi<{ synced: number; message?: string }>(
+      `/api/lms/integrations/${integrationId}/sync-grades`,
+      { method: 'POST', token }
+    ),
+
+  getAnnouncements: (token: string, integrationId: string, limit?: number) =>
+    fetchApi<Array<{
+      id: string;
+      title: string;
+      body: string | null;
+      createdAt: string;
+      course: { id: string; name: string; code: string | null } | null;
+    }>>(
+      `/api/lms/integrations/${integrationId}/announcements${limit != null ? `?limit=${limit}` : ''}`,
+      { token }
+    ),
+
+  syncAnnouncements: (token: string, integrationId: string) =>
+    fetchApi<{ synced: number; message?: string }>(
+      `/api/lms/integrations/${integrationId}/sync-announcements`,
+      { method: 'POST', token }
+    ),
+};
+
+// Integrations API (Zoom, Outlook)
+export const integrationsApi = {
+  status: (token: string) =>
+    fetchApi<{ zoom: boolean; outlook: boolean }>('/api/integrations/status', { token }),
+
+  getZoomAuthorizeUrl: (token: string) =>
+    fetchApi<{ redirectUrl: string }>('/api/integrations/zoom/authorize', { token }),
+
+  getOutlookAuthorizeUrl: (token: string) =>
+    fetchApi<{ redirectUrl: string }>('/api/integrations/outlook/authorize', { token }),
+
+  createZoomMeeting: (
+    token: string,
+    data: { title: string; startTime: string; endTime: string },
+  ) =>
+    fetchApi<{ joinUrl: string }>('/api/integrations/zoom/meetings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  createOutlookEvent: (
+    token: string,
+    data: { title: string; startTime: string; endTime: string; description?: string },
+  ) =>
+    fetchApi<{ id: string }>('/api/integrations/outlook/events', {
+      method: 'POST',
+      body: JSON.stringify(data),
       token,
     }),
 };
@@ -817,6 +918,27 @@ export const exportApi = {
       '/api/export/send-to-notion',
       { method: 'POST', body: JSON.stringify(data), token },
     ),
+};
+
+// Notifications API
+export const notificationsApi = {
+  list: (token: string) =>
+    fetchApi<Array<{
+      id: string;
+      type: string;
+      title: string;
+      body: string | null;
+      read: boolean;
+      link: string | null;
+      relatedId: string | null;
+      createdAt: string;
+    }>>('/api/notifications', { token }),
+
+  markRead: (token: string, id: string) =>
+    fetchApi<{ id: string; read: boolean }>(`/api/notifications/${id}`, {
+      method: 'PATCH',
+      token,
+    }),
 };
 
 export default fetchApi;

@@ -144,7 +144,7 @@ export default function WorkspaceTasksPage() {
       <header className="border-b sticky top-0 bg-background z-10">
         <div className="flex items-center justify-between h-14 px-4">
           <div className="flex items-center gap-4">
-            <Link href={`/workspace/${workspaceId}`} className="text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground" title="Back to workspaces">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-2">

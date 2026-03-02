@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { calendarApi } from '@/lib/api';
+import { calendarApi, integrationsApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface CalendarEvent {
@@ -54,6 +54,8 @@ export default function WorkspaceCalendarPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [zoomLoading, setZoomLoading] = useState(false);
+  const [outlookLoading, setOutlookLoading] = useState(false);
 
   const loadEvents = useCallback(async () => {
     if (!token) return;
@@ -131,6 +133,50 @@ export default function WorkspaceCalendarPage() {
     }
   };
 
+  const createZoomMeeting = async () => {
+    if (!token || !formTitle.trim()) {
+      toast({ title: 'Enter a title first', variant: 'destructive' });
+      return;
+    }
+    setZoomLoading(true);
+    try {
+      const { joinUrl } = await integrationsApi.createZoomMeeting(token, {
+        title: formTitle.trim(),
+        startTime: new Date(formStart).toISOString(),
+        endTime: new Date(formEnd).toISOString(),
+      });
+      setFormMeetingUrl(joinUrl);
+      toast({ title: 'Zoom meeting created' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Connect Zoom in Settings first';
+      toast({ title: 'Zoom meeting failed', description: msg, variant: 'destructive' });
+    } finally {
+      setZoomLoading(false);
+    }
+  };
+
+  const addToOutlook = async () => {
+    if (!token || !formTitle.trim()) {
+      toast({ title: 'Enter a title first', variant: 'destructive' });
+      return;
+    }
+    setOutlookLoading(true);
+    try {
+      await integrationsApi.createOutlookEvent(token, {
+        title: formTitle.trim(),
+        startTime: new Date(formStart).toISOString(),
+        endTime: new Date(formEnd).toISOString(),
+        description: formDescription.trim() || undefined,
+      });
+      toast({ title: 'Added to Outlook calendar' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Connect Outlook in Settings first';
+      toast({ title: 'Outlook failed', description: msg, variant: 'destructive' });
+    } finally {
+      setOutlookLoading(false);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!token || !eventToDelete) return;
     setIsDeleting(true);
@@ -164,7 +210,7 @@ export default function WorkspaceCalendarPage() {
       <header className="border-b sticky top-0 bg-background z-10">
         <div className="flex items-center justify-between h-14 px-4">
           <div className="flex items-center gap-4">
-            <Link href={`/workspace/${workspaceId}`} className="text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground" title="Back to workspaces">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-2">
@@ -295,14 +341,34 @@ export default function WorkspaceCalendarPage() {
               </div>
               <div>
                 <label htmlFor="event-meeting" className="text-xs text-muted-foreground">Meeting link (Zoom, Meet, Outlook)</label>
-                <Input
-                  id="event-meeting"
-                  type="url"
-                  placeholder="https://zoom.us/j/... or Outlook/Teams link"
-                  value={formMeetingUrl}
-                  onChange={(e) => setFormMeetingUrl(e.target.value)}
-                  className="mt-0.5"
-                />
+                <div className="flex gap-2 mt-0.5">
+                  <Input
+                    id="event-meeting"
+                    type="url"
+                    placeholder="https://zoom.us/j/... or paste link"
+                    value={formMeetingUrl}
+                    onChange={(e) => setFormMeetingUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={createZoomMeeting}
+                    disabled={zoomLoading || !formTitle.trim()}
+                  >
+                    {zoomLoading ? '…' : 'Create Zoom meeting'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addToOutlook}
+                    disabled={outlookLoading || !formTitle.trim()}
+                  >
+                    {outlookLoading ? '…' : 'Add to Outlook'}
+                  </Button>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>

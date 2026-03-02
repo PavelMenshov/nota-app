@@ -41,6 +41,7 @@ model User {
   pdfAnnotations     PDFAnnotation[]
   flashcardSets      FlashcardSet[]
   lmsIntegrations    LmsIntegration[]
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -570,11 +571,29 @@ model LmsIntegration {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   
-  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courses Course[]
-  workspaces Workspace[]
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses       Course[]
+  workspaces    Workspace[]
+  announcements LmsAnnouncement[]
 
   @@map("lms_integrations")
+}
+
+model LmsAnnouncement {
+  id               String   @id @default(cuid())
+  lmsIntegrationId String
+  courseId         String?
+  externalId       String
+  title            String
+  body             String?  @db.Text
+  createdAt        DateTime
+  syncedAt         DateTime @default(now())
+  
+  lmsIntegration LmsIntegration @relation(fields: [lmsIntegrationId], references: [id], onDelete: Cascade)
+  course         Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  
+  @@unique([lmsIntegrationId, externalId])
+  @@map("lms_announcements")
 }
 
 model Course {
@@ -586,11 +605,30 @@ model Course {
   term             String?
   syncedAt         DateTime  @default(now())
   
-  lmsIntegration LmsIntegration @relation(fields: [lmsIntegrationId], references: [id], onDelete: Cascade)
+  lmsIntegration LmsIntegration  @relation(fields: [lmsIntegrationId], references: [id], onDelete: Cascade)
   assignments    Assignment[]
+  grades         Grade[]
+  announcements  LmsAnnouncement[]
 
   @@unique([lmsIntegrationId, externalId])
   @@map("lms_courses")
+}
+
+model Grade {
+  id               String    @id @default(cuid())
+  courseId         String
+  externalColumnId String
+  name             String
+  score            Float?
+  maxScore         Float?
+  letterGrade      String?
+  feedback         String?   @db.Text
+  syncedAt         DateTime  @default(now())
+  
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([courseId, externalColumnId])
+  @@map("lms_grades")
 }
 
 model Assignment {
@@ -605,4 +643,31 @@ model Assignment {
 
   @@unique([courseId, externalId])
   @@map("lms_assignments")
+}
+
+// ================================
+// NOTIFICATIONS
+// ================================
+
+enum NotificationType {
+  UPCOMING_DEADLINE
+  UPCOMING_EVENT
+  COLLABORATION_REQUEST
+  OTHER
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  type       NotificationType
+  title      String
+  body       String?          @db.Text
+  read       Boolean          @default(false)
+  link       String?          @db.Text
+  relatedId  String?
+  createdAt  DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

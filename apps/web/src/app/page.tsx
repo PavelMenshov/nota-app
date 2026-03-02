@@ -6,8 +6,6 @@ import { useState } from 'react';
 import { NotaIcon } from '@/components/NotaIcon';
 import { useInView } from '@/hooks/use-in-view';
 import { cn } from '@/lib/utils';
-import { APP_CONFIG } from '@/lib/app-config';
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const FOCUS_RING =
@@ -108,9 +106,10 @@ export default function HomePage() {
   ];
 
   const steps = [
-    { step: 1, title: 'Create a workspace', body: 'Sign up free and create a workspace—e.g. a course or project.' },
-    { step: 2, title: 'Add pages & surfaces', body: 'Add pages. Each page gets doc, canvas, and PDF—use what you need.' },
-    { step: 3, title: 'Collaborate & share', body: 'Invite others, set roles, and export to PDF or DOCX when you\'re done.' },
+    { step: 1, title: 'Sign in with your university', body: 'Use your university SSO to log in. Nota connects to your institution—no extra passwords, and your Zoom, Outlook, and LMS access follow.' },
+    { step: 2, title: 'One place for courses & deadlines', body: 'Workspaces for each course or project. Pages with docs, canvas, and PDFs. Deadlines and important dates from your LMS (e.g. Blackboard) sync into Nota\'s calendar and tasks.' },
+    { step: 3, title: 'Meetings & collaboration in one app', body: 'Connect Zoom and Outlook once; create Zoom meetings from calendar events and add events to Outlook. Get notified about upcoming deadlines, meetings, and collaboration requests.' },
+    { step: 4, title: 'Collaborate & share', body: 'Invite others to workspaces, set roles, and export to PDF or DOCX. Everything you use as a student—LMS, mail, meetings, notes—lives in one place.' },
   ];
 
   return (
@@ -188,34 +187,15 @@ export default function HomePage() {
                     Get started free
                   </Button>
                 </Link>
-                <a
-                  href={APP_CONFIG.DOWNLOADS.WINDOWS}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn('inline-flex', FOCUS_RING)}
-                >
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className={cn('h-12 px-7 text-base font-semibold rounded-full border-border bg-card/80 hover:bg-card', FOCUS_RING)}
-                  >
-                    Download for Windows
-                  </Button>
-                </a>
                 <Button
                   variant="outline"
                   size="lg"
                   className={cn('h-12 px-7 text-base font-semibold rounded-full border-border bg-card/80 hover:bg-card', FOCUS_RING)}
                   onClick={scrollToFeatures}
                 >
-                  Try demo
+                  See features
                 </Button>
               </div>
-              {!APP_CONFIG.HAS_WINDOWS_DOWNLOAD && (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Windows: check GitHub Releases for the latest build.
-                </p>
-              )}
             </Reveal>
           </div>
         </section>
@@ -247,7 +227,7 @@ export default function HomePage() {
                 Everything you need in one place
               </h2>
               <p className="mt-3 text-muted-foreground text-lg max-w-2xl">
-                Workspaces, pages, and three surfaces per page: doc, canvas, and PDF. Built for academic use.
+                Everything students use in one place: workspaces, notes, canvas, PDFs, tasks, calendar, and integrations with your LMS, Zoom, and Outlook.
               </p>
             </Reveal>
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -279,10 +259,10 @@ export default function HomePage() {
                 How it works
               </h2>
               <p className="mt-3 text-muted-foreground text-lg max-w-2xl">
-                Get from signup to your first page in minutes.
+                Nota is built for students: one place for your LMS, calendar, meetings, mail, and notes. Sign in with your university and bring it all together.
               </p>
             </Reveal>
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-6">
               {steps.map((item) => (
                 <Reveal key={item.step}>
                   <div className="flex sm:flex-col gap-4 sm:gap-3">
@@ -324,20 +304,6 @@ export default function HomePage() {
                       Get started free
                     </Button>
                   </Link>
-                  <a
-                    href={APP_CONFIG.DOWNLOADS.WINDOWS}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn('inline-flex', FOCUS_RING)}
-                  >
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className={cn('h-12 px-7 text-base font-semibold rounded-full', FOCUS_RING)}
-                    >
-                      Download for Windows
-                    </Button>
-                  </a>
                   <Link href="/auth/login" className={cn('inline-flex', FOCUS_RING)}>
                     <Button
                       variant="outline"

@@ -1,26 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, Settings, User } from 'lucide-react';
+import { ChevronLeft, Settings, User, Video, Mail, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { authApi } from '@/lib/api';
+import { authApi, integrationsApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function DashboardSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { token, user, updateUser, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [integrations, setIntegrations] = useState<{ zoom: boolean; outlook: boolean } | null>(null);
+  const [connectingZoom, setConnectingZoom] = useState(false);
+  const [connectingOutlook, setConnectingOutlook] = useState(false);
+  const oauthHandled = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -39,6 +44,52 @@ export default function DashboardSettingsPage() {
       })
       .finally(() => setIsLoading(false));
   }, [token, isAuthenticated, router, toast]);
+
+  useEffect(() => {
+    if (!token) return;
+    integrationsApi.status(token).then(setIntegrations).catch(() => setIntegrations({ zoom: false, outlook: false }));
+  }, [token]);
+
+  useEffect(() => {
+    if (oauthHandled.current) return;
+    const success = searchParams.get('integrations');
+    const provider = searchParams.get('provider');
+    const error = searchParams.get('error') || searchParams.get('message');
+    if (success === 'success' && provider) {
+      oauthHandled.current = true;
+      toast({ title: `${provider === 'zoom' ? 'Zoom' : 'Outlook'} connected successfully` });
+      if (token) integrationsApi.status(token).then(setIntegrations);
+      router.replace('/dashboard/settings', { scroll: false });
+    } else if (success === 'error' || error) {
+      oauthHandled.current = true;
+      toast({ title: 'Connection failed', description: error || 'Please try again.', variant: 'destructive' });
+      router.replace('/dashboard/settings', { scroll: false });
+    }
+  }, [searchParams, token, toast, router]);
+
+  const handleConnectZoom = async () => {
+    if (!token) return;
+    setConnectingZoom(true);
+    try {
+      const { redirectUrl } = await integrationsApi.getZoomAuthorizeUrl(token);
+      globalThis.location.href = redirectUrl;
+    } catch {
+      toast({ title: 'Could not start Zoom connection', variant: 'destructive' });
+      setConnectingZoom(false);
+    }
+  };
+
+  const handleConnectOutlook = async () => {
+    if (!token) return;
+    setConnectingOutlook(true);
+    try {
+      const { redirectUrl } = await integrationsApi.getOutlookAuthorizeUrl(token);
+      globalThis.location.href = redirectUrl;
+    } catch {
+      toast({ title: 'Could not start Outlook connection', variant: 'destructive' });
+      setConnectingOutlook(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +191,45 @@ export default function DashboardSettingsPage() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Integrations</CardTitle>
+          <CardDescription>Connect Zoom and Outlook for calendar meetings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 min-w-[140px]">
+              <Video className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium">Zoom</span>
+              {integrations?.zoom && <CheckCircle className="h-4 w-4 text-green-600" />}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleConnectZoom}
+              disabled={connectingZoom || connectingOutlook}
+            >
+              {integrations?.zoom ? 'Reconnect Zoom' : 'Connect Zoom'}
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 min-w-[140px]">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium">Outlook</span>
+              {integrations?.outlook && <CheckCircle className="h-4 w-4 text-green-600" />}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleConnectOutlook}
+              disabled={connectingZoom || connectingOutlook}
+            >
+              {integrations?.outlook ? 'Reconnect Outlook' : 'Connect Outlook'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

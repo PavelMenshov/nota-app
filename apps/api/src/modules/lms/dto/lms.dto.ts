@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, MinLength, MaxLength } from 'class-validator';
 
 export enum LmsProviderEnum {
   BLACKBOARD = 'BLACKBOARD',
@@ -34,4 +34,16 @@ export class LinkWorkspaceLmsDto {
   @IsString()
   @MinLength(1)
   integrationId!: string;
+}
+
+export class SyncLmsAssignmentsDto {
+  @ApiProperty({ example: 'cuid_workspace_id' })
+  @IsString()
+  @MinLength(1)
+  workspaceId!: string;
+
+  @ApiProperty({ type: [String], description: 'Assignment IDs to import as tasks' })
+  @IsArray()
+  @IsString({ each: true })
+  assignmentIds!: string[];
 }

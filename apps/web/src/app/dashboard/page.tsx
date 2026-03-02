@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail } from 'lucide-react';
+import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, GraduationCap, BookOpen, Link2, CheckSquare, Calendar, Video, Mail, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +38,18 @@ interface LmsCourse {
   syncedAt: string;
 }
 
+interface LmsAssignment {
+  id: string;
+  externalId: string;
+  name: string;
+  dueDate: string | null;
+  points: number | null;
+}
+
+interface CourseWithAssignments extends LmsCourse {
+  assignments: LmsAssignment[];
+}
+
 function DashboardContent() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +77,13 @@ function DashboardContent() {
   const [showLinkWorkspaceModal, setShowLinkWorkspaceModal] = useState<{ integrationId: string } | null>(null);
   const [linkingWorkspaceId, setLinkingWorkspaceId] = useState<string | null>(null);
   const [isCreatingDemo, setIsCreatingDemo] = useState(false);
+  // Import deadlines from LMS
+  const [showImportDeadlinesModal, setShowImportDeadlinesModal] = useState<{ integrationId: string } | null>(null);
+  const [importWorkspaceId, setImportWorkspaceId] = useState<string>('');
+  const [coursesWithAssignments, setCoursesWithAssignments] = useState<CourseWithAssignments[] | null>(null);
+  const [importSelectedIds, setImportSelectedIds] = useState<Set<string>>(new Set());
+  const [loadingImportAssignments, setLoadingImportAssignments] = useState(false);
+  const [syncingImport, setSyncingImport] = useState(false);
   const router = useRouter();
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -300,6 +319,54 @@ function DashboardContent() {
     }
   };
 
+  const openImportDeadlines = (integrationId: string) => {
+    setShowImportDeadlinesModal({ integrationId });
+    setCoursesWithAssignments(null);
+    setImportSelectedIds(new Set());
+    setImportWorkspaceId(workspaces[0]?.id ?? '');
+  };
+
+  const loadImportAssignments = async () => {
+    if (!token || !showImportDeadlinesModal) return;
+    setLoadingImportAssignments(true);
+    try {
+      const data = await lmsApi.getCoursesWithAssignments(token, showImportDeadlinesModal.integrationId);
+      setCoursesWithAssignments(data);
+    } catch {
+      toast({ title: 'Failed to load courses and assignments', variant: 'destructive' });
+    } finally {
+      setLoadingImportAssignments(false);
+    }
+  };
+
+  const toggleImportAssignment = (id: string) => {
+    setImportSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSyncImport = async () => {
+    if (!token || !showImportDeadlinesModal || !importWorkspaceId || importSelectedIds.size === 0) return;
+    setSyncingImport(true);
+    try {
+      const result = await lmsApi.syncAssignments(token, showImportDeadlinesModal.integrationId, {
+        workspaceId: importWorkspaceId,
+        assignmentIds: Array.from(importSelectedIds),
+      });
+      toast({ title: `Imported ${result.synced} deadline(s) as tasks` });
+      setShowImportDeadlinesModal(null);
+      setCoursesWithAssignments(null);
+      setImportSelectedIds(new Set());
+    } catch {
+      toast({ title: 'Failed to import deadlines', variant: 'destructive' });
+    } finally {
+      setSyncingImport(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -331,6 +398,11 @@ function DashboardContent() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Link href="/dashboard/grades">
+                <Button variant="outline" className="h-10 px-5 rounded-md font-medium border-border">
+                  My grades
+                </Button>
+              </Link>
               <Link href="/dashboard/courses">
                 <Button variant="outline" className="h-10 px-5 rounded-md font-medium border-border">
                   View courses
@@ -370,7 +442,7 @@ function DashboardContent() {
                         <p className="text-xs text-muted-foreground truncate max-w-[240px]">{int.baseUrl}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -379,6 +451,16 @@ function DashboardContent() {
                         disabled={loadingCoursesId === int.id}
                       >
                         {loadingCoursesId === int.id ? 'Loading…' : 'View courses'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-md"
+                        onClick={() => openImportDeadlines(int.id)}
+                        disabled={workspaces.length === 0}
+                      >
+                        <CalendarClock className="h-4 w-4 mr-1" />
+                        Import deadlines
                       </Button>
                       <Button
                         variant="outline"
@@ -665,6 +747,99 @@ function DashboardContent() {
                 <p className="text-sm text-muted-foreground py-4 text-center">No courses found.</p>
               )}
               <Button variant="outline" className="w-full mt-4 rounded-md h-10" onClick={() => setCoursesForIntegration(null)}>Close</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Import deadlines from LMS modal */}
+      {showImportDeadlinesModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowImportDeadlinesModal(null)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowImportDeadlinesModal(null); }}
+          aria-label="Close modal"
+        >
+          <Card className="w-full max-w-lg max-h-[85vh] rounded-lg border border-border shadow-lg bg-card flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="pb-3 flex-shrink-0">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <CalendarClock className="h-5 w-5" />
+                Import deadlines from LMS
+              </CardTitle>
+              <CardDescription>Choose a workspace and select assignments to import as tasks with due dates.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Target workspace</Label>
+                <select
+                  value={importWorkspaceId}
+                  onChange={(e) => setImportWorkspaceId(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {workspaces.map((w) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
+              {!coursesWithAssignments ? (
+                <Button
+                  variant="secondary"
+                  className="w-full rounded-md h-10"
+                  onClick={loadImportAssignments}
+                  disabled={loadingImportAssignments}
+                >
+                  {loadingImportAssignments ? 'Loading…' : 'Load courses and assignments'}
+                </Button>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Select assignments to import as tasks</Label>
+                    <ul className="space-y-2 border border-border rounded-md divide-y divide-border max-h-[280px] overflow-y-auto">
+                      {coursesWithAssignments.map((c) => (
+                        <li key={c.id} className="p-2">
+                          <p className="text-sm font-medium text-foreground px-1">{c.name}</p>
+                          <ul className="mt-1 space-y-1">
+                            {c.assignments.map((a) => (
+                              <li key={a.id} className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50">
+                                <input
+                                  type="checkbox"
+                                  id={`import-${a.id}`}
+                                  checked={importSelectedIds.has(a.id)}
+                                  onChange={() => toggleImportAssignment(a.id)}
+                                  className="rounded border-border"
+                                />
+                                <label htmlFor={`import-${a.id}`} className="flex-1 text-sm cursor-pointer">
+                                  {a.name}
+                                  {a.dueDate && (
+                                    <span className="text-muted-foreground ml-2">
+                                      Due {new Date(a.dueDate).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </label>
+                              </li>
+                            ))}
+                          </ul>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => setCoursesWithAssignments(null)}>
+                      Back
+                    </Button>
+                    <Button
+                      className="flex-1 rounded-md h-10"
+                      onClick={handleSyncImport}
+                      disabled={importSelectedIds.size === 0 || syncingImport}
+                    >
+                      {syncingImport ? 'Importing…' : `Import ${importSelectedIds.size} selected`}
+                    </Button>
+                  </div>
+                </>
+              )}
+              <Button variant="ghost" className="w-full rounded-md h-10" onClick={() => setShowImportDeadlinesModal(null)}>Cancel</Button>
             </CardContent>
           </Card>
         </div>

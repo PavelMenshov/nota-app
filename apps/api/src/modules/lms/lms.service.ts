@@ -1,11 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { WorkspaceAccessService } from '../../common/workspace-access/workspace-access.service';
 import { CreateLmsIntegrationDto } from './dto/lms.dto';
 import { LmsProvider } from '@prisma/client';
 
+const BB_API_V1 = '/learn/api/public/v1';
+const BB_API_V2 = '/learn/api/public/v2';
+const BB_API_V3 = '/learn/api/public/v3';
+
 @Injectable()
 export class LmsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {}
+
+  private baseUrl(integration: { baseUrl: string }) {
+    return integration.baseUrl.replace(/\/$/, '');
+  }
+
+  private async bbRequest<T>(
+    baseUrl: string,
+    path: string,
+    accessToken: string,
+    options?: { method?: string; body?: unknown },
+  ): Promise<T> {
+    const url = `${baseUrl}${path}`;
+    const res = await fetch(url, {
+      method: options?.method ?? 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...(options?.body && { body: JSON.stringify(options.body) }),
+      },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Blackboard API ${res.status}: ${text}`);
+    }
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  }
 
   async listIntegrations(userId: string) {
     return this.prisma.lmsIntegration.findMany({
@@ -65,4 +100,337 @@ export class LmsService {
     ];
   }
 
+  /** Returns courses with assignments (from DB or ensures mock data in DB for demo). */
+  async getCoursesWithAssignments(integrationId: string, userId: string) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: { courses: { include: { assignments: true } } },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    if (integration.courses.length > 0) {
+      return integration.courses.map((c) => ({
+        id: c.id,
+        externalId: c.externalId,
+        name: c.name,
+        code: c.code,
+        term: c.term,
+        syncedAt: c.syncedAt.toISOString?.() ?? String(c.syncedAt),
+        assignments: c.assignments.map((a) => ({
+          id: a.id,
+          externalId: a.externalId,
+          name: a.name,
+          dueDate: a.dueDate?.toISOString?.() ?? null,
+          points: a.points,
+        })),
+      }));
+    }
+    // Ensure mock courses and assignments exist in DB so we have real IDs for sync
+    const mockCourses = [
+      { externalId: 'ext-1', name: 'Introduction to Computer Science', code: 'CS101', term: 'Fall 2025', assignments: [
+        { externalId: 'a1', name: 'Homework 1', dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), points: 100 },
+        { externalId: 'a2', name: 'Homework 2', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), points: 100 },
+      ]},
+      { externalId: 'ext-2', name: 'Data Structures', code: 'CS201', term: 'Fall 2025', assignments: [
+        { externalId: 'a1', name: 'Project 1', dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), points: 50 },
+      ]},
+    ];
+    const created = await this.prisma.$transaction(
+      mockCourses.map((mc) =>
+        this.prisma.course.upsert({
+          where: {
+            lmsIntegrationId_externalId: { lmsIntegrationId: integrationId, externalId: mc.externalId },
+          },
+          create: {
+            lmsIntegrationId: integrationId,
+            externalId: mc.externalId,
+            name: mc.name,
+            code: mc.code ?? undefined,
+            term: mc.term ?? undefined,
+            assignments: {
+              create: mc.assignments.map((a) => ({
+                externalId: a.externalId,
+                name: a.name,
+                dueDate: a.dueDate,
+                points: a.points,
+              })),
+            },
+          },
+          update: {},
+          include: { assignments: true },
+        }),
+      ),
+    );
+    return created.map((c) => ({
+      id: c.id,
+      externalId: c.externalId,
+      name: c.name,
+      code: c.code,
+      term: c.term,
+      syncedAt: c.syncedAt.toISOString?.() ?? String(c.syncedAt),
+      assignments: c.assignments.map((a) => ({
+        id: a.id,
+        externalId: a.externalId,
+        name: a.name,
+        dueDate: a.dueDate?.toISOString?.() ?? null,
+        points: a.points,
+      })),
+    }));
+  }
+
+  /** Sync selected LMS assignments into a workspace as Tasks (with dueDate). */
+  async syncAssignmentsToWorkspace(
+    integrationId: string,
+    userId: string,
+    workspaceId: string,
+    assignmentIds: string[],
+  ) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: {
+        courses: {
+          include: { assignments: { where: { id: { in: assignmentIds } } } },
+        },
+      },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    await this.workspaceAccess.checkAccess(workspaceId, userId);
+    const assignments = integration.courses.flatMap((c) => c.assignments);
+    if (assignments.length !== assignmentIds.length) {
+      throw new ForbiddenException('One or more assignment IDs are invalid or do not belong to this integration');
+    }
+    const created: { id: string; title: string; dueDate: string | null }[] = [];
+    for (const a of assignments) {
+      const task = await this.prisma.task.create({
+        data: {
+          workspaceId,
+          creatorId: userId,
+          title: a.name,
+          description: a.points != null ? `LMS assignment (${a.points} pts)` : 'Imported from LMS',
+          status: 'TODO',
+          priority: 'MEDIUM',
+          dueDate: a.dueDate,
+        },
+      });
+      created.push({
+        id: task.id,
+        title: task.title,
+        dueDate: task.dueDate?.toISOString?.() ?? null,
+      });
+    }
+    return { synced: created.length, tasks: created };
+  }
+
+  /** Get grades from DB (grouped by course). Call syncGrades first to pull from LMS. */
+  async getGrades(integrationId: string, userId: string) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: { courses: { include: { grades: true } } },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    return integration.courses.map((c) => ({
+      id: c.id,
+      externalId: c.externalId,
+      name: c.name,
+      code: c.code,
+      term: c.term,
+      grades: c.grades.map((g) => ({
+        id: g.id,
+        name: g.name,
+        score: g.score,
+        maxScore: g.maxScore,
+        letterGrade: g.letterGrade,
+        feedback: g.feedback,
+        syncedAt: g.syncedAt.toISOString(),
+      })),
+    }));
+  }
+
+  /** Sync grades from Blackboard (Learn REST API) into DB. No-op for non-Blackboard. */
+  async syncGrades(integrationId: string, userId: string) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: { courses: true },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    if (integration.provider !== LmsProvider.BLACKBOARD) {
+      return { synced: 0, message: 'Grades sync is supported for Blackboard only' };
+    }
+    const base = this.baseUrl(integration);
+    const token = integration.accessToken;
+
+    type BbUser = { id: string };
+    const me = await this.bbRequest<BbUser>(base, `${BB_API_V1}/users/me`, token);
+    const bbUserId = me?.id;
+    if (!bbUserId) {
+      throw new Error('Could not get Blackboard user id');
+    }
+
+    const courses = integration.courses.length > 0
+      ? integration.courses
+      : await this.fetchBlackboardCoursesAndUpsert(integrationId, base, token);
+
+    let totalSynced = 0;
+    for (const course of courses) {
+      type BbColumn = { id: string; name: string; score?: { possible?: number } };
+      let columns: BbColumn[] = [];
+      try {
+        const colsRes = await this.bbRequest<{ results?: BbColumn[] }>(
+          base,
+          `${BB_API_V2}/courses/${encodeURIComponent(course.externalId)}/gradebook/columns`,
+          token,
+        );
+        columns = colsRes?.results ?? [];
+      } catch {
+        continue;
+      }
+      for (const col of columns) {
+        type BbUserGrade = { userId: string; columnId: string; status: string; score?: number; text?: string; feedback?: string };
+        let usersInColumn: BbUserGrade[] = [];
+        try {
+          const usersRes = await this.bbRequest<{ results?: BbUserGrade[] }>(
+            base,
+            `${BB_API_V1}/courses/${encodeURIComponent(course.externalId)}/gradebook/columns/${encodeURIComponent(col.id)}/users`,
+            token,
+          );
+          usersInColumn = usersRes?.results ?? [];
+        } catch {
+          continue;
+        }
+        const myGrade = usersInColumn.find((u) => u.userId === bbUserId);
+        const score = myGrade?.score ?? null;
+        const maxScore = col.score?.possible ?? null;
+        const feedback = myGrade?.feedback ?? myGrade?.text ?? null;
+        await this.prisma.grade.upsert({
+          where: {
+            courseId_externalColumnId: { courseId: course.id, externalColumnId: col.id },
+          },
+          create: {
+            courseId: course.id,
+            externalColumnId: col.id,
+            name: col.name,
+            score,
+            maxScore,
+            feedback,
+          },
+          update: { name: col.name, score, maxScore, feedback, syncedAt: new Date() },
+        });
+        totalSynced++;
+      }
+    }
+    return { synced: totalSynced };
+  }
+
+  private async fetchBlackboardCoursesAndUpsert(
+    integrationId: string,
+    base: string,
+    token: string,
+  ): Promise<{ id: string; externalId: string; name: string }[]> {
+    type BbCourse = { id: string; name: string; courseId?: string };
+    const res = await this.bbRequest<{ results?: BbCourse[] }>(
+      base,
+      `${BB_API_V3}/courses?limit=50`,
+      token,
+    );
+    const results = res?.results ?? [];
+    const created = await this.prisma.$transaction(
+      results.map((c) =>
+        this.prisma.course.upsert({
+          where: {
+            lmsIntegrationId_externalId: { lmsIntegrationId: integrationId, externalId: c.id },
+          },
+          create: {
+            lmsIntegrationId: integrationId,
+            externalId: c.id,
+            name: c.name,
+          },
+          update: { name: c.name, syncedAt: new Date() },
+        }),
+      ),
+    );
+    return created;
+  }
+
+  /** Get announcements from DB. Call syncAnnouncements first to pull from LMS. */
+  async getAnnouncements(integrationId: string, userId: string, limit = 50) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: {
+        announcements: {
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          include: { course: { select: { id: true, name: true, code: true } } },
+        },
+      },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    return integration.announcements.map((a) => ({
+      id: a.id,
+      title: a.title,
+      body: a.body,
+      createdAt: a.createdAt.toISOString(),
+      course: a.course ? { id: a.course.id, name: a.course.name, code: a.course.code } : null,
+    }));
+  }
+
+  /** Sync announcements from Blackboard (course contents). No-op for non-Blackboard or if endpoint not available. */
+  async syncAnnouncements(integrationId: string, userId: string) {
+    const integration = await this.prisma.lmsIntegration.findFirst({
+      where: { id: integrationId, userId },
+      include: { courses: true },
+    });
+    if (!integration) {
+      throw new NotFoundException('LMS integration not found');
+    }
+    if (integration.provider !== LmsProvider.BLACKBOARD) {
+      return { synced: 0, message: 'Announcements sync is supported for Blackboard only' };
+    }
+    const base = this.baseUrl(integration);
+    const token = integration.accessToken;
+    const courses = integration.courses.length > 0 ? integration.courses : await this.fetchBlackboardCoursesAndUpsert(integrationId, base, token);
+    let totalSynced = 0;
+    for (const course of courses) {
+      type BbContent = { id: string; title: string; body?: string; created: string; contentHandler?: { id: string } };
+      try {
+        const res = await this.bbRequest<{ results?: BbContent[] }>(
+          base,
+          `${BB_API_V1}/courses/${encodeURIComponent(course.externalId)}/contents?expand=body`,
+          token,
+        );
+        const contents = res?.results ?? [];
+        const announcements = contents.filter(
+          (c) => c.contentHandler?.id === 'resource/x-bb-announcement' || (c.title && (c.body != null || c.created)),
+        );
+        for (const ann of announcements.slice(0, 30)) {
+          await this.prisma.lmsAnnouncement.upsert({
+            where: {
+              lmsIntegrationId_externalId: { lmsIntegrationId: integrationId, externalId: ann.id },
+            },
+            create: {
+              lmsIntegrationId: integrationId,
+              courseId: course.id,
+              externalId: ann.id,
+              title: ann.title,
+              body: ann.body ?? undefined,
+              createdAt: ann.created ? new Date(ann.created) : new Date(),
+            },
+            update: { title: ann.title, body: ann.body ?? undefined, syncedAt: new Date() },
+          });
+          totalSynced++;
+        }
+      } catch {
+        // Course contents or announcements may not be available
+      }
+    }
+    return { synced: totalSynced };
+  }
 }

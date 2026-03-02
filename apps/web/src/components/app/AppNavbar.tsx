@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search, Command, HelpCircle } from 'lucide-react';
+import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search, Command, HelpCircle, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NotaIcon } from '@/components/NotaIcon';
 import { useAuthStore } from '@/lib/store';
 import { useOpenShortcuts } from './CommandPaletteProvider';
 import { COMMAND_PALETTE_OPEN } from './CommandPalette';
+import { notificationsApi } from '@/lib/api';
 
 interface AppNavbarProps {
   /** When true, show "Back to Dashboard" in nav (e.g. inside workspace) */
@@ -24,16 +25,68 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
   const openShortcuts = useOpenShortcuts();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: string;
+    title: string;
+    body: string | null;
+    read: boolean;
+    link: string | null;
+    relatedId: string | null;
+    createdAt: string;
+  }>>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const { token } = useAuthStore();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    setNotificationsLoading(true);
+    try {
+      const list = await notificationsApi.list(token);
+      setNotifications(list);
+    } catch {
+      // Non-blocking
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (notificationsOpen && token) {
+      fetchNotifications();
+    }
+  }, [notificationsOpen, token, fetchNotifications]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleNotificationClick = async (n: { id: string; read: boolean; link: string | null }) => {
+    if (!token) return;
+    if (!n.read) {
+      try {
+        await notificationsApi.markRead(token, n.id);
+        setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      } catch {
+        // ignore
+      }
+    }
+    if (n.link) {
+      setNotificationsOpen(false);
+      router.push(n.link);
+    }
+  };
 
   const handleLogout = () => {
     clearAuth();
@@ -110,6 +163,51 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <div className="relative" ref={notificationsRef}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground relative"
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              aria-expanded={notificationsOpen}
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {notifications.some((n) => !n.read) && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" aria-hidden />
+              )}
+            </Button>
+            {notificationsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 max-h-[360px] rounded-lg border border-border bg-card shadow-lg z-20 flex flex-col">
+                <div className="px-3 py-2 border-b border-border font-medium text-sm text-foreground">
+                  Notifications
+                </div>
+                <div className="overflow-y-auto flex-1 min-h-0">
+                  {notificationsLoading ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">Loading…</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+                  ) : (
+                    <ul className="py-1">
+                      {notifications.map((n) => (
+                        <li key={n.id}>
+                          <button
+                            type="button"
+                            className={`w-full text-left px-3 py-2.5 text-sm hover:bg-muted/80 transition-colors ${!n.read ? 'bg-primary/5' : ''}`}
+                            onClick={() => handleNotificationClick(n)}
+                          >
+                            <p className="font-medium text-foreground truncate">{n.title}</p>
+                            {n.body && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{n.body}</p>}
+                            <p className="text-muted-foreground text-xs mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {openShortcuts && (
             <Button
               variant="ghost"
