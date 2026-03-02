@@ -309,6 +309,9 @@ export const workspacesApi = {
   purgeExpiredBin: (token: string) =>
     fetchApi<{ purged: number }>('/api/workspaces/bin/purge-expired', { method: 'POST', token }),
 
+  emptyBin: (token: string) =>
+    fetchApi<{ deleted: number }>('/api/workspaces/bin/empty', { method: 'POST', token }),
+
   createDemo: (token: string) =>
     fetchApi<{ id: string; name: string }>('/api/workspaces/demo', {
       method: 'POST',
@@ -382,7 +385,7 @@ export const pagesApi = {
       sources: Array<{ id: string; fileName: string; fileUrl: string; pageCount: number | null }>;
     }>(`/api/pages/${id}`, { token }),
 
-  update: (token: string, id: string, data: { title?: string; icon?: string; coverImage?: string; tags?: string[] }) =>
+  update: (token: string, id: string, data: { title?: string; icon?: string; coverImage?: string; tags?: string[]; parentId?: string | null }) =>
     fetchApi<{ id: string; title: string }>(`/api/pages/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

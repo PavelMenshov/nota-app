@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History, Library, LayoutGrid, Video, ExternalLink, FileCheck } from 'lucide-react';
+import { ChevronLeft, FileText, Plus, Save, Pencil, Eye, Upload, Paperclip, Trash2, Sparkles, Users, FolderPlus, Folder, UserPlus, Link2, LayoutPanelTop, PenTool, FileStack, History, Library, LayoutGrid, Video, ExternalLink, FileCheck, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { NOTA_OPEN_CREATE_PAGE } from '@/components/app/CommandPalette';
 import { workspacesApi, pagesApi, docApi, canvasApi, sourcesApi, aiApi, settingsApi, type QuickLinksPreferences } from '@/lib/api';
 import { getStudentAppLinks } from '@/lib/student-apps';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/contexts/LocaleContext';
 import { RichTextEditor, defaultDoc, isProseMirrorDoc } from '@/components/editor/RichTextEditor';
 import CanvasEditor, { type CanvasState } from '@/components/canvas/CanvasEditor';
 import PDFViewer from '@/components/pdf/PDFViewer';
@@ -65,6 +66,7 @@ export default function WorkspacePage() {
   const router = useRouter();
   const { token, isAuthenticated, user } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useLocale();
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +109,15 @@ export default function WorkspacePage() {
   const [aiFlashcards, setAiFlashcards] = useState<Array<{ id: string; front: string; back: string }> | null>(null);
   const [aiLoading, setAiLoading] = useState<'summary' | 'flashcards' | null>(null);
   const [quickLinks, setQuickLinks] = useState<QuickLinksPreferences>({});
+  const [pageMenuOpenId, setPageMenuOpenId] = useState<string | null>(null);
+  const [renamePageId, setRenamePageId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [movePageId, setMovePageId] = useState<string | null>(null);
+  const [moveParentId, setMoveParentId] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const [deletePageId, setDeletePageId] = useState<string | null>(null);
+  const [isDeletingPage, setIsDeletingPage] = useState(false);
 
   const activeTab = openTabs.find((t) => t.id === activeTabId);
   const { connected: realtimeConnected, presenceUsers } = useRealtime({
@@ -165,6 +176,70 @@ export default function WorkspacePage() {
       setIsLoading(false);
     }
   }, [token, workspaceId, toast]);
+
+  const handleRenamePage = async () => {
+    if (!token || !renamePageId || !renameValue.trim()) return;
+    setIsRenaming(true);
+    try {
+      await pagesApi.update(token, renamePageId, { title: renameValue.trim() });
+      toast({ title: 'Page renamed' });
+      setRenamePageId(null);
+      setRenameValue('');
+      setPageMenuOpenId(null);
+      loadWorkspace();
+      setPageContents((prev) =>
+        prev[renamePageId] ? { ...prev, [renamePageId]: { ...prev[renamePageId], title: renameValue.trim() } } : prev
+      );
+      setOpenTabs((prev) =>
+        prev.map((tab) => (tab.type === 'page' && tab.pageId === renamePageId ? { ...tab, title: renameValue.trim() } : tab))
+      );
+    } catch {
+      toast({ title: 'Failed to rename', variant: 'destructive' });
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleMovePage = async () => {
+    if (!token || !movePageId) return;
+    setIsMoving(true);
+    try {
+      await pagesApi.update(token, movePageId, { parentId: moveParentId || null });
+      toast({ title: 'Page moved' });
+      setMovePageId(null);
+      setMoveParentId(null);
+      setPageMenuOpenId(null);
+      loadWorkspace();
+    } catch {
+      toast({ title: 'Failed to move', variant: 'destructive' });
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const handleDeletePage = async () => {
+    if (!token || !deletePageId) return;
+    setIsDeletingPage(true);
+    try {
+      await pagesApi.delete(token, deletePageId);
+      toast({ title: 'Page deleted' });
+      setDeletePageId(null);
+      setPageMenuOpenId(null);
+      loadWorkspace();
+      const newTabs = openTabs.filter((t) => !(t.type === 'page' && t.pageId === deletePageId));
+      setOpenTabs(newTabs);
+      setPageContents((prev) => {
+        const next = { ...prev };
+        delete next[deletePageId];
+        return next;
+      });
+      if (activeTabId === `page-${deletePageId}`) setActiveTabId(newTabs[0]?.id ?? null);
+    } catch {
+      toast({ title: 'Failed to delete', variant: 'destructive' });
+    } finally {
+      setIsDeletingPage(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -575,32 +650,88 @@ export default function WorkspacePage() {
                 const openPage = () => {
                   if (!isFolder) loadPageContent(page.id);
                 };
+                const showMenu = pageMenuOpenId === page.id;
                 return (
-                  <li key={page.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-                      onClick={openPage}
-                    >
-                      {isFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                      <span className="truncate">{page.title || 'Untitled'}</span>
-                    </button>
+                  <li key={page.id} className="relative group">
+                    <div className="flex w-full items-center gap-0.5 rounded-md hover:bg-muted/50">
+                      <button
+                        type="button"
+                        className="flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                        onClick={openPage}
+                      >
+                        {isFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                        <span className="truncate">{page.title || 'Untitled'}</span>
+                      </button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => { e.stopPropagation(); setPageMenuOpenId(showMenu ? null : page.id); }}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    {showMenu && (
+                      <div className="absolute right-0 top-full z-20 mt-0.5 rounded-md border bg-card shadow-lg py-1 min-w-[140px]">
+                        <button
+                          type="button"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted flex items-center gap-2"
+                          onClick={() => { setRenamePageId(page.id); setRenameValue(page.title || ''); setPageMenuOpenId(null); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />{t('pages.rename')}
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted flex items-center gap-2"
+                          onClick={() => { setMovePageId(page.id); setMoveParentId(page.parentId || null); setPageMenuOpenId(null); }}
+                        >
+                          <Folder className="h-3.5 w-3.5" />{t('pages.move')}
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted text-destructive flex items-center gap-2"
+                          onClick={() => { setDeletePageId(page.id); setPageMenuOpenId(null); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />{t('pages.delete')}
+                        </button>
+                      </div>
+                    )}
                     {children.length > 0 && (
                       <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-muted pl-2">
                         {children.map((child) => {
                           const childIsFolder = getChildren(child.id).length > 0 || !child.doc;
+                          const childShowMenu = pageMenuOpenId === child.id;
                           return (
-                            <li key={child.id}>
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-muted"
-                                onClick={() => {
-                                  if (!childIsFolder) loadPageContent(child.id);
-                                }}
-                              >
-                                {childIsFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                                <span className="truncate">{child.title || 'Untitled'}</span>
-                              </button>
+                            <li key={child.id} className="relative group">
+                              <div className="flex w-full items-center gap-0.5 rounded-md hover:bg-muted/50">
+                                <button
+                                  type="button"
+                                  className="flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-muted"
+                                  onClick={() => {
+                                    if (!childIsFolder) loadPageContent(child.id);
+                                  }}
+                                >
+                                  {childIsFolder ? <Folder className="h-4 w-4 shrink-0 text-muted-foreground" /> : <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                                  <span className="truncate">{child.title || 'Untitled'}</span>
+                                </button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                                  onClick={(e) => { e.stopPropagation(); setPageMenuOpenId(childShowMenu ? null : child.id); }}
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                              {childShowMenu && (
+                                <div className="absolute right-0 top-full z-20 mt-0.5 rounded-md border bg-card shadow-lg py-1 min-w-[140px]">
+                                  <button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted flex items-center gap-2" onClick={() => { setRenamePageId(child.id); setRenameValue(child.title || ''); setPageMenuOpenId(null); }}><Pencil className="h-3.5 w-3.5" />{t('pages.rename')}</button>
+                                  <button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted flex items-center gap-2" onClick={() => { setMovePageId(child.id); setMoveParentId(child.parentId || null); setPageMenuOpenId(null); }}><Folder className="h-3.5 w-3.5" />{t('pages.move')}</button>
+                                  <button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted text-destructive flex items-center gap-2" onClick={() => { setDeletePageId(child.id); setPageMenuOpenId(null); }}><Trash2 className="h-3.5 w-3.5" />{t('pages.delete')}</button>
+                                </div>
+                              )}
                             </li>
                           );
                         })}
@@ -1117,15 +1248,20 @@ export default function WorkspacePage() {
                         )}
                       </span>
                       {currentMember?.role === 'OWNER' ? (
-                        <select
-                          className="rounded-md border border-input bg-background px-2 py-1 text-xs w-24"
-                          value={m.role}
-                          onChange={(e) => handleUpdateMemberRole(m.id, e.target.value)}
-                        >
-                          <option value="OWNER">Owner</option>
-                          <option value="EDITOR">Editor</option>
-                          <option value="VIEWER">Viewer</option>
-                        </select>
+                        // Don't let the current user demote themselves from owner (would lock them out)
+                        m.user.id === user?.id && m.role === 'OWNER' ? (
+                          <span className="text-muted-foreground text-xs">Owner</span>
+                        ) : (
+                          <select
+                            className="rounded-md border border-input bg-background px-2 py-1 text-xs w-24"
+                            value={m.role}
+                            onChange={(e) => handleUpdateMemberRole(m.id, e.target.value)}
+                          >
+                            <option value="OWNER">Owner</option>
+                            <option value="EDITOR">Editor</option>
+                            <option value="VIEWER">Viewer</option>
+                          </select>
+                        )
                       ) : (
                         <span className="text-muted-foreground capitalize">{m.role.toLowerCase()}</span>
                       )}
@@ -1167,6 +1303,64 @@ export default function WorkspacePage() {
           </Card>
         </div>
       )}
+
+      {renamePageId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" onKeyDown={(e) => e.key === 'Escape' && setRenamePageId(null)}>
+          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <CardContent className="pt-6 space-y-4">
+              <h3 className="font-semibold text-lg">{t('pages.rename')}</h3>
+              <Input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleRenamePage()} placeholder={t('pages.rename')} autoFocus />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setRenamePageId(null); setRenameValue(''); }}>{t('common.cancel')}</Button>
+                <Button className="flex-1" onClick={handleRenamePage} disabled={!renameValue.trim() || isRenaming}>{isRenaming ? t('common.saving') : t('common.save')}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {movePageId && workspace && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" onKeyDown={(e) => e.key === 'Escape' && setMovePageId(null)}>
+          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <CardContent className="pt-6 space-y-4">
+              <h3 className="font-semibold text-lg">{t('pages.moveTo')}</h3>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={moveParentId ?? ''}
+                onChange={(e) => setMoveParentId(e.target.value || null)}
+              >
+                <option value="">{t('pages.root')}</option>
+                {workspace.pages.filter((p) => !p.parentId && !p.doc && p.id !== movePageId).map((f) => (
+                  <option key={f.id} value={f.id}>{f.title || 'Untitled'}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setMovePageId(null); setMoveParentId(null); }}>{t('common.cancel')}</Button>
+                <Button className="flex-1" onClick={handleMovePage} disabled={isMoving}>{isMoving ? t('common.saving') : t('common.save')}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {deletePageId && workspace && (() => {
+        const page = workspace.pages.find((p) => p.id === deletePageId);
+        const title = page?.title || 'Untitled';
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" onKeyDown={(e) => { if (e.key === 'Escape') setDeletePageId(null); else if (e.key === 'Enter') { e.preventDefault(); handleDeletePage(); } }}>
+            <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+              <CardContent className="pt-6 space-y-4">
+                <h3 className="font-semibold text-lg">{t('pages.deleteConfirm')}</h3>
+                <p className="text-sm text-muted-foreground">{t('pages.deleteConfirmMessage', { title })}</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setDeletePageId(null)}>{t('common.cancel')}</Button>
+                  <Button variant="destructive" className="flex-1" onClick={handleDeletePage} disabled={isDeletingPage}>{isDeletingPage ? t('common.saving') : t('common.delete')}</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
     </div>
   );
 }

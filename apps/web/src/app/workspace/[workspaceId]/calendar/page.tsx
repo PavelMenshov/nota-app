@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
 import { calendarApi, integrationsApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface CalendarEvent {
   id: string;
@@ -40,6 +41,7 @@ export default function WorkspaceCalendarPage() {
   const router = useRouter();
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useLocale();
 
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -215,12 +217,12 @@ export default function WorkspaceCalendarPage() {
             </Link>
             <div className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Calendar</h1>
+              <h1 className="text-lg font-semibold">{t('calendar.title')}</h1>
             </div>
           </div>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            New Event
+            {t('calendar.newEvent')}
           </Button>
         </div>
       </header>
@@ -240,7 +242,7 @@ export default function WorkspaceCalendarPage() {
 
         <div className="space-y-2">
           {events.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-8 text-center">No events this month.</p>
+            <p className="text-muted-foreground text-sm py-8 text-center">{t('calendar.noEvents')}</p>
           ) : (
             events.map((ev) => (
               <Card key={ev.id} className="group">
@@ -262,7 +264,7 @@ export default function WorkspaceCalendarPage() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Video className="h-3.5 w-3.5" />
-                        Join meeting
+                        {t('calendar.joinMeeting')}
                       </a>
                     )}
                   </div>
@@ -287,9 +289,9 @@ export default function WorkspaceCalendarPage() {
       </main>
 
       {showModal && (() => {
-        let submitLabel = 'Create';
-        if (isSaving) submitLabel = 'Saving...';
-        else if (editingId) submitLabel = 'Update';
+        let submitLabel = t('calendar.create');
+        if (isSaving) submitLabel = t('calendar.saving');
+        else if (editingId) submitLabel = t('calendar.update');
         return (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -300,16 +302,16 @@ export default function WorkspaceCalendarPage() {
         >
           <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowModal(false); }}>
             <CardContent className="pt-6 space-y-4">
-              <h3 className="font-semibold text-lg">{editingId ? 'Edit Event' : 'New Event'}</h3>
+              <h3 className="font-semibold text-lg">{editingId ? t('calendar.editEvent') : t('calendar.newEvent')}</h3>
               <Input
-                placeholder="Title"
+                placeholder={t('calendar.titleLabel')}
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 autoFocus
               />
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label htmlFor="event-start" className="text-xs text-muted-foreground">Start</label>
+                  <label htmlFor="event-start" className="text-xs text-muted-foreground">{t('calendar.start')}</label>
                   <Input
                     id="event-start"
                     type="datetime-local"
@@ -319,7 +321,7 @@ export default function WorkspaceCalendarPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="event-end" className="text-xs text-muted-foreground">End</label>
+                  <label htmlFor="event-end" className="text-xs text-muted-foreground">{t('calendar.end')}</label>
                   <Input
                     id="event-end"
                     type="datetime-local"
@@ -330,17 +332,17 @@ export default function WorkspaceCalendarPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="event-desc" className="text-xs text-muted-foreground">Description (optional)</label>
+                <label htmlFor="event-desc" className="text-xs text-muted-foreground">{t('calendar.description')}</label>
                 <Input
                   id="event-desc"
-                  placeholder="Description"
+                  placeholder={t('calendar.description')}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="mt-0.5"
                 />
               </div>
               <div>
-                <label htmlFor="event-meeting" className="text-xs text-muted-foreground">Meeting link (Zoom, Meet, Outlook)</label>
+                <label htmlFor="event-meeting" className="text-xs text-muted-foreground">{t('calendar.meetingLink')}</label>
                 <div className="flex gap-2 mt-0.5">
                   <Input
                     id="event-meeting"
@@ -357,7 +359,7 @@ export default function WorkspaceCalendarPage() {
                     onClick={createZoomMeeting}
                     disabled={zoomLoading || !formTitle.trim()}
                   >
-                    {zoomLoading ? '…' : 'Create Zoom meeting'}
+                    {zoomLoading ? '…' : t('calendar.createZoom')}
                   </Button>
                   <Button
                     type="button"
@@ -366,13 +368,13 @@ export default function WorkspaceCalendarPage() {
                     onClick={addToOutlook}
                     disabled={outlookLoading || !formTitle.trim()}
                   >
-                    {outlookLoading ? '…' : 'Add to Outlook'}
+                    {outlookLoading ? '…' : t('calendar.addToOutlook')}
                   </Button>
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
-                  Cancel
+                  {t('calendar.cancel')}
                 </Button>
                 <Button className="flex-1" onClick={saveEvent} disabled={!formTitle.trim() || isSaving}>
                   {submitLabel}
@@ -390,18 +392,21 @@ export default function WorkspaceCalendarPage() {
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
-          onKeyDown={(e) => { if (e.key === 'Escape') setEventToDelete(null); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setEventToDelete(null);
+            if (e.key === 'Enter') { e.preventDefault(); confirmDelete(); }
+          }}
         >
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setEventToDelete(null); }}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setEventToDelete(null); if (e.key === 'Enter') { e.preventDefault(); confirmDelete(); } }}>
             <CardContent className="pt-6 space-y-4">
-              <h3 className="font-semibold text-lg">Delete event?</h3>
-              <p className="text-sm text-muted-foreground">&quot;{eventToDelete.title}&quot; will be deleted.</p>
+              <h3 className="font-semibold text-lg">{t('calendar.deleteConfirm')}</h3>
+              <p className="text-sm text-muted-foreground">{t('calendar.deleteConfirmMessage', { title: eventToDelete.title })}</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setEventToDelete(null)}>
-                  Cancel
+                  {t('calendar.cancel')}
                 </Button>
                 <Button variant="destructive" className="flex-1" onClick={confirmDelete} disabled={isDeleting}>
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  {isDeleting ? t('calendar.deleting') : t('common.delete')}
                 </Button>
               </div>
             </CardContent>

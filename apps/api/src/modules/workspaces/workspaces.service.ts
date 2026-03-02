@@ -512,6 +512,22 @@ export class WorkspacesService {
     return expired.length;
   }
 
+  /** Permanently delete all workspaces in the current user's bin. */
+  async emptyBin(userId: string): Promise<number> {
+    const inBin = await this.prisma.workspace.findMany({
+      where: {
+        deletedAt: { not: null },
+        members: { some: { userId } },
+      },
+      select: { id: true },
+    });
+    if (inBin.length === 0) return 0;
+    await this.prisma.workspace.deleteMany({
+      where: { id: { in: inBin.map((x) => x.id) } },
+    });
+    return inBin.length;
+  }
+
   async addMember(workspaceId: string, userId: string, dto: AddMemberDto) {
     await this.checkPermission(workspaceId, userId, ['OWNER']);
 
@@ -569,6 +585,22 @@ export class WorkspacesService {
 
   async updateMemberRole(workspaceId: string, memberId: string, userId: string, role: 'OWNER' | 'EDITOR' | 'VIEWER') {
     await this.checkPermission(workspaceId, userId, ['OWNER']);
+
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { id: memberId, workspaceId },
+      select: { userId: true, role: true },
+    });
+    if (!member) throw new NotFoundException('Member not found');
+
+    // Prevent the last owner from demoting themselves (would leave workspace with no owner)
+    if (member.userId === userId && member.role === 'OWNER' && role !== 'OWNER') {
+      const ownerCount = await this.prisma.workspaceMember.count({
+        where: { workspaceId, role: 'OWNER' },
+      });
+      if (ownerCount <= 1) {
+        throw new BadRequestException('You cannot change your own role because you are the only owner. Add another owner first or transfer ownership.');
+      }
+    }
 
     return this.prisma.workspaceMember.update({
       where: { id: memberId },

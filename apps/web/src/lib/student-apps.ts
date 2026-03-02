@@ -26,6 +26,20 @@ const TURNITIN: StudentAppLink = {
   description: 'Submissions and similarity',
 };
 
+const OUTLOOK: StudentAppLink = {
+  id: 'outlook',
+  label: 'Outlook',
+  href: 'https://outlook.office.com',
+  description: 'Email and calendar',
+};
+
+const ZOOM: StudentAppLink = {
+  id: 'zoom',
+  label: 'Zoom',
+  href: 'https://zoom.us',
+  description: 'Video meetings',
+};
+
 const PRESETS = {
   library: {
     google: { href: 'https://library.google.com', label: 'Google Library', description: 'Search and reserves' },
@@ -113,7 +127,7 @@ function buildClassroomLinks(preferences?: QuickLinksPreferences): StudentAppLin
 }
 
 function buildOtherLinks(): StudentAppLink[] {
-  const apps = [TURNITIN];
+  const apps = [TURNITIN, OUTLOOK, ZOOM];
   return apps
     .map((app) => {
       const envUrl = getEnvUrl(app.id);

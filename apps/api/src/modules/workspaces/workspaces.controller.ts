@@ -55,6 +55,14 @@ export class WorkspacesController {
     return { purged: count };
   }
 
+  @Post('bin/empty')
+  @ApiOperation({ summary: 'Permanently delete all workspaces in the current user\'s bin' })
+  @ApiResponse({ status: 200, description: 'Count of deleted workspaces' })
+  async emptyBin(@Request() req: { user: { userId: string } }) {
+    const count = await this.workspacesService.emptyBin(req.user.userId);
+    return { deleted: count };
+  }
+
   @Post('demo')
   @ApiOperation({ summary: 'Create a demo workspace for pitch (Blackboard-style)' })
   @ApiResponse({ status: 201, description: 'Demo workspace created' })

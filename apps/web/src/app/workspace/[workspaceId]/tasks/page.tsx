@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
 import { tasksApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Task {
   id: string;
@@ -43,6 +44,7 @@ export default function WorkspaceTasksPage() {
   const router = useRouter();
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useLocale();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,12 +151,12 @@ export default function WorkspaceTasksPage() {
             </Link>
             <div className="flex items-center gap-2">
               <CheckSquare className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Tasks</h1>
+              <h1 className="text-lg font-semibold">{t('tasks.title')}</h1>
             </div>
           </div>
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            New Task
+            {t('tasks.newTask')}
           </Button>
         </div>
       </header>
@@ -164,7 +166,7 @@ export default function WorkspaceTasksPage() {
           <div className="bg-muted/30 rounded-lg p-4">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Circle className="h-4 w-4" />
-              To Do ({grouped.TODO.length})
+              {t('tasks.toDo')} ({grouped.TODO.length})
             </h3>
             <div className="space-y-2">
               {grouped.TODO.map((task) => (
@@ -178,7 +180,7 @@ export default function WorkspaceTasksPage() {
             </div>
           </div>
           <div className="bg-muted/30 rounded-lg p-4">
-            <h3 className="font-semibold mb-4">In Progress ({grouped.IN_PROGRESS.length})</h3>
+            <h3 className="font-semibold mb-4">{t('tasks.inProgress')} ({grouped.IN_PROGRESS.length})</h3>
             <div className="space-y-2">
               {grouped.IN_PROGRESS.map((task) => (
                 <TaskCard
@@ -193,7 +195,7 @@ export default function WorkspaceTasksPage() {
           <div className="bg-muted/30 rounded-lg p-4">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              Done ({grouped.DONE.length})
+              {t('tasks.done')} ({grouped.DONE.length})
             </h3>
             <div className="space-y-2">
               {grouped.DONE.map((task) => (
@@ -219,9 +221,9 @@ export default function WorkspaceTasksPage() {
         >
           <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setShowCreateModal(false); }}>
             <CardContent className="pt-6 space-y-4">
-              <h3 className="font-semibold text-lg">Create Task</h3>
+              <h3 className="font-semibold text-lg">{t('tasks.createTask')}</h3>
               <Input
-                placeholder="Task title"
+                placeholder={t('tasks.taskTitle')}
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
@@ -241,10 +243,10 @@ export default function WorkspaceTasksPage() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>
-                  Cancel
+                  {t('tasks.cancel')}
                 </Button>
                 <Button className="flex-1" onClick={handleCreateTask} disabled={!newTaskTitle.trim() || isCreating}>
-                  {isCreating ? 'Creating...' : 'Create'}
+                  {isCreating ? t('tasks.creating') : t('tasks.create')}
                 </Button>
               </div>
             </CardContent>
@@ -258,18 +260,21 @@ export default function WorkspaceTasksPage() {
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
-          onKeyDown={(e) => { if (e.key === 'Escape') setTaskToDelete(null); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setTaskToDelete(null);
+            if (e.key === 'Enter') { e.preventDefault(); confirmDeleteTask(); }
+          }}
         >
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setTaskToDelete(null); }}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') setTaskToDelete(null); if (e.key === 'Enter') { e.preventDefault(); confirmDeleteTask(); } }}>
             <CardContent className="pt-6 space-y-4">
-              <h3 className="font-semibold text-lg">Delete task?</h3>
-              <p className="text-sm text-muted-foreground">&quot;{taskToDelete.title}&quot; will be deleted.</p>
+              <h3 className="font-semibold text-lg">{t('tasks.deleteConfirm')}</h3>
+              <p className="text-sm text-muted-foreground">{t('tasks.deleteConfirmMessage', { title: taskToDelete.title })}</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setTaskToDelete(null)}>
-                  Cancel
+                  {t('tasks.cancel')}
                 </Button>
                 <Button variant="destructive" className="flex-1" onClick={confirmDeleteTask} disabled={isDeleting}>
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  {isDeleting ? t('common.saving') : t('common.delete')}
                 </Button>
               </div>
             </CardContent>
@@ -305,7 +310,7 @@ function TaskCard({
           )}
           {task.dueDate && (
             <p className="text-xs text-muted-foreground mt-1">
-              Due: {new Date(task.dueDate).toLocaleDateString()}
+              {t('tasks.due')}: {new Date(task.dueDate).toLocaleDateString()}
             </p>
           )}
         </div>
@@ -322,7 +327,7 @@ function TaskCard({
               className="h-7 text-xs"
               onClick={() => onStatusChange(task.id, nextStatus)}
             >
-              → {nextStatus === 'DONE' ? 'Done' : 'Next'}
+              → {nextStatus === 'DONE' ? t('tasks.done') : t('tasks.next')}
             </Button>
           )}
           <Button

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Trash2, RotateCcw, FolderOpen } from 'lucide-react';
+import { ChevronLeft, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
@@ -39,10 +39,11 @@ export default function DashboardBinPage() {
   const { t } = useLocale();
   const [items, setItems] = useState<BinWorkspace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [restoringId, setRestoringId] = useState<string | null>(null);
   const [purgingId, setPurgingId] = useState<string | null>(null);
   const [purgingExpired, setPurgingExpired] = useState(false);
+  const [emptyingBin, setEmptyingBin] = useState(false);
   const [purgeConfirmId, setPurgeConfirmId] = useState<string | null>(null);
+  const [emptyBinConfirm, setEmptyBinConfirm] = useState(false);
   const purgeModalRef = useRef<HTMLDivElement>(null);
 
   const loadBin = useCallback(async () => {
@@ -65,20 +66,6 @@ export default function DashboardBinPage() {
     }
     loadBin();
   }, [isAuthenticated, router, loadBin]);
-
-  const handleRestore = async (id: string) => {
-    if (!token) return;
-    setRestoringId(id);
-    try {
-      await workspacesApi.restore(token, id);
-      toast({ title: 'Workspace restored' });
-      setItems((prev) => prev.filter((w) => w.id !== id));
-    } catch {
-      toast({ title: 'Failed to restore', variant: 'destructive' });
-    } finally {
-      setRestoringId(null);
-    }
-  };
 
   const openPurgeConfirm = (id: string) => setPurgeConfirmId(id);
 
@@ -139,6 +126,21 @@ export default function DashboardBinPage() {
     }
   };
 
+  const handleEmptyBin = async () => {
+    if (!token) return;
+    setEmptyBinConfirm(false);
+    setEmptyingBin(true);
+    try {
+      const { deleted } = await workspacesApi.emptyBin(token);
+      toast({ title: deleted > 0 ? `${deleted} workspace(s) permanently deleted` : 'Bin is already empty' });
+      loadBin();
+    } catch {
+      toast({ title: 'Failed to empty bin', variant: 'destructive' });
+    } finally {
+      setEmptyingBin(false);
+    }
+  };
+
   if (!token) return null;
 
   return (
@@ -158,7 +160,7 @@ export default function DashboardBinPage() {
             {t('bin.title')}
           </CardTitle>
           <CardDescription>
-            {t('bin.description')}
+            {t('bin.descriptionNoRestore')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -200,19 +202,6 @@ export default function DashboardBinPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRestore(w.id)}
-                        disabled={restoringId !== null}
-                      >
-                        {restoringId === w.id ? t('common.saving') : (
-                          <>
-                            <RotateCcw className="h-4 w-4 mr-1" />
-                            {t('dashboard.restore')}
-                          </>
-                        )}
-                      </Button>
-                      <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => openPurgeConfirm(w.id)}
@@ -228,19 +217,53 @@ export default function DashboardBinPage() {
           )}
 
           {items.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
+            <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePurgeExpired}
-                disabled={purgingExpired}
+                disabled={purgingExpired || emptyingBin}
               >
                 {purgingExpired ? t('common.saving') : t('bin.purgeExpired')}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setEmptyBinConfirm(true)}
+                disabled={emptyingBin}
+              >
+                {emptyingBin ? t('common.saving') : t('bin.emptyBin')}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Empty bin confirmation */}
+      {emptyBinConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="empty-bin-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 outline-none"
+          onClick={(e) => e.target === e.currentTarget && setEmptyBinConfirm(false)}
+        >
+          <Card className="w-full max-w-sm shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle id="empty-bin-title" className="text-lg">{t('bin.emptyBinConfirmTitle')}</CardTitle>
+              <CardDescription>{t('bin.emptyBinConfirmMessage')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setEmptyBinConfirm(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={handleEmptyBin} disabled={emptyingBin}>
+                {emptyingBin ? t('common.saving') : t('bin.emptyBin')}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Permanent delete confirmation modal: Cancel (button or Esc), Confirm (button or Enter) */}
       {purgeConfirmId && (
