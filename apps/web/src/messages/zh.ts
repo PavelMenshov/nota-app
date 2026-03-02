@@ -36,7 +36,7 @@ export const zh = {
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',
-    withSSO: '学校或机构 SSO',
+    withSSO: 'SSO',
     comingSoon: '该登录方式即将推出。',
   },
   dashboard: {

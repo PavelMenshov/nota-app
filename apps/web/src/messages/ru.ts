@@ -36,7 +36,7 @@ export const ru: Messages = {
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',
-    withSSO: 'Вуз или организация (SSO)',
+    withSSO: 'SSO',
     comingSoon: 'Этот способ входа скоро будет доступен.',
   },
   dashboard: {

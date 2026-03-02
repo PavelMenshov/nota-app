@@ -34,7 +34,7 @@ export const en = {
     withGoogle: 'Google',
     withMicrosoft: 'Microsoft',
     withApple: 'Apple',
-    withSSO: 'University or organization SSO',
+    withSSO: 'SSO',
     comingSoon: 'This sign-in option is coming soon.',
   },
   dashboard: {

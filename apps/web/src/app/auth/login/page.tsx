@@ -126,18 +126,38 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('google')}>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-lg border-2 bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-900/50 dark:hover:border-amber-700 transition-colors font-medium"
+                  onClick={() => handleProviderClick('google')}
+                >
                   {t('auth.withGoogle')}
                 </Button>
-                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('microsoft')}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-lg border-2 bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100 hover:border-sky-300 dark:bg-sky-950/40 dark:border-sky-800 dark:text-sky-200 dark:hover:bg-sky-900/50 dark:hover:border-sky-700 transition-colors font-medium"
+                  onClick={() => handleProviderClick('microsoft')}
+                >
                   {t('auth.withMicrosoft')}
                 </Button>
-                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('apple')}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-lg border-2 bg-neutral-100 text-neutral-800 border-neutral-300 hover:bg-neutral-200 hover:border-neutral-400 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-700 dark:hover:border-neutral-500 transition-colors font-medium"
+                  onClick={() => handleProviderClick('apple')}
+                >
                   {t('auth.withApple')}
                 </Button>
-                <Button type="button" variant="outline" className="h-10 rounded-md" onClick={() => handleProviderClick('sso')}>
-                  {t('auth.withSSO')}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-lg min-w-0 border-2 bg-indigo-50 text-indigo-800 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-200 dark:hover:bg-indigo-900/50 dark:hover:border-indigo-700 transition-colors font-medium"
+                  onClick={() => handleProviderClick('sso')}
+                >
+                  <span className="truncate min-w-0">{t('auth.withSSO')}</span>
                 </Button>
               </div>
 
