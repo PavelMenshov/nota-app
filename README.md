@@ -169,11 +169,11 @@ nota-platform/
 **AI (optional):**
 
 ```env
-OPENAI_API_KEY="sk-..."
+OPENAI_API_KEY="your-openai-api-key"
 AI_PROVIDER="openai"
 
 # Or Anthropic
-ANTHROPIC_API_KEY="sk-ant-..."
+ANTHROPIC_API_KEY="your-anthropic-api-key"
 AI_PROVIDER="anthropic"
 ```
 
@@ -208,6 +208,7 @@ pnpm db:migrate    # Run migrations
 - [Desktop App](./docs/DESKTOP-APP.md)
 - [Prisma Setup](./docs/PRISMA-SETUP.md)
 - [API connection troubleshooting](./docs/API-CONNECTION-TROUBLESHOOTING.md)
+- [Release checklist](./docs/RELEASE_CHECKLIST.md) — before opening the repo or creating a release
 
 ---
 
