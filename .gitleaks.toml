@@ -1,0 +1,21 @@
+# Gitleaks config for Nota Platform — prevents committing secrets.
+# Run: gitleaks detect --source . (or use gitleaks/gitleaks-action in CI)
+title = "Nota Platform - secret detection"
+
+[extend]
+useDefault = true
+
+# Allowlisted paths: example/template files and docs with placeholder content only
+[[allowlists]]
+description = "Env example and docs with placeholders"
+paths = [
+  '''\.env\.example''',
+  '''docs/.*\.md''',
+  '''\.gitignore'''
+]
+
+# Allow our intentional dev fallback string (not a real secret)
+[[allowlists]]
+description = "Auth module dev fallback constant"
+paths = ['''apps/api/src/modules/auth/auth\.module\.ts''']
+stopwords = ['''DO-NOT-USE-IN-PRODUCTION-SET-JWT_SECRET-IN-ENV''']

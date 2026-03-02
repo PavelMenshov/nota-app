@@ -1,5 +1,9 @@
 # Локальный запуск Nota
 
+Short **local development guide in Russian**. For the full guide in English (first steps, concepts, tasks), see [GETTING-STARTED.md](./GETTING-STARTED.md).
+
+---
+
 ## 1. Зависимости (если ещё не ставили)
 
 В **корне** проекта:
@@ -28,7 +32,7 @@ docker compose ps
 
 Должны быть в статусе `running`:
 
-- **nota-postgres** — порт 5432 (логин/пароль/БД: `nota` / `nota_dev_password` / `nota`)
+- **nota-postgres** — порт 5432 (логин/БД: `nota`; пароль задаётся в `.env` как `POSTGRES_PASSWORD`)
 - **nota-redis** — порт 6379
 - **nota-minio** — порты 9000 (API), 9001 (веб-консоль)
 
@@ -45,11 +49,11 @@ docker compose down
 - В **корне**: скопировать `.env.example` в `.env`.
 - В **packages/database**: тоже должен быть `.env` с теми же `DATABASE_URL` и `DIRECT_DATABASE_URL` (для Prisma CLI).
 
-В обоих файлах должны быть **реальные** URL, без плейсхолдера `db.prisma.io`:
+В обоих файлах укажите **реальные** значения (пароль из `POSTGRES_PASSWORD` в `.env`):
 
 ```env
-DATABASE_URL="postgresql://nota:nota_dev_password@localhost:5432/nota?schema=public"
-DIRECT_DATABASE_URL="postgresql://nota:nota_dev_password@localhost:5432/nota?schema=public"
+DATABASE_URL="postgresql://nota:ВАШ_ПАРОЛЬ_ИЗ_POSTGRES_PASSWORD@localhost:5432/nota?schema=public"
+DIRECT_DATABASE_URL="postgresql://nota:ВАШ_ПАРОЛЬ_ИЗ_POSTGRES_PASSWORD@localhost:5432/nota?schema=public"
 ```
 
 ---

@@ -2,7 +2,17 @@
 
 ## Overview
 
-Nota takes security and data protection seriously. This document outlines our security practices, data handling policies, and compliance measures to ensure the safety and privacy of academic work.
+Nota takes security and data protection seriously.
+
+## 🔐 Repository security (open source)
+
+To prevent credential leaks when the repo is public:
+
+- **Never commit secrets.** Do not commit `.env`, `.env.local`, or any file containing API keys, passwords, or tokens. Use `.env.example` as a template with placeholders only.
+- **Environment variables.** All sensitive configuration (database URLs, JWT secret, S3 keys, OAuth client secrets, AI API keys) must be provided via environment variables, not hardcoded.
+- **Docker Compose.** PostgreSQL and MinIO credentials are read from `.env` (e.g. `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`). Copy `.env.example` to `.env` and set values locally; `.env` is gitignored.
+- **Secret scanning.** The repo includes a [Gitleaks](https://github.com/gitleaks/gitleaks) config (`.gitleaks.toml`). Run `gitleaks detect --source .` locally or use `gitleaks/gitleaks-action` in CI to block commits that contain secrets.
+- **If a secret was committed.** Rotate the exposed credential immediately (new JWT secret, new DB password, new API key, etc.) and consider using `git filter-repo` or BFG to remove the secret from history before making the repo public. This document outlines our security practices, data handling policies, and compliance measures to ensure the safety and privacy of academic work.
 
 ## 🔒 Security Measures
 

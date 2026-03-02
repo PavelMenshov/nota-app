@@ -1,75 +1,16 @@
 # API Connection Troubleshooting
 
-## Problem: Web App Cannot Detect API Server
+When the web app shows **"Cannot connect to API server"** (red status on login/register), use this doc. For **full project setup** (first-time install, Docker, .env, DB), see [GETTING-STARTED.md](./GETTING-STARTED.md).
 
-If you're seeing errors about the API server not being detected, or seeing a red warning on the login/register pages, follow these steps:
+## Quick checklist
 
-### Step 1: Verify Docker Services Are Running
+1. **Docker** — `docker compose up -d` and `docker compose ps` (postgres, redis, minio running).
+2. **Env** — `.env` in root and `packages/database/.env` (see [GETTING-STARTED.md](./GETTING-STARTED.md#4-configure-environment)).
+3. **DB** — `pnpm db:generate` and `pnpm db:push`.
+4. **API** — `pnpm dev:api` (or `pnpm dev` for API + web). API runs at `http://localhost:4000`.
+5. **Web** — `pnpm dev:web` if not using `pnpm dev`. Web at `http://localhost:3000`.
 
-The API requires PostgreSQL, Redis, and MinIO to be running:
-
-```bash
-# Start all docker services
-docker compose up -d
-
-# Verify they're running
-docker compose ps
-```
-
-You should see three services running:
-- `nota-postgres` on port 5432
-- `nota-redis` on port 6379
-- `nota-minio` on ports 9000 and 9001
-
-### Step 2: Set Up Environment Variables
-
-```bash
-# Copy the example environment file
-cp .env.example .env
-cp .env.example packages/database/.env
-```
-
-The default values in `.env.example` work for local development.
-
-### Step 3: Initialize the Database
-
-```bash
-# Generate Prisma client
-pnpm db:generate
-
-# Push schema to database
-pnpm db:push
-```
-
-### Step 4: Start the API Server
-
-```bash
-# Start just the API server
-pnpm dev:api
-
-# OR start all services (API + Web)
-pnpm dev
-```
-
-The API should start on `http://localhost:4000`. You'll see:
-```
-🚀 Nota API is running on http://localhost:4000
-📚 API Documentation: http://localhost:4000/api/docs
-🔒 Security: Rate limiting, CORS, and Helmet enabled
-```
-
-### Step 5: Start the Web Application
-
-If you started both with `pnpm dev`, skip this step. Otherwise:
-
-```bash
-# Start the web application
-pnpm dev:web
-```
-
-The web app will start on `http://localhost:3000` after the API is ready.
-
-### Step 6: Verify Connection
+## Verify connection
 
 1. Open `http://localhost:3000/auth/login` in your browser
 2. Look for the API status indicator:

@@ -8,10 +8,18 @@ dist/
 .turbo/
 *.tsbuildinfo
 
-# Environment files (keep .env.example)
+# Environment and secrets (never commit; use .env.example as template)
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.test
+*.pem
+*.key
+secrets/
+.secrets/
+*.secret
 
 # IDE
 .idea/

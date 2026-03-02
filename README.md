@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.svg" alt="Nota Logo" width="100" height="100">
+  <img src="./assets/logo.svg" alt="Nota — Academic Workspace" width="100" height="100">
 </p>
 
 # Nota — Academic Workspace
@@ -199,12 +199,15 @@ pnpm db:migrate    # Run migrations
 
 ## Documentation
 
-- [Getting Started](./docs/GETTING-STARTED.md)
+- [**Getting Started**](./docs/GETTING-STARTED.md) — main onboarding and setup
+- [Local dev (Russian)](./docs/LOCAL_DEV_RU.md) — краткий запуск на русском
+- [Docs index](./docs/README.md) — overview of all docs
 - [API Reference](./docs/API.md)
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Security](./docs/SECURITY.md)
 - [Desktop App](./docs/DESKTOP-APP.md)
 - [Prisma Setup](./docs/PRISMA-SETUP.md)
+- [API connection troubleshooting](./docs/API-CONNECTION-TROUBLESHOOTING.md)
 
 ---
 

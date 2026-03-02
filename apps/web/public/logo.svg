@@ -11,7 +11,6 @@
   </defs>
   <rect width="100" height="100" rx="22" fill="url(#nota-bg)"/>
   <rect width="100" height="100" rx="22" fill="url(#nota-shine)"/>
-  <!-- N: left stem, top bar, diagonal, right stem (filled) -->
   <path d="M22 78V22h8v36l22-36h8v44h-8V50L30 78H22z" fill="white" fill-rule="evenodd"/>
   <circle cx="66" cy="24" r="5" fill="white"/>
 </svg>

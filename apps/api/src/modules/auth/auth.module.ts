@@ -7,8 +7,8 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 
-// Shared fallback secret for development only — NOT secure for production
-export const DEV_JWT_SECRET_FALLBACK = 'nota-dev-insecure-secret-set-JWT_SECRET-in-env';
+// Development-only fallback when JWT_SECRET is unset. Never used in production.
+export const DEV_JWT_SECRET_FALLBACK = 'DO-NOT-USE-IN-PRODUCTION-SET-JWT_SECRET-IN-ENV';
 
 @Module({
   imports: [

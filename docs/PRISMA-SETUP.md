@@ -1,5 +1,7 @@
 # Prisma Setup and Type Generation Guide
 
+For **initial project setup** (clone, install, Docker, .env, first run), see [GETTING-STARTED.md](./GETTING-STARTED.md). This doc focuses on **Prisma client generation** and fixing type errors.
+
 ## The Problem
 
 When starting the Nota project, you may encounter TypeScript errors like:
@@ -50,33 +52,7 @@ The `apps/api/package.json` includes a `prebuild` script to ensure Prisma is gen
 }
 ```
 
-## Quick Start Guide
-
-### First Time Setup
-
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd nota-platform
-
-# 2. Run the automated setup script
-./scripts/setup.sh
-
-# OR manually:
-# Install dependencies (triggers postinstall → generates Prisma)
-pnpm install
-
-# Start database
-docker compose up -d nota-postgres
-
-# Push schema to database
-pnpm db:push
-
-# Start development servers
-pnpm dev
-```
-
-### After Pulling Schema Changes
+## After pulling schema changes
 
 If someone updates the Prisma schema:
 

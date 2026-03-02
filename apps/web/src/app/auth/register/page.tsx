@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
 import { authApi, ApiError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { NotaIcon } from '@/components/NotaIcon';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -55,9 +56,7 @@ export default function RegisterPage() {
       <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 text-foreground no-underline font-semibold tracking-tight">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">N</span>
-            </div>
+            <NotaIcon size={32} className="shrink-0 rounded-lg" />
             Nota
           </Link>
           <Link href="/auth/login">

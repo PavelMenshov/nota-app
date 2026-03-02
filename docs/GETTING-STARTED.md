@@ -75,7 +75,7 @@ cp .env.example .env
 cp .env packages/database/.env
 ```
 
-Edit the `.env` file if needed. The default values work for local development.
+Edit the `.env` file and set all placeholder values (e.g. `YOUR_POSTGRES_PASSWORD`, `YOUR_JWT_SECRET`). Use strong, unique values in production; for local Docker dev you can use simple passwords that match the values you set for `POSTGRES_PASSWORD` and MinIO in `.env`.
 
 **Important Environment Variables:**
 - `DATABASE_URL`: PostgreSQL connection string
@@ -120,7 +120,7 @@ pnpm dev
 - **Web App**: http://localhost:3000
 - **API**: http://localhost:4000
 - **API Documentation (Swagger)**: http://localhost:4000/api/docs
-- **MinIO Console**: http://localhost:9001 (admin/admin123)
+- **MinIO Console**: http://localhost:9001 (credentials: `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` from `.env`)
 
 ## First Steps
 
@@ -328,14 +328,14 @@ cp .env packages/database/.env
 **Problem**: AI requests return placeholder responses
 
 **Solution:**
-Add AI API key to `.env`:
+Add AI API key to `.env` (use your real key from OpenAI or Anthropic; never commit it):
 ```bash
 # For OpenAI
-OPENAI_API_KEY="sk-..."
+OPENAI_API_KEY="your-openai-api-key"
 AI_PROVIDER="openai"
 
 # For Anthropic Claude
-ANTHROPIC_API_KEY="sk-ant-..."
+ANTHROPIC_API_KEY="your-anthropic-api-key"
 AI_PROVIDER="anthropic"
 ```
 

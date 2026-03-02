@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NotaIcon } from '@/components/NotaIcon';
 import { useAuthStore } from '@/lib/store';
 
 interface AppNavbarProps {
@@ -50,9 +51,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
             href="/dashboard"
             className="flex items-center gap-2.5 text-foreground no-underline shrink-0"
           >
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">N</span>
-            </div>
+            <NotaIcon size={32} className="shrink-0 rounded-lg" />
             <span className="font-semibold text-foreground tracking-tight hidden sm:inline">Nota</span>
           </Link>
 
