@@ -22,6 +22,8 @@ model User {
   passwordHash  String?
   name          String?
   avatarUrl     String?
+  /// JSON: { quickLinks?: { library?: { provider, customUrl?, customLabel? }, classroom?: { provider, customUrl?, customLabel? } } }
+  preferences   Json?
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -100,6 +102,9 @@ model Workspace {
   shareLink    String?  @unique
   shareLinkEnabled Boolean @default(false)
   shareRole    Role     @default(VIEWER)
+  
+  /// When set, workspace is in bin; purged after retention days (e.g. 14)
+  deletedAt   DateTime?
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

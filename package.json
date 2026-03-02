@@ -19,6 +19,7 @@
     "db:build": "pnpm --filter @nota/database build",
     "db:push": "pnpm --filter @nota/database push",
     "db:migrate": "pnpm --filter @nota/database migrate",
+    "db:migrate:deploy": "pnpm --filter @nota/database migrate:deploy",
     "db:studio": "pnpm --filter @nota/database studio",
     "setup": "pnpm install && pnpm db:build && pnpm db:push",
     "postinstall": "pnpm db:build",

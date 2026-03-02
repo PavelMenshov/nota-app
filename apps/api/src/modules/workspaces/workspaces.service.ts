@@ -338,6 +338,7 @@ export class WorkspacesService {
   async findAll(userId: string) {
     return this.prisma.workspace.findMany({
       where: {
+        deletedAt: null,
         members: {
           some: {
             userId,
@@ -373,6 +374,7 @@ export class WorkspacesService {
     const workspace = await this.prisma.workspace.findFirst({
       where: {
         id,
+        deletedAt: null,
         members: {
           some: {
             userId,
@@ -432,14 +434,82 @@ export class WorkspacesService {
     });
   }
 
+  /** Move workspace to bin (soft delete). Retained for BIN_RETENTION_DAYS then purged. */
   async delete(id: string, userId: string) {
     await this.checkPermission(id, userId, ['OWNER']);
+
+    await this.prisma.workspace.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    return { success: true };
+  }
+
+  /** List workspaces in bin for the current user (as member, any role). */
+  async findBin(userId: string) {
+    return this.prisma.workspace.findMany({
+      where: {
+        deletedAt: { not: null },
+        members: {
+          some: { userId },
+        },
+      },
+      include: {
+        _count: { select: { pages: true } },
+      },
+      orderBy: { deletedAt: 'desc' },
+    });
+  }
+
+  /** Restore a workspace from bin. */
+  async restore(id: string, userId: string) {
+    await this.checkPermission(id, userId, ['OWNER']);
+
+    await this.prisma.workspace.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+
+    return { success: true };
+  }
+
+  /** Permanently delete a workspace (must be in bin). */
+  async purge(id: string, userId: string) {
+    await this.checkPermission(id, userId, ['OWNER']);
+
+    const w = await this.prisma.workspace.findUnique({
+      where: { id },
+      select: { deletedAt: true },
+    });
+    if (!w?.deletedAt) {
+      throw new BadRequestException('Workspace is not in bin. Use delete to move to bin first.');
+    }
 
     await this.prisma.workspace.delete({
       where: { id },
     });
 
     return { success: true };
+  }
+
+  /** Remove from DB workspaces that have been in bin longer than retention days. Call from cron or on demand. */
+  async purgeExpired(retentionDays: number = 14): Promise<number> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+
+    const expired = await this.prisma.workspace.findMany({
+      where: { deletedAt: { lt: cutoff } },
+      select: { id: true },
+    });
+
+    if (expired.length === 0) return 0;
+
+    await this.prisma.workspace.deleteMany({
+      where: { id: { in: expired.map((x) => x.id) } },
+    });
+
+    return expired.length;
   }
 
   async addMember(workspaceId: string, userId: string, dto: AddMemberDto) {

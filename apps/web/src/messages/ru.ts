@@ -1,0 +1,45 @@
+import type { Messages } from './en';
+
+export const ru: Messages = {
+  nav: {
+    workspaces: 'Пространства',
+    university: 'Университет',
+    bin: 'Корзина',
+    backToDashboard: 'Назад к панели',
+    profile: 'Профиль',
+    settings: 'Настройки',
+    logOut: 'Выйти',
+    searchPlaceholder: 'Поиск пространств, страниц…',
+    notifications: 'Уведомления',
+    noNotifications: 'Нет уведомлений',
+    loading: 'Загрузка…',
+  },
+  dashboard: {
+    myWorkspaces: 'Мои пространства',
+    newWorkspace: 'Новое пространство',
+    createWorkspace: 'Создать пространство',
+    moveToBin: 'В корзину',
+    edit: 'Изменить',
+    deletePermanent: 'Удалить навсегда',
+    restore: 'Восстановить',
+    studentApps: 'Студенческие приложения',
+    customizeInSettings: 'Настроить в Настройках',
+  },
+  bin: {
+    title: 'Корзина',
+    description: 'Удалённые пространства хранятся 14 дней. Восстановите или удалите их окончательно.',
+    empty: 'Корзина пуста',
+    backToWorkspaces: 'К пространствам',
+    deletedToday: 'Удалено сегодня',
+    deletedDaysAgo: 'Удалено {{count}} дн. назад',
+    purgeInDays: 'Окончательно удалено через {{count}} дн.',
+    purgeExpired: 'Очистить истёкшие (старше 14 дней)',
+  },
+  common: {
+    cancel: 'Отмена',
+    save: 'Сохранить',
+    saving: 'Сохранение…',
+    delete: 'Удалить',
+    loading: 'Загрузка…',
+  },
+};

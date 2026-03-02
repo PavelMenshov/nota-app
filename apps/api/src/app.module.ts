@@ -19,6 +19,7 @@ import { FilesModule } from './modules/files/files.module';
 import { LmsModule } from './modules/lms/lms.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { WorkspaceAccessModule } from './common/workspace-access/workspace-access.module';
 
@@ -51,6 +52,7 @@ import { WorkspaceAccessModule } from './common/workspace-access/workspace-acces
     LmsModule,
     NotificationsModule,
     IntegrationsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [

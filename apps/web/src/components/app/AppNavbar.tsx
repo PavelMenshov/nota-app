@@ -3,13 +3,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search, Command, HelpCircle, Bell } from 'lucide-react';
+import { User, LogOut, Settings, GraduationCap, LayoutDashboard, Search, Command, HelpCircle, Bell, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NotaIcon } from '@/components/NotaIcon';
 import { useAuthStore } from '@/lib/store';
 import { useOpenShortcuts } from './CommandPaletteProvider';
 import { COMMAND_PALETTE_OPEN } from './CommandPalette';
-import { notificationsApi } from '@/lib/api';
+import { notificationsApi, settingsApi } from '@/lib/api';
+import { useLocale } from '@/contexts/LocaleContext';
+import type { LocaleOption } from '@/lib/api';
 
 interface AppNavbarProps {
   /** When true, show "Back to Dashboard" in nav (e.g. inside workspace) */
@@ -18,10 +20,13 @@ interface AppNavbarProps {
   workspaceName?: string | null;
 }
 
+const LOCALE_LABELS: Record<LocaleOption, string> = { en: 'EN', ru: 'RU', zh: '中文' };
+
 export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNavbarProps>) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, token } = useAuthStore();
+  const { locale, setLocale, t } = useLocale();
   const openShortcuts = useOpenShortcuts();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -38,7 +43,11 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
     createdAt: string;
   }>>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const { token } = useAuthStore();
+
+  useEffect(() => {
+    if (!token) return;
+    settingsApi.getLocale(token).then((data) => setLocale(data.locale)).catch(() => {});
+  }, [token, setLocale]);
 
   const fetchNotifications = useCallback(async () => {
     if (!token) return;
@@ -93,6 +102,13 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
     router.push('/');
   };
 
+  const handleLocaleChange = (next: LocaleOption) => {
+    setLocale(next);
+    if (token) {
+      settingsApi.updateLocale(token, next).catch(() => {});
+    }
+  };
+
   const isDashboard = pathname === '/dashboard' || pathname.startsWith('/dashboard');
   const isWorkspace = pathname.startsWith('/workspace/');
 
@@ -119,20 +135,33 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
             >
               <span className="flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4" />
-                University
+                {t('nav.university')}
               </span>
             </Link>
             <Link
               href="/dashboard"
               className={`text-sm font-medium px-3 py-2 rounded-md transition-colors ${
-                isDashboard && pathname !== '/dashboard/courses'
+                isDashboard && pathname !== '/dashboard/courses' && pathname !== '/dashboard/bin'
                   ? 'bg-muted/80 text-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
               }`}
             >
               <span className="flex items-center gap-1.5">
                 <LayoutDashboard className="h-4 w-4" />
-                Workspaces
+                {t('nav.workspaces')}
+              </span>
+            </Link>
+            <Link
+              href="/dashboard/bin"
+              className={`text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                pathname === '/dashboard/bin'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <Trash2 className="h-4 w-4" />
+                {t('nav.bin')}
               </span>
             </Link>
             {showBackToDashboard && isWorkspace && (
@@ -140,7 +169,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                 href="/dashboard"
                 className="text-sm font-medium px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80"
               >
-                Back to Dashboard
+                {t('nav.backToDashboard')}
               </Link>
             )}
           </nav>
@@ -155,7 +184,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
             aria-label="Open command palette (Ctrl+K)"
           >
             <Search className="h-4 w-4 shrink-0" />
-            <span className="flex-1 truncate">Search workspaces, pages…</span>
+            <span className="flex-1 truncate">{t('nav.searchPlaceholder')}</span>
             <kbd className="hidden rounded border border-border bg-background px-1.5 py-0.5 text-xs sm:inline-flex items-center gap-0.5">
               <Command className="h-3 w-3" />K
             </kbd>
@@ -163,6 +192,25 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Language selector */}
+          <div className="flex items-center rounded-md border border-border bg-muted/30 overflow-hidden">
+            {(['en', 'ru', 'zh'] as const).map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => handleLocaleChange(loc)}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  locale === loc
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+                title={loc === 'en' ? 'English' : loc === 'ru' ? 'Русский' : '中文'}
+                aria-label={`Language: ${LOCALE_LABELS[loc]}`}
+              >
+                {LOCALE_LABELS[loc]}
+              </button>
+            ))}
+          </div>
           <div className="relative" ref={notificationsRef}>
             <Button
               variant="ghost"
@@ -180,13 +228,13 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
             {notificationsOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 max-h-[360px] rounded-lg border border-border bg-card shadow-lg z-20 flex flex-col">
                 <div className="px-3 py-2 border-b border-border font-medium text-sm text-foreground">
-                  Notifications
+                  {t('nav.notifications')}
                 </div>
                 <div className="overflow-y-auto flex-1 min-h-0">
                   {notificationsLoading ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">Loading…</div>
+                    <div className="p-4 text-center text-sm text-muted-foreground">{t('nav.loading')}</div>
                   ) : notifications.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+                    <div className="p-4 text-center text-sm text-muted-foreground">{t('nav.noNotifications')}</div>
                   ) : (
                     <ul className="py-1">
                       {notifications.map((n) => (
@@ -256,7 +304,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                 >
                   <Button variant="ghost" className="w-full justify-start rounded-none h-9 px-3">
                     <User className="h-4 w-4 mr-2" />
-                    Profile
+                    {t('nav.profile')}
                   </Button>
                 </Link>
                 <Link
@@ -266,7 +314,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                 >
                   <Button variant="ghost" className="w-full justify-start rounded-none h-9 px-3">
                     <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    {t('nav.settings')}
                   </Button>
                 </Link>
                 <Button
@@ -278,7 +326,7 @@ export function AppNavbar({ showBackToDashboard, workspaceName }: Readonly<AppNa
                   }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Log out
+                  {t('nav.logOut')}
                 </Button>
               </div>
             )}

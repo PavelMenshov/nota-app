@@ -291,6 +291,24 @@ export const workspacesApi = {
   delete: (token: string, id: string) =>
     fetchApi<{ success: boolean }>(`/api/workspaces/${id}`, { method: 'DELETE', token }),
 
+  listBin: (token: string) =>
+    fetchApi<Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      deletedAt: string;
+      _count: { pages: number };
+    }>>('/api/workspaces/bin', { token }),
+
+  restore: (token: string, id: string) =>
+    fetchApi<{ success: boolean }>(`/api/workspaces/${id}/restore`, { method: 'POST', token }),
+
+  deletePermanent: (token: string, id: string) =>
+    fetchApi<{ success: boolean }>(`/api/workspaces/${id}/permanent`, { method: 'DELETE', token }),
+
+  purgeExpiredBin: (token: string) =>
+    fetchApi<{ purged: number }>('/api/workspaces/bin/purge-expired', { method: 'POST', token }),
+
   createDemo: (token: string) =>
     fetchApi<{ id: string; name: string }>('/api/workspaces/demo', {
       method: 'POST',
@@ -891,6 +909,46 @@ export const integrationsApi = {
     fetchApi<{ id: string }>('/api/integrations/outlook/events', {
       method: 'POST',
       body: JSON.stringify(data),
+      token,
+    }),
+};
+
+// Settings API (library & classroom quick-links)
+export type LibraryQuickLinkOption = {
+  provider: 'google' | 'custom';
+  customUrl?: string;
+  customLabel?: string;
+};
+export type ClassroomQuickLinkOption = {
+  provider: 'google' | 'teams' | 'custom';
+  customUrl?: string;
+  customLabel?: string;
+};
+export type QuickLinksPreferences = {
+  library?: LibraryQuickLinkOption;
+  classroom?: ClassroomQuickLinkOption;
+};
+
+export type LocaleOption = 'en' | 'ru' | 'zh';
+
+export const settingsApi = {
+  getQuickLinks: (token: string) =>
+    fetchApi<QuickLinksPreferences>('/api/settings/quick-links', { token }),
+
+  updateQuickLinks: (token: string, data: QuickLinksPreferences) =>
+    fetchApi<QuickLinksPreferences>('/api/settings/quick-links', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      token,
+    }),
+
+  getLocale: (token: string) =>
+    fetchApi<{ locale: LocaleOption }>('/api/settings/locale', { token }),
+
+  updateLocale: (token: string, locale: LocaleOption) =>
+    fetchApi<{ locale: LocaleOption }>('/api/settings/locale', {
+      method: 'PATCH',
+      body: JSON.stringify({ locale }),
       token,
     }),
 };

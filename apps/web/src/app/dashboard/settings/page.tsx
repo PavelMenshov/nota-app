@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, Settings, User, Video, Mail, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Settings, User, Video, Mail, CheckCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/lib/store';
-import { authApi, integrationsApi } from '@/lib/api';
+import { authApi, integrationsApi, settingsApi, type QuickLinksPreferences } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -25,7 +25,18 @@ export default function DashboardSettingsPage() {
   const [integrations, setIntegrations] = useState<{ zoom: boolean; outlook: boolean } | null>(null);
   const [connectingZoom, setConnectingZoom] = useState(false);
   const [connectingOutlook, setConnectingOutlook] = useState(false);
+  const [quickLinks, setQuickLinks] = useState<QuickLinksPreferences>({});
+  const [quickLinksSaving, setQuickLinksSaving] = useState(false);
   const oauthHandled = useRef(false);
+
+  // Library: google | custom (with URL and optional label)
+  const [libraryProvider, setLibraryProvider] = useState<'google' | 'custom'>('google');
+  const [libraryCustomUrl, setLibraryCustomUrl] = useState('');
+  const [libraryCustomLabel, setLibraryCustomLabel] = useState('');
+  // Classroom: google | teams | custom
+  const [classroomProvider, setClassroomProvider] = useState<'google' | 'teams' | 'custom'>('google');
+  const [classroomCustomUrl, setClassroomCustomUrl] = useState('');
+  const [classroomCustomLabel, setClassroomCustomLabel] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -48,6 +59,26 @@ export default function DashboardSettingsPage() {
   useEffect(() => {
     if (!token) return;
     integrationsApi.status(token).then(setIntegrations).catch(() => setIntegrations({ zoom: false, outlook: false }));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    settingsApi
+      .getQuickLinks(token)
+      .then((data) => {
+        setQuickLinks(data);
+        if (data.library) {
+          setLibraryProvider(data.library.provider);
+          setLibraryCustomUrl(data.library.customUrl ?? '');
+          setLibraryCustomLabel(data.library.customLabel ?? '');
+        }
+        if (data.classroom) {
+          setClassroomProvider(data.classroom.provider);
+          setClassroomCustomUrl(data.classroom.customUrl ?? '');
+          setClassroomCustomLabel(data.classroom.customLabel ?? '');
+        }
+      })
+      .catch(() => {});
   }, [token]);
 
   useEffect(() => {
@@ -88,6 +119,45 @@ export default function DashboardSettingsPage() {
     } catch {
       toast({ title: 'Could not start Outlook connection', variant: 'destructive' });
       setConnectingOutlook(false);
+    }
+  };
+
+  const handleSaveQuickLinks = async () => {
+    if (!token) return;
+    setQuickLinksSaving(true);
+    try {
+      const payload: QuickLinksPreferences = {};
+      if (libraryProvider === 'custom' && libraryCustomUrl.trim()) {
+        payload.library = {
+          provider: 'custom',
+          customUrl: libraryCustomUrl.trim(),
+          customLabel: libraryCustomLabel.trim() || undefined,
+        };
+      } else {
+        payload.library = { provider: 'google' };
+      }
+      if (classroomProvider === 'custom' && classroomCustomUrl.trim()) {
+        payload.classroom = {
+          provider: 'custom',
+          customUrl: classroomCustomUrl.trim(),
+          customLabel: classroomCustomLabel.trim() || undefined,
+        };
+      } else if (classroomProvider === 'teams') {
+        payload.classroom = {
+          provider: 'teams',
+          customUrl: classroomCustomUrl.trim() || undefined,
+          customLabel: classroomCustomLabel.trim() || undefined,
+        };
+      } else {
+        payload.classroom = { provider: 'google' };
+      }
+      await settingsApi.updateQuickLinks(token, payload);
+      setQuickLinks(payload);
+      toast({ title: 'Library & classroom saved' });
+    } catch {
+      toast({ title: 'Failed to save', variant: 'destructive' });
+    } finally {
+      setQuickLinksSaving(false);
     }
   };
 
@@ -191,6 +261,92 @@ export default function DashboardSettingsPage() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Library & Classroom
+          </CardTitle>
+          <CardDescription>
+            Choose your library (e.g. Google Library or your institution like PolyU) and classroom (e.g. Google Classroom or Microsoft Teams). These links appear on your dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label>Library</Label>
+            <div className="flex flex-wrap gap-3 items-center">
+              <select
+                value={libraryProvider}
+                onChange={(e) => setLibraryProvider(e.target.value as 'google' | 'custom')}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[180px]"
+              >
+                <option value="google">Google Library</option>
+                <option value="custom">My library (custom URL)</option>
+              </select>
+              {libraryProvider === 'custom' && (
+                <>
+                  <Input
+                    type="url"
+                    placeholder="https://library.example.edu"
+                    value={libraryCustomUrl}
+                    onChange={(e) => setLibraryCustomUrl(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Input
+                    placeholder="Label (optional)"
+                    value={libraryCustomLabel}
+                    onChange={(e) => setLibraryCustomLabel(e.target.value)}
+                    className="max-w-[140px]"
+                  />
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Label>Classroom</Label>
+            <div className="flex flex-wrap gap-3 items-center">
+              <select
+                value={classroomProvider}
+                onChange={(e) => setClassroomProvider(e.target.value as 'google' | 'teams' | 'custom')}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm w-[200px]"
+              >
+                <option value="google">Google Classroom</option>
+                <option value="teams">Microsoft Teams</option>
+                <option value="custom">My classroom (custom URL)</option>
+              </select>
+              {classroomProvider === 'custom' && (
+                <>
+                  <Input
+                    type="url"
+                    placeholder="https://..."
+                    value={classroomCustomUrl}
+                    onChange={(e) => setClassroomCustomUrl(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Input
+                    placeholder="Label (optional)"
+                    value={classroomCustomLabel}
+                    onChange={(e) => setClassroomCustomLabel(e.target.value)}
+                    className="max-w-[140px]"
+                  />
+                </>
+              )}
+              {classroomProvider === 'teams' && (
+                <Input
+                  placeholder="Custom label (optional)"
+                  value={classroomCustomLabel}
+                  onChange={(e) => setClassroomCustomLabel(e.target.value)}
+                  className="max-w-[160px]"
+                />
+              )}
+            </div>
+          </div>
+          <Button type="button" onClick={handleSaveQuickLinks} disabled={quickLinksSaving}>
+            {quickLinksSaving ? 'Saving...' : 'Save library & classroom'}
+          </Button>
         </CardContent>
       </Card>
 

@@ -1,0 +1,45 @@
+export const en = {
+  nav: {
+    workspaces: 'Workspaces',
+    university: 'University',
+    bin: 'Bin',
+    backToDashboard: 'Back to Dashboard',
+    profile: 'Profile',
+    settings: 'Settings',
+    logOut: 'Log out',
+    searchPlaceholder: 'Search workspaces, pages…',
+    notifications: 'Notifications',
+    noNotifications: 'No notifications',
+    loading: 'Loading…',
+  },
+  dashboard: {
+    myWorkspaces: 'My Workspaces',
+    newWorkspace: 'New workspace',
+    createWorkspace: 'Create workspace',
+    moveToBin: 'Move to bin',
+    edit: 'Edit',
+    deletePermanent: 'Delete permanently',
+    restore: 'Restore',
+    studentApps: 'Student apps',
+    customizeInSettings: 'Customize in Settings',
+  },
+  bin: {
+    title: 'Bin',
+    description: 'Deleted workspaces are kept for 14 days. Restore or permanently delete them here.',
+    empty: 'Bin is empty',
+    backToWorkspaces: 'Back to workspaces',
+    deletedToday: 'Deleted today',
+    deletedDaysAgo: 'Deleted {{count}} day(s) ago',
+    purgeInDays: 'Permanently deleted in {{count}} day(s)',
+    purgeExpired: 'Purge all expired (older than 14 days)',
+  },
+  common: {
+    cancel: 'Cancel',
+    save: 'Save',
+    saving: 'Saving…',
+    delete: 'Delete',
+    loading: 'Loading…',
+  },
+} as const;
+
+export type Messages = typeof en;

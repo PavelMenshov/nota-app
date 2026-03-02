@@ -1,0 +1,45 @@
+import type { Messages } from './en';
+
+export const zh: Messages = {
+  nav: {
+    workspaces: '工作区',
+    university: '大学',
+    bin: '回收站',
+    backToDashboard: '返回仪表盘',
+    profile: '个人资料',
+    settings: '设置',
+    logOut: '退出登录',
+    searchPlaceholder: '搜索工作区、页面…',
+    notifications: '通知',
+    noNotifications: '暂无通知',
+    loading: '加载中…',
+  },
+  dashboard: {
+    myWorkspaces: '我的工作区',
+    newWorkspace: '新建工作区',
+    createWorkspace: '创建工作区',
+    moveToBin: '移至回收站',
+    edit: '编辑',
+    deletePermanent: '永久删除',
+    restore: '恢复',
+    studentApps: '学生应用',
+    customizeInSettings: '在设置中自定义',
+  },
+  bin: {
+    title: '回收站',
+    description: '已删除的工作区将保留 14 天。在此恢复或永久删除。',
+    empty: '回收站为空',
+    backToWorkspaces: '返回工作区',
+    deletedToday: '今天删除',
+    deletedDaysAgo: '{{count}} 天前删除',
+    purgeInDays: '{{count}} 天后永久删除',
+    purgeExpired: '清除已过期（超过 14 天）',
+  },
+  common: {
+    cancel: '取消',
+    save: '保存',
+    saving: '保存中…',
+    delete: '删除',
+    loading: '加载中…',
+  },
+};

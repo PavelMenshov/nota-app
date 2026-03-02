@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createWorkspaceSchema, updateWorkspaceSchema } from '@nota/shared';
 import { useAuthStore } from '@/lib/store';
-import { workspacesApi, lmsApi, ApiError } from '@/lib/api';
+import { workspacesApi, lmsApi, settingsApi, ApiError } from '@/lib/api';
+import type { QuickLinksPreferences } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { NOTA_OPEN_CREATE_WORKSPACE } from '@/components/app/CommandPalette';
 import { getStudentAppLinks } from '@/lib/student-apps';
@@ -85,6 +86,7 @@ function DashboardContent() {
   const [importSelectedIds, setImportSelectedIds] = useState<Set<string>>(new Set());
   const [loadingImportAssignments, setLoadingImportAssignments] = useState(false);
   const [syncingImport, setSyncingImport] = useState(false);
+  const [quickLinks, setQuickLinks] = useState<QuickLinksPreferences>({});
   const router = useRouter();
   const { token, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
@@ -119,6 +121,16 @@ function DashboardContent() {
     }
   }, [token]);
 
+  const loadQuickLinks = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await settingsApi.getQuickLinks(token);
+      setQuickLinks(data);
+    } catch {
+      // Non-blocking
+    }
+  }, [token]);
+
   const loadWorkspaces = useCallback(async () => {
     if (!token) return;
     try {
@@ -143,7 +155,8 @@ function DashboardContent() {
     }
     loadWorkspaces();
     loadLmsIntegrations();
-  }, [authChecked, isAuthenticated, router, loadWorkspaces, loadLmsIntegrations]);
+    loadQuickLinks();
+  }, [authChecked, isAuthenticated, router, loadWorkspaces, loadLmsIntegrations, loadQuickLinks]);
 
   useEffect(() => {
     const joinToken = searchParams.get('join');
@@ -246,13 +259,13 @@ function DashboardContent() {
     setIsDeleting(true);
     try {
       await workspacesApi.delete(token, id);
-      toast({ title: 'Workspace deleted' });
+      toast({ title: 'Workspace moved to bin' });
       setShowDeleteConfirm(null);
       loadWorkspaces();
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete workspace',
+        description: 'Failed to move workspace to bin',
         variant: 'destructive',
       });
     } finally {
@@ -514,16 +527,21 @@ function DashboardContent() {
           </section>
         )}
 
-        {/* Student apps: Google Classroom, Library, Turnitin */}
-        {getStudentAppLinks().length > 0 && (
+        {/* Student apps: Classroom, Library, Turnitin (customizable in Settings) */}
+        {getStudentAppLinks(quickLinks).length > 0 && (
           <section className="mb-10">
             <h2 className="text-lg font-semibold text-foreground mb-3">Student apps</h2>
             <p className="text-sm text-muted-foreground mb-3">
-              Quick links to tools you use for study. Your institution can customize these.
+              Quick links to tools you use for study. Customize in{' '}
+              <Link href="/dashboard/settings" className="text-primary hover:underline">Settings</Link>.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {getStudentAppLinks().map((app) => {
-                const Icon = app.id === 'google-classroom' ? LayoutGrid : app.id === 'library' ? Library : FileCheck;
+              {getStudentAppLinks(quickLinks).map((app) => {
+                const Icon = app.id === 'google-classroom'
+                  ? (app.label.includes('Teams') ? Video : LayoutGrid)
+                  : app.id === 'library'
+                    ? Library
+                    : FileCheck;
                 return (
                   <a
                     key={app.id}
@@ -673,7 +691,7 @@ function DashboardContent() {
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
-                          Delete
+                          Move to bin
                         </button>
                       </div>
                     )}
@@ -1044,13 +1062,13 @@ function DashboardContent() {
             onKeyDown={(e) => e.stopPropagation()}
           >
             <CardHeader className="pb-3">
-              <CardTitle id="delete-workspace-title" className="text-lg font-semibold">Delete workspace</CardTitle>
-              <CardDescription>This will permanently delete this workspace and all its pages. This cannot be undone.</CardDescription>
+              <CardTitle id="delete-workspace-title" className="text-lg font-semibold">Move to bin</CardTitle>
+              <CardDescription>This workspace and its pages will be moved to the bin. You can restore it within 14 days from the Bin. After that it will be permanently deleted.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-md h-10" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
-                <Button variant="destructive" className="flex-1 rounded-md h-10" onClick={() => handleDeleteWorkspace(showDeleteConfirm)} disabled={isDeleting}>{isDeleting ? 'Deleting…' : 'Delete'}</Button>
+                <Button variant="destructive" className="flex-1 rounded-md h-10" onClick={() => handleDeleteWorkspace(showDeleteConfirm)} disabled={isDeleting}>{isDeleting ? 'Moving…' : 'Move to bin'}</Button>
               </div>
             </CardContent>
           </Card>

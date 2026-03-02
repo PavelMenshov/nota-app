@@ -40,6 +40,21 @@ export class WorkspacesController {
     return this.workspacesService.findAll(req.user.userId);
   }
 
+  @Get('bin')
+  @ApiOperation({ summary: 'List workspaces in bin (soft-deleted)' })
+  @ApiResponse({ status: 200, description: 'List of workspaces in bin' })
+  async findBin(@Request() req: { user: { userId: string } }) {
+    return this.workspacesService.findBin(req.user.userId);
+  }
+
+  @Post('bin/purge-expired')
+  @ApiOperation({ summary: 'Permanently delete workspaces that exceeded bin retention (e.g. 14 days)' })
+  @ApiResponse({ status: 200, description: 'Count of purged workspaces' })
+  async purgeExpired(@Request() _req: { user: { userId: string } }) {
+    const count = await this.workspacesService.purgeExpired(14);
+    return { purged: count };
+  }
+
   @Post('demo')
   @ApiOperation({ summary: 'Create a demo workspace for pitch (Blackboard-style)' })
   @ApiResponse({ status: 201, description: 'Demo workspace created' })
@@ -70,13 +85,33 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a workspace' })
-  @ApiResponse({ status: 200, description: 'Workspace deleted' })
+  @ApiOperation({ summary: 'Move workspace to bin (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Workspace moved to bin' })
   async delete(
     @Request() req: { user: { userId: string } },
     @Param('id') id: string,
   ) {
     return this.workspacesService.delete(id, req.user.userId);
+  }
+
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore workspace from bin' })
+  @ApiResponse({ status: 200, description: 'Workspace restored' })
+  async restore(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.workspacesService.restore(id, req.user.userId);
+  }
+
+  @Delete(':id/permanent')
+  @ApiOperation({ summary: 'Permanently delete a workspace in bin' })
+  @ApiResponse({ status: 200, description: 'Workspace permanently deleted' })
+  async purge(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.workspacesService.purge(id, req.user.userId);
   }
 
   @Post(':id/members')
